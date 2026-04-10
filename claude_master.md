@@ -273,8 +273,10 @@ if (cycle_completed === 'true' && Date.now() >= next_cycle_time) {
 
 ## FIREBASE
 
-- services/firebase.ts → getAuth(app) sans persistence AsyncStorage
-- Warning non-bloquant, ignoré jusqu'à implémentation auth réelle
+- services/firebase.ts → initializeAuth(app, { persistence: inMemoryPersistence })
+- Firebase 12.x : getReactNativePersistence non disponible dans cette version
+- inMemoryPersistence utilisé temporairement — pas de warning, 0 erreur TypeScript
+- À corriger lors de la session Auth avec la vraie implémentation Apple/Google/Magic Link
 
 ---
 
@@ -295,11 +297,25 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 
 ## PROCHAINES PAGES À CONSTRUIRE (design complet à venir)
 
-1. affirmation.tsx — Affirmations du cycle
-2. action.tsx — Actions facile + difficile
-3. visualisation.tsx — Visualisation guidée
+1. ~~affirmation.tsx~~ ✅
+2. ~~action.tsx~~ ✅
+3. ~~visualisation.tsx~~ ✅
 4. celebration.tsx — Fin de cycle
 5. journal.tsx — Journal de gratitude
 6. vision-board.tsx — Vision board
 7. profil.tsx — Profil utilisateur + stats
 8. parametres.tsx — Paramètres + reset compte
+
+---
+
+## À IMPLÉMENTER PLUS TARD
+
+### Textes dynamiques — adjustsFontSizeToFit
+
+Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
+à la taille de leur bloc blanc conteneur.
+
+Utiliser `adjustsFontSizeToFit={true}` et `numberOfLines` adapté sur chaque `<Text>`
+qui affiche du contenu venant du JSON.
+
+À implémenter lors de la session d'intégration du contenu `content_fr.json`.

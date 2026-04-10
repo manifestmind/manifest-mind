@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
@@ -16,13 +16,26 @@ const THEMES = [
   'Gratitude & Paix',
 ];
 
-export default function Affirmation() {
+export default function Visualisation() {
   const insets = useSafeAreaInsets();
+
   const [cycleNumber, setCycleNumber] = useState(1);
-  const [themeNumber, setThemeNumber] = useState(1);
-  const [themeName, setThemeName] = useState('Confiance & Identité');
+  const [themeName, setThemeName] = useState('');
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
+  const [breathePhase, setBreathePhase] = useState<'inspire' | 'retiens' | 'expire'>('inspire');
+
+  // Animation cercle respiration
+  const breatheAnim = useRef(new Animated.Value(1)).current;
+
+  // Animations fadeWord pour les 4 phrases
+  const fade1 = useRef(new Animated.Value(0)).current;
+  const fade2 = useRef(new Animated.Value(0)).current;
+  const fade3 = useRef(new Animated.Value(0)).current;
+  const fade4 = useRef(new Animated.Value(0)).current;
+
+  // Animation shimmer phrase finale
+  const shimmer = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     async function load() {
@@ -30,24 +43,80 @@ export default function Affirmation() {
       setCycleNumber(cycle);
 
       const theme = parseInt(await AsyncStorage.getItem('current_theme') || '1');
-      setThemeNumber(theme);
       setThemeName(THEMES[theme - 1]);
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
         const status = JSON.parse(statusRaw);
-        if (status.affirmation) setValidated(true);
+        if (status.visualisation) setValidated(true);
       }
     }
     load();
   }, []);
+
+  useEffect(() => {
+    // Breathe animation synced with phases: inspire 4s, retiens 2s, expire 4s
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(breatheAnim, { toValue: 1.12, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(breatheAnim, { toValue: 1.12, duration: 2000, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(breatheAnim, { toValue: 0.95, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start();
+
+    // FadeWord séquentiel
+    Animated.sequence([Animated.delay(500), Animated.timing(fade1, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
+    Animated.sequence([Animated.delay(1200), Animated.timing(fade2, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
+    Animated.sequence([Animated.delay(1900), Animated.timing(fade3, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
+    Animated.sequence([Animated.delay(2600), Animated.timing(fade4, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
+
+    // Shimmer phrase finale après 3s
+    const t = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmer, { toValue: 0.7, duration: 1500, useNativeDriver: true }),
+          Animated.timing(shimmer, { toValue: 1, duration: 1500, useNativeDriver: true }),
+        ])
+      ).start();
+    }, 3000);
+
+    return () => clearTimeout(t);
+  }, []);
+
+  // Cycle de respiration — texte selon phase
+  useEffect(() => {
+    if (validated) return;
+
+    let running = true;
+
+    const loop = async () => {
+      while (running) {
+        setBreathePhase('inspire');
+        await new Promise(r => setTimeout(r, 4000));
+        if (!running) break;
+        setBreathePhase('retiens');
+        await new Promise(r => setTimeout(r, 2000));
+        if (!running) break;
+        setBreathePhase('expire');
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    };
+
+    loop();
+    return () => { running = false; };
+  }, [validated]);
+
+  const breatheText =
+    breathePhase === 'inspire' ? 'Inspire\ndoucement' :
+    breathePhase === 'retiens' ? 'Retiens' :
+    'Expire\nlentement';
 
   async function handleValidate() {
     if (validated) return;
 
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
     const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.affirmation = true;
+    status.visualisation = true;
     await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
     const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
@@ -57,10 +126,10 @@ export default function Affirmation() {
     await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
 
     setValidated(true);
-    setToast('✦ +15 pts · Affirmation validée');
+    setToast('✦ +15 pts · Visualisation validée');
 
     setTimeout(() => {
-      router.push('/(app)/action' as any);
+      router.push('/(app)/journal' as any);
     }, 1500);
   }
 
@@ -69,49 +138,49 @@ export default function Affirmation() {
 
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
     const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.affirmation = true;
+    status.visualisation = true;
     await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
     setValidated(true);
-    router.push('/(app)/action' as any);
+    router.push('/(app)/journal' as any);
   }
 
   return (
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#C4A8D4', top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 80, height: 80, backgroundColor: '#B8D4B0', bottom: 55, left: -20 }]} />
+      <View style={[styles.orb, { width: 130, height: 130, backgroundColor: '#C4E8F0', top: -32, right: -32 }]} />
+      <View style={[styles.orb, { width: 80, height: 80, backgroundColor: '#DDD0F8', bottom: 55, left: -20 }]} />
 
       <View style={styles.content}>
 
         {/* Œil + Titre */}
         <View style={styles.header}>
-          <Svg width={116} height={89} viewBox="0 0 56 44">
+          <Svg width={110} height={85} viewBox="0 0 56 44">
             <Defs>
-              <ClipPath id="ac1">
+              <ClipPath id="vc1">
                 <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
               </ClipPath>
             </Defs>
             <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
-            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#ac1)" />
-            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#ac1)" />
+            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#vc1)" />
+            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#vc1)" />
+            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#vc1)" />
+            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#vc1)" />
+            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#vc1)" />
+            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#vc1)" />
+            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#vc1)" />
             <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
             <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
             <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
             <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
           </Svg>
-          <Text style={styles.title}>Affirmation</Text>
+          <Text style={styles.title}>Visualisation</Text>
         </View>
 
         {/* Barre progression */}
         <View style={styles.progressBlock}>
           <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>Étape 2 · Cycle {cycleNumber}</Text>
+            <Text style={styles.progressLabel}>Étape 5 · Cycle {cycleNumber}</Text>
             <View style={styles.ptsBadge}>
               <Text style={styles.ptsBadgeText}>+15 pts</Text>
             </View>
@@ -121,23 +190,37 @@ export default function Affirmation() {
           </View>
         </View>
 
-        {/* Badge thème */}
-        <View style={styles.themeBadge}>
-          <View style={styles.themeDot} />
-          <Text style={styles.themeBadgeText}>✦ Thème {themeNumber} · {themeName}</Text>
+        {/* Cercle respiration */}
+        <View style={styles.breatheBlock}>
+          <Animated.View style={[styles.breatheCircle, { transform: [{ scale: breatheAnim }] }]}>
+            <View style={styles.breatheRing} />
+            <View style={styles.breatheInner}>
+              <Text style={styles.breatheText}>{breatheText}</Text>
+            </View>
+          </Animated.View>
+          <Text style={styles.breatheHint}>inspire 4s · retiens 2s · expire 4s</Text>
         </View>
 
-        {/* Carte affirmation */}
-        <View style={styles.card}>
-          <View style={styles.cardBody}>
-            <Text style={styles.affirmationText}>
-              {"Je suis confiant·e en ma valeur\net je m'avance vers ma vie\navec grâce et assurance."}
-            </Text>
+        {/* Bloc texte guidé */}
+        <View style={styles.textBlock}>
+          <View style={styles.textPhrases}>
+            <Animated.Text style={[styles.phrase, { opacity: fade1 }]}>
+              Imagine-toi debout, rayonnant·e de confiance...
+            </Animated.Text>
+            <Animated.Text style={[styles.phrase, { opacity: fade2 }]}>
+              Les gens autour de toi ressentent ta lumière.
+            </Animated.Text>
+            <Animated.Text style={[styles.phrase, { opacity: fade3 }]}>
+              Tu avances avec assurance vers ce que tu désires.
+            </Animated.Text>
+            <Animated.Text style={[styles.phrase, { opacity: fade4 }]}>
+              Tu es exactement là où tu dois être.
+            </Animated.Text>
           </View>
-          <View style={styles.cardFooter}>
-            <Text style={styles.instructionText}>
-              {'Répète cette phrase à voix haute,\nplusieurs fois, avec sincérité.'}
-            </Text>
+          <View style={styles.textFooter}>
+            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer }]}>
+              Je reçois cela maintenant. ✦
+            </Animated.Text>
           </View>
         </View>
 
@@ -148,10 +231,10 @@ export default function Affirmation() {
             onPress={handleValidate}
             disabled={validated}
           >
-            <Svg width={11} height={11} viewBox="0 0 12 12" fill="none">
+            <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
               <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-            <Text style={styles.validateBtnText}>J'ai répété mon affirmation · +15 pts</Text>
+            <Text style={styles.validateBtnText}>J'ai visualisé · +15 pts ✦</Text>
           </Pressable>
           {!validated && (
             <Pressable onPress={handleSkip}>
@@ -210,15 +293,16 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    gap: 3,
+    gap: 0,
     flexShrink: 0,
-    marginTop: 22,
+    marginTop: 24,
   },
   title: {
     fontFamily: 'serif',
-    fontSize: 22,
+    fontSize: 26,
     fontStyle: 'italic',
     color: '#2A2520',
+    marginTop: -6,
   },
   progressBlock: {
     flexShrink: 0,
@@ -231,7 +315,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 12,
     color: '#9B80B8',
   },
   ptsBadge: {
@@ -242,7 +326,7 @@ const styles = StyleSheet.create({
   },
   ptsBadgeText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 12,
     color: '#9A6A00',
   },
   progressBar: {
@@ -253,77 +337,100 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressFill: {
-    width: '20%',
+    width: '75%',
     height: '100%',
     backgroundColor: '#6B3FA0',
     borderRadius: 10,
   },
-  themeBadge: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    flexDirection: 'row',
+  breatheBlock: {
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(221,208,248,0.4)',
-    borderWidth: 0.5,
-    borderColor: '#C4A8D4',
-    borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
+    gap: 4,
     flexShrink: 0,
+    marginTop: 16,
   },
-  themeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: '#9B72C8',
-  },
-  themeBadgeText: {
-    fontFamily: 'Jost',
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#6B3FA0',
-  },
-  card: {
-    flex: 0.6,
-    marginTop: 56,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    borderWidth: 0.5,
-    borderColor: '#D4C4B8',
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 13,
-    justifyContent: 'space-between',
-  },
-  cardBody: {
-    flex: 1,
+  breatheCircle: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    borderWidth: 1,
+    borderColor: 'rgba(155,114,200,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    overflow: 'visible',
   },
-  affirmationText: {
+  breatheRing: {
+    position: 'absolute',
+    width: 142,
+    height: 142,
+    borderRadius: 71,
+    borderWidth: 0.5,
+    borderColor: 'rgba(155,114,200,0.2)',
+    top: -13,
+    left: -13,
+  },
+  breatheInner: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    backgroundColor: 'rgba(155,114,200,0.12)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(155,114,200,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+  },
+  breatheText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#6B3FA0',
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  breatheHint: {
+    fontFamily: 'Jost',
+    fontSize: 11,
+    color: '#9A8878',
+    letterSpacing: 0.4,
+    marginTop: 16,
+  },
+  textBlock: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    borderWidth: 0.5,
+    borderColor: '#C4D8E8',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  textPhrases: {
+    gap: 5,
+  },
+  phrase: {
+    fontFamily: 'serif',
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#4A3060',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  textFooter: {
+    borderTopWidth: 0.5,
+    borderTopColor: '#D4C4D8',
+    paddingTop: 7,
+    marginTop: 5,
+  },
+  phraseFinale: {
     fontFamily: 'serif',
     fontSize: 16,
     fontStyle: 'italic',
-    color: '#3A2850',
-    lineHeight: 27,
+    color: '#6B3FA0',
     textAlign: 'center',
-  },
-  cardFooter: {
-    borderTopWidth: 0.5,
-    borderTopColor: '#E0D4CC',
-    paddingTop: 8,
-  },
-  instructionText: {
-    fontFamily: 'Jost',
-    fontSize: 10,
-    color: '#9A8878',
-    textAlign: 'center',
-    lineHeight: 16,
   },
   bottomBlock: {
     flexShrink: 0,
-    marginTop: 28,
   },
   validateBtn: {
     backgroundColor: '#3A3530',
@@ -337,18 +444,18 @@ const styles = StyleSheet.create({
   validateBtnText: {
     fontFamily: 'Jost',
     color: '#F0EAE0',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '500',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   skipText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 12,
     color: '#A09088',
     textDecorationLine: 'underline',
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 14,
   },
   navbar: {
     flexDirection: 'row',
@@ -365,7 +472,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: '300',
     color: '#A09088',
   },

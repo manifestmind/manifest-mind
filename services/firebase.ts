@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { inMemoryPersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -14,7 +14,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
+// Firebase 12.x : getReactNativePersistence non disponible — inMemoryPersistence utilisé
+// À remplacer lors de l'implémentation auth réelle
+export const auth = initializeAuth(app, {
+  persistence: inMemoryPersistence,
+});
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

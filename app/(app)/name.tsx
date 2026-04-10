@@ -17,7 +17,6 @@ export default function Name() {
   async function handleSave() {
     if (!name.trim()) return;
     await AsyncStorage.setItem('user_name', name.trim());
-    await AsyncStorage.setItem('user_start_date', new Date().toISOString());
     router.replace('/(app)/home' as any);
   }
 
