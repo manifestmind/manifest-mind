@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 10 Avril 2026
-**État :** Architecture cycles — toutes les pages de base validées ✅
+**État :** Affirmation + Action + Visualisation validées ✅
 
 ---
 
@@ -17,6 +17,9 @@
 | app/(app)/splash.tsx | ✅ Validé |
 | app/(app)/name.tsx | ✅ Validé |
 | app/(app)/home.tsx | ✅ Validé (logique cycles 3 états) |
+| app/(app)/affirmation.tsx | ✅ Validé (design + logique) |
+| app/(app)/action.tsx | ✅ Validé (design + logique) |
+| app/(app)/visualisation.tsx | ✅ Validé (design + logique) |
 
 ---
 
@@ -39,13 +42,14 @@ Dans expo-router, les groupes `(name)` sont transparents dans les URLs :
 router.replace('/(app)/splash' as any)
 ```
 
-### 4. Reanimated : uniquement dans `welcome.tsx`
-Reanimated cause `opacity: 0` permanent en Expo Go sur splash/home/name.
-Reanimated conservé **uniquement** dans `app/(onboarding)/welcome.tsx`.
-Toutes les autres pages utilisent des Views statiques.
+### 4. Reanimated : UNIQUEMENT dans `welcome.tsx`
+Reanimated cause `opacity: 0` permanent en Expo Go sur toutes les pages sauf welcome.tsx.
+- Reanimated conservé **uniquement** dans `app/(onboarding)/welcome.tsx`
+- Toutes les autres pages utilisent `Animated` de React Native uniquement
+- PointsToast utilise Reanimated en interne mais est autorisé car c'est un composant pré-existant
 
 ### 5. Navbar identique sur toutes les pages
-Icônes 24×24, labels 11px, `paddingTop: 8`, `paddingBottom: Math.max(insets.bottom, 8)`.
+Icônes 22×22, `paddingTop: 8`, `paddingBottom: Math.max(insets.bottom, 8)`.
 Ne jamais modifier sans instruction explicite.
 
 ### 6. Design des pages validées — INTOUCHABLE
@@ -54,6 +58,32 @@ Ne jamais modifier couleurs, polices, espacements, SVG, animations, navbar ni la
 ### 7. Ne jamais tuer les process node
 Ne pas utiliser `kill`, `taskkill` ou équivalents sur les process node/expo.
 L'utilisateur gère Expo Go lui-même.
+
+---
+
+## RÈGLES TECHNIQUES
+
+### Reanimated
+- Utiliser UNIQUEMENT dans `welcome.tsx`
+- Sur toutes les autres pages : `Animated` de React Native uniquement
+- Cause `opacity: 0` permanent sur Expo Go hors `welcome.tsx`
+
+### ClipPath IDs SVG — IDs uniques par fichier (ne jamais réutiliser)
+
+| Fichier | ID |
+|---------|-----|
+| welcome.tsx | ec1 |
+| splash.tsx | sc1 |
+| name.tsx | nc1 |
+| home.tsx | hc1 |
+| affirmation.tsx | ac1 |
+| action.tsx | axc1 |
+| visualisation.tsx | vc1 |
+| journal.tsx | jc1 |
+| vision-board.tsx | vbc1 |
+| celebration.tsx | cc1 |
+| profil.tsx | pc1 |
+| parametres.tsx | prc1 |
 
 ---
 
@@ -77,9 +107,9 @@ app/
     splash.tsx    ✅             → Oeil SVG statique, toast si opening=false, → name ou home
     name.tsx      ✅             → Saisie prénom, → home
     home.tsx      ✅             → Écran principal (design validé, logique cycles 3 états)
-    affirmation.tsx  placeholder → router.back()
-    action.tsx       placeholder → router.back()
-    visualisation.tsx placeholder → router.back()
+    affirmation.tsx  ✅          → Étape 2 cycle — affirmation thème
+    action.tsx       ✅          → Étape 3+4 cycle — action facile + difficile
+    visualisation.tsx ✅         → Étape 5 cycle — respiration + phrases guidées
     celebration.tsx  placeholder → router.back()
     journal.tsx      placeholder → router.back()
     vision-board.tsx placeholder → router.back()
@@ -87,16 +117,13 @@ app/
     parametres.tsx   placeholder → router.back()
 
 services/
-  firebase.ts                    → getAuth(app) — warning persistence ignoré
+  firebase.ts                    → initializeAuth + inMemoryPersistence
 
 components/
-  ui/PointsToast.tsx             → Toast points animé
+  ui/PointsToast.tsx             → Toast points animé (Reanimated interne autorisé)
 
 constants/
   theme.ts                       → Couleurs et styles globaux
-
-types/
-  index.ts                       → Types legacy (non utilisés, à ignorer)
 ```
 
 ---
@@ -115,7 +142,7 @@ app/index.tsx
   user_name absent  →  /(app)/name
   user_name présent →  /(app)/home
 
-(app)/name → sauvegarde user_name + user_start_date → /(app)/home
+(app)/name → sauvegarde user_name → /(app)/home
 
 (app)/home — bouton principal selon état du cycle :
 
@@ -141,6 +168,9 @@ app/index.tsx
   Navbar Profil      → /(app)/profil
   Navbar Paramètres  → /(app)/parametres
   Bouton reset (discret, top:48 right:16) → AsyncStorage.clear() → /
+
+Cycle des étapes :
+  affirmation → action → visualisation → journal → vision-board → (celebration)
 ```
 
 ---
@@ -157,7 +187,6 @@ app/index.tsx
 | legal_accepted_date | ISO string | Date acceptation CGU |
 | selected_plan | lifetime / annuel / mensuel | Plan choisi (pricing.tsx) |
 | user_name | string | Prénom utilisateur (name.tsx) |
-| user_start_date | ISO string | Date premier jour (name.tsx) |
 | current_cycle | string int 1–365 | Numéro de cycle actuel |
 | current_theme | string int 1–7 | Thème actuel = ((cycle-1) % 7) + 1 |
 | cycle_step_status | JSON string | État des étapes du cycle |
@@ -184,6 +213,7 @@ app/index.tsx
 - daily_progress_step
 - last_open_date
 - points_today
+- user_start_date
 
 ---
 
@@ -256,26 +286,15 @@ if (cycle_completed === 'true' && Date.now() >= next_cycle_time) {
 - Cartes Journal/VisionBoard : paddingVertical:8, paddingHorizontal:8, gap:3, cardTitle 11px — avec lien "Passer cette étape sans points" dessous
 - Bloc puces Affirmations/Actions/Visualisations : pointerEvents="none", informatif uniquement
 - Layout content : flex:1, justifyContent:space-between, paddingHorizontal:16, paddingTop:12, paddingBottom:16
-- Navbar : icônes 24x24, labels 11px, paddingTop:8, safe area bottom
-
----
-
-## EYE SVG — CLIPPATH IDs (ne jamais réutiliser)
-
-| Fichier | ID |
-|---------|-----|
-| welcome.tsx | ec1 |
-| splash.tsx | sc1 |
-| name.tsx | nc1 |
-| home.tsx | hc1 |
+- Navbar : icônes 22x22, labels 11px, paddingTop:8, safe area bottom
 
 ---
 
 ## FIREBASE
 
-- services/firebase.ts → initializeAuth(app, { persistence: inMemoryPersistence })
-- Firebase 12.x : getReactNativePersistence non disponible dans cette version
-- inMemoryPersistence utilisé temporairement — pas de warning, 0 erreur TypeScript
+- services/firebase.ts → `initializeAuth(app, { persistence: inMemoryPersistence })`
+- Firebase 12.x : `getReactNativePersistence` non disponible dans cette version
+- `inMemoryPersistence` utilisé temporairement — 0 warning, 0 erreur TypeScript
 - À corriger lors de la session Auth avec la vraie implémentation Apple/Google/Magic Link
 
 ---
@@ -295,14 +314,14 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 
 ---
 
-## PROCHAINES PAGES À CONSTRUIRE (design complet à venir)
+## PROCHAINES PAGES À CONSTRUIRE
 
 1. ~~affirmation.tsx~~ ✅
 2. ~~action.tsx~~ ✅
 3. ~~visualisation.tsx~~ ✅
-4. celebration.tsx — Fin de cycle
-5. journal.tsx — Journal de gratitude
-6. vision-board.tsx — Vision board
+4. journal.tsx — Journal de gratitude
+5. vision-board.tsx — Vision board
+6. celebration.tsx — Fin de cycle
 7. profil.tsx — Profil utilisateur + stats
 8. parametres.tsx — Paramètres + reset compte
 
@@ -310,12 +329,22 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 
 ## À IMPLÉMENTER PLUS TARD
 
-### Textes dynamiques — adjustsFontSizeToFit
-
+### Contenu JSON — adjustsFontSizeToFit
 Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
 à la taille de leur bloc blanc conteneur.
+- Utiliser `adjustsFontSizeToFit={true}` et `numberOfLines` adapté sur chaque `<Text>`
+  qui affiche du contenu venant du JSON
+- À implémenter lors de la session d'intégration du contenu `content_fr.json`
 
-Utiliser `adjustsFontSizeToFit={true}` et `numberOfLines` adapté sur chaque `<Text>`
-qui affiche du contenu venant du JSON.
+### Firebase Auth
+- `inMemoryPersistence` utilisé temporairement
+- À corriger lors de la session Auth avec la vraie implémentation Apple/Google/Magic Link
 
-À implémenter lors de la session d'intégration du contenu `content_fr.json`.
+---
+
+## NETTOYAGE À FAIRE AVANT PUBLICATION
+
+- Bouton reset sur toutes les pages → à supprimer avant publication stores
+- Placeholders journal, vision-board, celebration, profil, parametres → à remplacer par vraies pages
+- Stubs Apple/Google Sign-In dans auth.tsx → à remplacer par vraie implémentation
+- `handlePurchase()` stub dans pricing.tsx → à remplacer par expo-in-app-purchases
