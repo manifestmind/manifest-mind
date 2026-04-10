@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ManifestMind — Pages 1, 2, 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes irisAppear{0%,35%{transform:scale(0);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pupilAppear{0%,50%{transform:scale(0);opacity:0}80%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes refletAppear{0%,65%{opacity:0}100%{opacity:1}}
+@keyframes thirdEye{0%,70%{opacity:0;transform:scale(0)}85%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:.9}}
+@keyframes dashDraw{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.22;transform:scale(1)}50%{opacity:.35;transform:scale(1.04)}}
+@keyframes fillBar{from{width:0}to{width:42%}}
+@keyframes levelGlow{0%,100%{box-shadow:0 0 0 0 rgba(107,63,160,.2)}50%{box-shadow:0 0 8px 2px rgba(107,63,160,.15)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1A1020;font-family:'Jost',sans-serif;padding:32px 20px 48px;display:flex;flex-direction:column;align-items:center;gap:32px}
+
+.section-title{color:rgba(255,255,255,.35);font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;text-align:center;width:100%}
+
+.row{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;width:100%}
+
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.lbl{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+
+.phone{
+  width:260px;height:530px;
+  background:#F0EAE0;
+  border-radius:38px;
+  border:0.5px solid #D4C4B8;
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+  box-shadow:0 32px 64px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05);
+}
+
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;pointer-events:none}
+
+.navbar{
+  height:50px;background:#F0EAE0;
+  border-top:0.5px solid #D4C4B8;
+  display:flex;align-items:center;
+  justify-content:space-around;
+  padding:0 6px 2px;flex-shrink:0;z-index:2;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.nl{font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#A09088}
+.ni.act .nl{color:#6B3FA0;font-weight:500}
+.nd{width:3px;height:3px;border-radius:50%;background:#6B3FA0}
+
+.cta-btn{
+  width:100%;padding:13px;border-radius:50px;border:none;
+  background:#3A3530;color:#F0EAE0;
+  font-family:'Jost',sans-serif;font-size:12px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;overflow:hidden;
+}
+.cta-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  background-size:200% 100%;animation:shimmer 3s ease infinite;
+}
+
+.cta-acc{
+  width:100%;padding:12px;border-radius:50px;border:none;
+  background:#3A3530;color:#F0EAE0;
+  font-family:'Jost',sans-serif;font-size:11px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+
+.ico-card{
+  flex:1;background:rgba(255,255,255,.55);
+  border:0.5px solid #D4C4B8;border-radius:10px;
+  padding:8px 6px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;
+}
+</style>
+</head>
+<body>
+
+<p class="section-title">ManifestMind — Pages 1 · 2 · 3</p>
+
+<div class="row">
+
+<!-- ══════════════════════════
+     PAGE 1 — SPLASH
+══════════════════════════ -->
+<div class="col">
+  <p class="lbl">01 — Splash</p>
+  <div class="phone">
+    <div class="orb" style="width:150px;height:150px;background:#B8D4B0;top:-40px;right:-40px"></div>
+    <div class="orb" style="width:90px;height:90px;background:#C4A8D4;bottom:50px;left:-25px;animation-delay:1s"></div>
+    <div class="orb" style="width:65px;height:65px;background:#E8C890;bottom:120px;right:-15px;animation-delay:2s"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 18px 18px;z-index:1;gap:14px">
+
+      <!-- Œil + nom -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;animation:fadeUp .5s ease .1s both">
+        <svg width="180" height="138" viewBox="0 0 56 44" style="overflow:visible">
+          <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2s infinite"/>
+          <ellipse cx="28" cy="22" rx="17" ry="11" fill="none" stroke="#9B72C8" stroke-width=".3" opacity=".3" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2.3s infinite"/>
+          <clipPath id="ec1"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+          <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+          <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .5s both;clip-path:url(#ec1)"/>
+          <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .6s both;clip-path:url(#ec1)"/>
+          <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="transform-origin:28px 22px;animation:irisAppear .5s cubic-bezier(.34,1.56,.64,1) .75s both;clip-path:url(#ec1)"/>
+          <circle cx="28" cy="22" r="3" fill="#1A0E30" style="transform-origin:28px 22px;animation:pupilAppear .4s cubic-bezier(.34,1.56,.64,1) .95s both;clip-path:url(#ec1)"/>
+          <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="animation:refletAppear .3s ease 1.1s both;opacity:0;clip-path:url(#ec1)"/>
+          <circle cx="25.5" cy="23.5" r=".6" fill="white" opacity=".5" style="animation:refletAppear .3s ease 1.2s both;opacity:0;clip-path:url(#ec1)"/>
+          <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="transform-origin:28px 15.5px;animation:thirdEye .5s cubic-bezier(.34,1.56,.64,1) 1.3s both;opacity:0;clip-path:url(#ec1)"/>
+          <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="transform-origin:28px 15.5px;animation:thirdEye .5s cubic-bezier(.34,1.56,.64,1) 1.4s both;opacity:0;clip-path:url(#ec1)"/>
+          <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .1s forwards"/>
+          <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .2s forwards"/>
+          <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .8s both;opacity:0"/>
+          <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .8s both;opacity:0"/>
+        </svg>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:#2A2520;font-style:italic;letter-spacing:.04em;animation:fadeUp .6s ease 1.5s both;opacity:0">ManifestMind</p>
+        <p style="font-family:'Jost',sans-serif;font-size:11px;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;animation:fadeUp .6s ease 1.7s both;opacity:0">Bien-être &amp; Intentions</p>
+        <span style="font-family:'Jost',sans-serif;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;background:#FDE8B0;color:#9A6A00;display:inline-flex;align-items:center;gap:3px;animation:fadeUp .6s ease 1.9s both;opacity:0">✦ +10 pts au démarrage</span>
+      </div>
+
+      <!-- Citation -->
+      <div style="text-align:center;animation:fadeUp .6s ease 2s both;opacity:0">
+        <div style="width:20px;height:1px;background:#B8B0A8;margin:0 auto 10px"></div>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;color:#3A3530;font-style:italic;line-height:1.6">Chaque pensée<br>façonne ton futur</p>
+        <div style="display:flex;gap:5px;justify-content:center;margin-top:10px">
+          <div style="width:5px;height:5px;border-radius:50%;background:#B8D4B0"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:#C4A8D4"></div>
+          <div style="width:5px;height:5px;border-radius:50%;background:#E8C890"></div>
+        </div>
+      </div>
+
+      <!-- Bouton -->
+      <div style="width:100%;animation:fadeUp .6s ease 2.1s both;opacity:0">
+        <button class="cta-btn">
+          <span>Commencer</span>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <p style="text-align:center;font-family:'Jost',sans-serif;font-size:11px;color:#A09088;margin-top:8px">Ton espace de croissance personnelle</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     PAGE 2 — PRÉNOM
+══════════════════════════ -->
+<div class="col">
+  <p class="lbl">02 — Prénom</p>
+  <div class="phone">
+    <div class="orb" style="width:140px;height:140px;background:#B8D4B0;top:-35px;right:-35px"></div>
+    <div class="orb" style="width:85px;height:85px;background:#C4A8D4;bottom:45px;left:-22px;animation-delay:1s"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 20px;z-index:1">
+      <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;animation:fadeUp .7s ease both">
+
+        <svg width="180" height="138" viewBox="0 0 56 44" style="overflow:visible">
+          <clipPath id="ec2"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+          <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+          <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="transform-origin:28px 22px;animation:irisAppear .5s cubic-bezier(.34,1.56,.64,1) .2s both;clip-path:url(#ec2)"/>
+          <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="transform-origin:28px 22px;animation:irisAppear .5s cubic-bezier(.34,1.56,.64,1) .35s both;clip-path:url(#ec2)"/>
+          <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="transform-origin:28px 22px;animation:irisAppear .4s cubic-bezier(.34,1.56,.64,1) .5s both;clip-path:url(#ec2)"/>
+          <circle cx="28" cy="22" r="3" fill="#1A0E30" style="transform-origin:28px 22px;animation:pupilAppear .4s cubic-bezier(.34,1.56,.64,1) .65s both;clip-path:url(#ec2)"/>
+          <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="animation:refletAppear .3s ease .8s both;opacity:0;clip-path:url(#ec2)"/>
+          <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="transform-origin:28px 15.5px;animation:thirdEye .4s cubic-bezier(.34,1.56,.64,1) .9s both;opacity:0;clip-path:url(#ec2)"/>
+          <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="transform-origin:28px 15.5px;animation:thirdEye .4s cubic-bezier(.34,1.56,.64,1) 1s both;opacity:0;clip-path:url(#ec2)"/>
+          <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .6s ease .05s forwards"/>
+          <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .6s ease .1s forwards"/>
+          <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .5s both;opacity:0"/>
+          <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .5s both;opacity:0"/>
+        </svg>
+
+        <div style="width:20px;height:1px;background:#B8B0A8"></div>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:#2A2520;font-style:italic;text-align:center;line-height:1.3">Comment<br>t'appelles-tu ?</p>
+        <p style="font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:#7A7068;letter-spacing:.08em;text-align:center">Personnalisons ton expérience</p>
+        <input style="width:100%;padding:13px 16px;border-radius:50px;border:1px solid #C4B8A8;background:#E8E0D4;font-family:'Jost',sans-serif;font-size:14px;color:#2A2520;text-align:center;outline:none" type="text" placeholder="Ton prénom..."/>
+        <button class="cta-btn">Sauvegarder &amp; Continuer →</button>
+        <p style="font-family:'Jost',sans-serif;font-size:11px;color:#B0A898;text-align:center;line-height:1.5">Stocké uniquement sur ton appareil.<br>Aucune donnée transmise.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     PAGE 3 — ACCUEIL
+══════════════════════════ -->
+<div class="col">
+  <p class="lbl">03 — Accueil</p>
+  <div class="phone">
+    <div class="orb" style="width:150px;height:150px;background:#B8D4B0;top:-40px;right:-40px"></div>
+    <div class="orb" style="width:90px;height:90px;background:#C4A8D4;top:160px;left:-28px;animation-delay:1s"></div>
+    <div class="orb" style="width:60px;height:60px;background:#E8C890;top:310px;right:-15px;animation-delay:2s"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;padding:16px 14px 6px;gap:8px;z-index:1;overflow:hidden">
+
+      <!-- Œil + bonjour -->
+      <div style="display:flex;flex-direction:column;align-items:center;animation:fadeUp .6s ease .1s both;flex-shrink:0;gap:2px">
+        <svg width="64" height="49" viewBox="0 0 56 44" style="overflow:visible">
+          <clipPath id="ec3"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+          <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+          <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec3)" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 1s infinite"/>
+          <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec3)"/>
+          <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec3)"/>
+          <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec3)"/>
+          <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec3)"/>
+          <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec3)"/>
+          <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec3)"/>
+          <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+          <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+        </svg>
+        <div style="text-align:center">
+          <p style="font-family:'Jost',sans-serif;font-size:12px;font-weight:300;color:#7A7068;letter-spacing:.16em;text-transform:uppercase">Bonjour</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:400;color:#2A2520;font-style:italic;line-height:1.1">Lyana</p>
+        </div>
+      </div>
+
+      <!-- Phrase violette -->
+      <div style="animation:fadeUp .6s ease .15s both;flex-shrink:0;text-align:center">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:400;color:#6B3FA0;font-style:italic;line-height:1.5">Visualise le succès, crois en toi<br>et manifeste tes rêves</p>
+      </div>
+
+      <!-- Jauge progression -->
+      <div style="animation:fadeUp .6s ease .2s both;flex-shrink:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068;letter-spacing:.08em;text-transform:uppercase">Progression</span>
+          <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:2px 8px;border-radius:20px;animation:levelGlow 2s ease-in-out infinite">✦ Éveillée</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:3px">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:11px;font-style:italic;color:#9A8878">365 jours</span>
+        </div>
+        <div style="width:100%;height:14px;background:#E4DCD4;border-radius:7px;border:0.5px solid #C8BEB0;overflow:hidden;padding:2px">
+          <div style="height:100%;width:42%;border-radius:5px;background:#6B3FA0;animation:fillBar 1.2s cubic-bezier(.4,0,.2,1) .5s both;position:relative">
+            <div style="position:absolute;top:2px;left:5px;width:28%;height:40%;background:rgba(255,255,255,.3);border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#6B3FA0"></div>
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#6B3FA0">Éveillé</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#6B3FA0;box-shadow:0 0 0 2px rgba(107,63,160,.2)"></div>
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#2A2520;font-weight:500">Floraison</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#C8BEB0"></div>
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#B0A898">Rayonnant</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#C8BEB0"></div>
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#B0A898">Manifestant</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bouton principal -->
+      <div style="animation:fadeUp .6s ease .35s both;flex-shrink:0;margin-top:6px;margin-bottom:6px">
+        <button class="cta-acc" style="padding:9px;font-size:10px;">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Commencer mon jour
+        </button>
+      </div>
+
+      <!-- 2 boutons Journal + Vision Board -->
+      <div style="display:flex;gap:7px;animation:fadeUp .6s ease .42s both;flex-shrink:0">
+        <!-- Journal -->
+        <div style="flex:1;background:rgba(255,255,255,.65);border:0.5px solid #C4A8D4;border-radius:10px;padding:7px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:50%;background:#DDD0F8;display:flex;align-items:center;justify-content:center">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><path d="M6 6h8M6 9.5h8M6 13h5" stroke="#6B3FA0" stroke-width="1.1" stroke-linecap="round"/></svg>
+          </div>
+          <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#6B3FA0;text-align:center">Journal</p>
+          <span style="font-family:'Jost',sans-serif;font-size:7px;font-weight:500;background:#DDD0F8;color:#6B3FA0;padding:1px 6px;border-radius:20px">+15 pts/jour</span>
+        </div>
+        <!-- Vision Board -->
+        <div style="flex:1;background:rgba(255,255,255,.65);border:0.5px solid #C4A8D4;border-radius:10px;padding:7px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer">
+          <div style="width:24px;height:24px;border-radius:50%;background:#FDE8B0;display:flex;align-items:center;justify-content:center">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="#E8C860" opacity=".8"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="#C4A8D4" opacity=".8"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="#B8D4B0" opacity=".8"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="#9B72C8" opacity=".8"/></svg>
+          </div>
+          <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#9A6A00;text-align:center">Vision Board</p>
+          <span style="font-family:'Jost',sans-serif;font-size:7px;font-weight:500;background:#FDE8B0;color:#9A6A00;padding:1px 6px;border-radius:20px">+5 pts/jour</span>
+        </div>
+      </div>
+
+      <!-- 3 puces compactes -->
+      <div style="display:flex;flex-direction:column;gap:3px;animation:fadeUp .6s ease .5s both;flex-shrink:0;background:rgba(255,255,255,.35);border:0.5px solid #E0D8D0;border-radius:10px;padding:5px 8px">
+        <!-- Affirmation -->
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#FDE8B0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="7" height="7" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" stroke="#C89A10" stroke-width="1" fill="none"/><line x1="7" y1="1" x2="7" y2="3" stroke="#C89A10" stroke-width="1" stroke-linecap="round"/><line x1="7" y1="11" x2="7" y2="13" stroke="#C89A10" stroke-width="1" stroke-linecap="round"/><line x1="1" y1="7" x2="3" y2="7" stroke="#C89A10" stroke-width="1" stroke-linecap="round"/><line x1="11" y1="7" x2="13" y2="7" stroke="#C89A10" stroke-width="1" stroke-linecap="round"/></svg>
+          </div>
+          <span style="font-family:'Jost',sans-serif;font-size:8px;color:#9A7A10;font-weight:400;flex:1">Affirmations</span>
+          <span style="font-family:'Jost',sans-serif;font-size:7px;font-weight:500;background:#FDE8B0;color:#9A6A00;padding:1px 6px;border-radius:20px">+15 pts</span>
+        </div>
+        <div style="height:0.5px;background:#E0D8D0"></div>
+        <!-- Action -->
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#DDD0F8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="7" height="7" viewBox="0 0 14 14" fill="none"><path d="M8 2L4 8h4l-2 4 6-7H8l2-3z" fill="#9B72C8" stroke="#6B3FA0" stroke-width=".6" stroke-linejoin="round"/></svg>
+          </div>
+          <span style="font-family:'Jost',sans-serif;font-size:8px;color:#6B3FA0;font-weight:400;flex:1">Actions</span>
+          <span style="font-family:'Jost',sans-serif;font-size:7px;font-weight:500;background:#DDD0F8;color:#6B3FA0;padding:1px 6px;border-radius:20px">+15/25 pts</span>
+        </div>
+        <div style="height:0.5px;background:#E0D8D0"></div>
+        <!-- Visualisation -->
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#C4E8F0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="7" height="7" viewBox="0 0 14 14" fill="none"><path d="M1 7C2.5 4 4.5 3 7 3s4.5 1 6 4c-1.5 3-3.5 4-6 4S2.5 10 1 7z" fill="#C4E8F0" stroke="#1A6A80" stroke-width=".8"/><circle cx="7" cy="7" r="1.8" fill="#1A6A80" opacity=".8"/></svg>
+          </div>
+          <span style="font-family:'Jost',sans-serif;font-size:8px;color:#1A6A80;font-weight:400;flex:1">Visualisations</span>
+          <span style="font-family:'Jost',sans-serif;font-size:7px;font-weight:500;background:#C4E8F0;color:#1A6A80;padding:1px 6px;border-radius:20px">+15 pts</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navbar — 3 boutons : Accueil, Profil, Paramètres -->
+    <div class="navbar">
+      <div class="ni act">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#6B3FA0"/></svg>
+        <span class="nl" style="color:#6B3FA0">Accueil</span>
+        <div class="nd"></div>
+      </div>
+      <div class="ni">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" stroke="#A09088" stroke-width="1.2" fill="none"/><path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+        <span class="nl">Profil</span>
+      </div>
+      <div class="ni">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="#A09088" stroke-width="1.2" fill="none"/><path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="nl">Paramètres</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- fin row -->
+
+</body>
+</html>

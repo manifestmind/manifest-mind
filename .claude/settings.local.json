@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npx --yes tsc --noEmit)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(npx expo:*)",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(grep:*)",
+      "Bash(cp \"/c/Users/duboi/Downloads/MEMO_S2.md\" \"/c/Users/duboi/manifestmind/MEMO_S2.md\")",
+      "Bash(cp \"/c/Users/duboi/Downloads/pages_1_2_3.html\" \"/c/Users/duboi/manifestmind/pages_1_2_3.html\")",
+      "Bash(cp \"/c/Users/duboi/Downloads/MEMO_S2.md.md\" \"/c/Users/duboi/manifestmind/MEMO_S2.md\")",
+      "Bash(cp \"/c/Users/duboi/Downloads/pages_1_2_3.html.html\" \"/c/Users/duboi/manifestmind/pages_1_2_3.html\")"
+    ]
+  }
+}

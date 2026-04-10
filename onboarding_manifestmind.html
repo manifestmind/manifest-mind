@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ManifestMind — Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes irisAppear{0%,35%{transform:scale(0);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pupilAppear{0%,50%{transform:scale(0);opacity:0}80%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes refletAppear{0%,65%{opacity:0}100%{opacity:1}}
+@keyframes thirdEye{0%,70%{opacity:0;transform:scale(0)}85%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:.9}}
+@keyframes dashDraw{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.4;transform:scale(1.04)}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes unlockPulse{0%{box-shadow:0 0 0 0 rgba(107,63,160,.25)}70%{box-shadow:0 0 0 10px rgba(107,63,160,0)}100%{box-shadow:0 0 0 0 rgba(107,63,160,0)}}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(-40px);opacity:0}}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+
+body{
+  background:#1A1020;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  font-family:'Jost',sans-serif;
+  padding:20px;
+}
+
+/* ── WRAPPER TÉLÉPHONE ── */
+.phone{
+  width:320px;
+  height:640px;
+  background:#F0EAE0;
+  border-radius:44px;
+  border:0.5px solid #D4C4B8;
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05);
+  flex-shrink:0;
+}
+
+/* ── ÉCRANS ── */
+.screen{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .35s ease;
+}
+.screen.active{
+  opacity:1;
+  pointer-events:all;
+}
+
+/* ── ORBES ── */
+.orb{
+  position:absolute;
+  border-radius:50%;
+  animation:softPulse 6s ease-in-out infinite;
+  pointer-events:none;
+}
+
+/* ── DOTS ── */
+.dots{
+  display:flex;
+  gap:5px;
+  align-items:center;
+  justify-content:center;
+}
+.dot{
+  width:5px;height:5px;
+  border-radius:50%;
+  background:#C4A8D4;
+  transition:all .3s ease;
+}
+.dot.on{
+  width:18px;
+  border-radius:3px;
+  background:#6B3FA0;
+}
+
+/* ── BOUTONS ── */
+.btn-primary{
+  width:100%;
+  padding:13px;
+  border-radius:50px;
+  border:none;
+  background:#3A3530;
+  color:#F0EAE0;
+  font-family:'Jost',sans-serif;
+  font-size:11px;
+  font-weight:500;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  animation:unlockPulse 2.5s ease-in-out infinite;
+}
+.btn-primary::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  background-size:200% 100%;
+  animation:shimmer 3s ease infinite;
+}
+.btn-outline{
+  width:100%;
+  padding:12px;
+  border-radius:50px;
+  border:0.5px solid #C4A8D4;
+  background:transparent;
+  color:#6B3FA0;
+  font-family:'Jost',sans-serif;
+  font-size:11px;
+  font-weight:400;
+  letter-spacing:.1em;
+  cursor:pointer;
+}
+.btn-social{
+  width:100%;
+  padding:12px;
+  border-radius:50px;
+  border:0.5px solid #D4C4B8;
+  background:#F8F4EE;
+  color:#2A2520;
+  font-family:'Jost',sans-serif;
+  font-size:11px;
+  font-weight:400;
+  letter-spacing:.08em;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.btn-apple{
+  background:#1A1A1A;
+  color:#F0EAE0;
+  border-color:#1A1A1A;
+}
+
+/* ── SVG ŒIL RÉUTILISABLE ── */
+.eye-svg{ overflow:visible }
+
+/* ── CHECKBOX ── */
+.checkbox-row{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  background:rgba(221,208,248,.3);
+  border:0.5px solid #C4A8D4;
+  border-radius:10px;
+  padding:10px 12px;
+}
+.checkbox{
+  width:18px;height:18px;
+  border-radius:5px;
+  border:1.5px solid #C4A8D4;
+  flex-shrink:0;
+  margin-top:1px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s ease;
+  background:white;
+}
+.checkbox.checked{
+  background:#6B3FA0;
+  border-color:#6B3FA0;
+}
+
+/* ── FEAT CARD ── */
+.feat-card{
+  background:rgba(255,255,255,.6);
+  border:0.5px solid #D4C4B8;
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.feat-icon{
+  width:32px;height:32px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+/* ── LANG CHIP ── */
+.lang-chip{
+  padding:5px 14px;
+  border-radius:50px;
+  font-family:'Jost',sans-serif;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.06em;
+  cursor:pointer;
+  border:0.5px solid #C4A8D4;
+  background:transparent;
+  color:#7A7068;
+  transition:all .2s ease;
+}
+.lang-chip.on{
+  background:#6B3FA0;
+  border-color:#6B3FA0;
+  color:white;
+}
+
+/* ── PRIVACY ITEM ── */
+.priv-item{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.priv-icon{
+  width:28px;height:28px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+/* ── NAVBAR ── */
+.navbar{
+  height:52px;
+  background:#F0EAE0;
+  border-top:0.5px solid #D4C4B8;
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  padding:0 6px 2px;
+  flex-shrink:0;
+  z-index:2;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.nl{font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#A09088}
+.ni.act .nl{color:#6B3FA0;font-weight:500}
+.nd{width:3px;height:3px;border-radius:50%;background:#6B3FA0}
+
+/* ── LAYOUT EXTERNAL (preview) ── */
+.preview-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+}
+.nav-buttons{
+  display:flex;
+  gap:10px;
+}
+.nav-btn{
+  padding:8px 20px;
+  border-radius:50px;
+  border:0.5px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.6);
+  font-family:'Jost',sans-serif;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.1em;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.nav-btn:hover{background:rgba(255,255,255,.12);color:white}
+.nav-btn.prev-btn{ }
+.screen-label{
+  font-family:'Jost',sans-serif;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+}
+</style>
+</head>
+<body>
+
+<div class="preview-wrap">
+
+  <div class="screen-label" id="screenLabel">Écran 1 — Bienvenue</div>
+
+  <div class="phone" id="phone">
+
+    <!-- ═══════════════════════════════
+         ÉCRAN 1 : BIENVENUE + LANGUE
+    ═══════════════════════════════════ -->
+    <div class="screen active" id="s1">
+      <div class="orb" style="width:160px;height:160px;background:#B8D4B0;top:-45px;right:-45px"></div>
+      <div class="orb" style="width:100px;height:100px;background:#C4A8D4;bottom:60px;left:-28px;animation-delay:1s"></div>
+      <div class="orb" style="width:70px;height:70px;background:#E8C890;bottom:140px;right:-18px;animation-delay:2s"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:44px 24px 28px;z-index:1">
+
+        <!-- Logo + nom -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeUp .5s ease .1s both">
+          <svg class="eye-svg" width="120" height="92" viewBox="0 0 56 44">
+            <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5"/>
+            <ellipse cx="28" cy="22" rx="17" ry="11" fill="none" stroke="#9B72C8" stroke-width=".3" opacity=".3"/>
+            <clipPath id="ec1"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec1)"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec1)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec1)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec1)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec1)"/>
+            <circle cx="25.5" cy="23.5" r=".6" fill="white" opacity=".5" clip-path="url(#ec1)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec1)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec1)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:#2A2520;font-style:italic;letter-spacing:.04em;animation:fadeUp .6s ease 1.5s both;opacity:0">ManifestMind</p>
+          <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;animation:fadeUp .6s ease 1.7s both;opacity:0">Bien-être &amp; Intentions</p>
+        </div>
+
+        <!-- Citation centrale -->
+        <div style="text-align:center;animation:fadeUp .6s ease 1.9s both;opacity:0">
+          <div style="width:18px;height:1px;background:#C4A8D4;margin:0 auto 10px"></div>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:300;color:#3A3530;font-style:italic;line-height:1.65">Chaque pensée<br>façonne ton futur</p>
+          <div style="display:flex;gap:5px;justify-content:center;margin-top:10px">
+            <div style="width:4px;height:4px;border-radius:50%;background:#B8D4B0"></div>
+            <div style="width:4px;height:4px;border-radius:50%;background:#C4A8D4"></div>
+            <div style="width:4px;height:4px;border-radius:50%;background:#E8C890"></div>
+          </div>
+        </div>
+
+        <!-- Langue + bouton -->
+        <div style="width:100%;display:flex;flex-direction:column;gap:12px;animation:fadeUp .6s ease 2.1s both;opacity:0">
+          <div style="display:flex;gap:7px;justify-content:center">
+            <button class="lang-chip on" onclick="setLang('fr',this)">🇫🇷 Français</button>
+            <button class="lang-chip" onclick="setLang('en',this)">🇬🇧 English</button>
+            <button class="lang-chip" onclick="setLang('es',this)">🇪🇸 Español</button>
+          </div>
+          <button class="btn-primary" onclick="goTo(2)">Commencer →</button>
+          <p style="text-align:center;font-family:'Jost',sans-serif;font-size:8px;color:#A09088">Ton espace de croissance personnelle</p>
+          <!-- Dots -->
+          <div class="dots">
+            <div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         ÉCRAN 2 : FONCTIONNALITÉS
+    ═══════════════════════════════════ -->
+    <div class="screen" id="s2">
+      <div class="orb" style="width:140px;height:140px;background:#C4E8F0;top:-35px;right:-35px;animation-delay:.5s"></div>
+      <div class="orb" style="width:85px;height:85px;background:#B8D4B0;bottom:60px;left:-22px;animation-delay:2s"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;padding:28px 20px 16px;gap:10px;z-index:1">
+
+        <!-- Header -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:4px">
+          <svg class="eye-svg" width="44" height="34" viewBox="0 0 56 44">
+            <clipPath id="ec2"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec2)"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec2)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec2)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec2)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec2)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec2)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec2)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-style:italic;color:#2A2520">Un programme complet</p>
+          <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:300;color:#7A7068;letter-spacing:.1em">365 jours · 4 phases · 7 thèmes</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:12px;font-style:italic;color:#6B3FA0;margin-top:2px;text-align:center;line-height:1.4">365 jours pour transformer ta vie<br>étape par étape</p>
+        </div>
+
+        <!-- Barre progression -->
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#9B80B8">Étape 1 / 3</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(196,168,212,.25);border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:33%;border-radius:10px;background:#6B3FA0"></div>
+          </div>
+        </div>
+
+        <!-- Cartes fonctionnalités -->
+          <div class="feat-card">
+          <div class="feat-icon" style="background:#DDD0F8">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><circle cx="10" cy="10" r="3" fill="#6B3FA0" opacity=".6"/></svg>
+          </div>
+          <div>
+            <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520;margin-bottom:2px">Affirmations quotidiennes</p>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068;line-height:1.5">Un message puissant chaque matin. <span style="color:#9A6A00;background:#FDE8B0;padding:1px 5px;border-radius:8px;font-size:7px">+15 pts</span></p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:9px;font-style:italic;color:#6B3FA0;margin-top:3px">Reprogramme ton esprit dès le réveil.</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#C8E8C0">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 3l1.5 4h4l-3.2 2.4L13.5 14 10 12.2l-3.5 1.8 1.2-4.6L4.5 7H8.5L10 3z" fill="#3A6A20" opacity=".8"/></svg>
+          </div>
+          <div>
+            <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520;margin-bottom:2px">Actions concrètes</p>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068;line-height:1.5">Facile <span style="color:#2A6A20;background:#C8E8C0;padding:1px 5px;border-radius:8px;font-size:7px">+15 pts</span> ou difficile <span style="color:#9A6A00;background:#FDE8B0;padding:1px 5px;border-radius:8px;font-size:7px">+25 pts</span></p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:9px;font-style:italic;color:#3A6A20;margin-top:3px">Chaque petite action te rapproche de ton objectif.</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#C4E8F0">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M3 10C5.5 6 9.5 4 14 4M3 10C5.5 14 9.5 16 14 16" stroke="#1A6A80" stroke-width="1.2" stroke-linecap="round" fill="none"/><circle cx="14" cy="10" r="3" fill="#1A6A80" opacity=".6"/></svg>
+          </div>
+          <div>
+            <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520;margin-bottom:2px">Visualisation guidée</p>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068;line-height:1.5">Méditation et respiration chaque jour. <span style="color:#9A6A00;background:#FDE8B0;padding:1px 5px;border-radius:8px;font-size:7px">+15 pts</span></p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:9px;font-style:italic;color:#1A6A80;margin-top:3px">Visualise ta future vie comme si tu y étais déjà.</p>
+          </div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#FDE8B0">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 2l1.5 4.5h4.5l-3.6 2.7 1.4 4.3L10 11.2l-3.8 2.3 1.4-4.3L4 6.5h4.5L10 2z" fill="#C89A10" opacity=".9"/></svg>
+          </div>
+          <div>
+            <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520;margin-bottom:2px">Points &amp; Badges</p>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068;line-height:1.5">100 pts/jour max · 4 niveaux · récompenses</p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:9px;font-style:italic;color:#9A6A00;margin-top:3px">Transforme ta progression en victoire visible.</p>
+          </div>
+        </div>
+
+        <!-- Bouton + dots -->
+        <button class="btn-primary" onclick="goTo(3)" style="margin-top:2px">Suivant →</button>
+        <div class="dots">
+          <div class="dot"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         ÉCRAN 3 : CONFIDENTIALITÉ + CGU
+    ═══════════════════════════════════ -->
+    <div class="screen" id="s3">
+      <div class="orb" style="width:130px;height:130px;background:#DDD0F8;top:-32px;right:-32px;animation-delay:.5s"></div>
+      <div class="orb" style="width:80px;height:80px;background:#B8D4B0;bottom:60px;left:-20px;animation-delay:2.5s"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;padding:24px 20px 14px;gap:9px;z-index:1">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:2px">
+          <svg class="eye-svg" width="38" height="29" viewBox="0 0 56 44">
+            <clipPath id="ec3"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec3)"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec3)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec3)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec3)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec3)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec3)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec3)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-style:italic;color:#2A2520">Confidentialité</p>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-family:'Jost',sans-serif;font-size:8px;color:#9B80B8">Étape 2 / 3</span>
+          </div>
+          <div style="width:100%;height:4px;background:rgba(196,168,212,.25);border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:66%;border-radius:10px;background:#6B3FA0"></div>
+          </div>
+        </div>
+
+        <!-- Items privacy -->
+        <div class="priv-item">
+          <div class="priv-icon" style="background:#DDD0F8">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="7" width="12" height="8" rx="2" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><path d="M5 7V5a3 3 0 016 0v1" stroke="#6B3FA0" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div><p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520">Données chiffrées</p><p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Progression et journal sécurisés</p></div>
+        </div>
+        <div class="priv-item">
+          <div class="priv-icon" style="background:#C8E8C0">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#3A6A20" stroke-width="1.2" fill="none"/><path d="M2 6l3 3.5L10 2" stroke="#3A6A20" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div><p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520">Jamais vendues</p><p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Aucun partage tiers, jamais</p></div>
+        </div>
+        <div class="priv-item">
+          <div class="priv-icon" style="background:#FDE8B0">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V3a2 2 0 014 0v1M5 4l1 8h4l1-8" stroke="#9A6A00" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </div>
+          <div><p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520">Suppression à tout moment</p><p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Depuis les Paramètres de l'app</p></div>
+        </div>
+        <div class="priv-item">
+          <div class="priv-icon" style="background:#F8D0D8">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#C84860" stroke-width="1.2" fill="none"/><path d="M8 5v3M8 11v.5" stroke="#C84860" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+          <div><p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:500;color:#2A2520">Aucune publicité</p><p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Jamais de ciblage marketing</p></div>
+        </div>
+
+        <!-- Checkbox CGU -->
+        <div class="checkbox-row">
+          <div class="checkbox" id="cguCheck" onclick="toggleCGU()"></div>
+          <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#4A3060;line-height:1.6">J'accepte les <span style="text-decoration:underline;font-weight:500;cursor:pointer">Conditions d'utilisation</span> et la <span style="text-decoration:underline;font-weight:500;cursor:pointer">Politique de confidentialité</span> de ManifestMind.</p>
+        </div>
+
+        <button class="btn-primary" id="btnCGU" onclick="goTo(4)" style="opacity:.4;cursor:not-allowed;animation:none">Continuer →</button>
+        <div class="dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         ÉCRAN 4 : TARIFS
+    ═══════════════════════════════════ -->
+    <div class="screen" id="s4">
+      <div class="orb" style="width:140px;height:140px;background:#FDE8B0;top:-35px;right:-35px;animation-delay:.3s"></div>
+      <div class="orb" style="width:80px;height:80px;background:#C4A8D4;bottom:60px;left:-20px;animation-delay:2s"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;padding:20px 18px 12px;gap:7px;z-index:1;overflow-y:auto">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;margin-bottom:2px">
+          <svg class="eye-svg" width="34" height="26" viewBox="0 0 56 44">
+            <clipPath id="ec4"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec4)"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec4)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec4)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec4)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec4)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec4)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec4)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:#2A2520">Transforme ta vie en 365 jours</p>
+        </div>
+
+        <div>
+          <div style="width:100%;height:3px;background:rgba(196,168,212,.25);border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:100%;border-radius:10px;background:#6B3FA0"></div>
+          </div>
+          <p style="font-family:'Jost',sans-serif;font-size:8px;color:#9B80B8;margin-top:2px">Étape 3 / 3</p>
+        </div>
+
+        <!-- Plan LIFETIME — en haut, meilleure offre -->
+        <div onclick="selectPlan('lifetime')" id="plan-lifetime" style="background:rgba(255,255,255,.7);border:1.5px solid #3A3530;border-radius:13px;overflow:hidden;cursor:pointer;transition:all .2s">
+          <div style="background:#3A3530;padding:4px;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px">
+            <svg width="9" height="9" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4l-3.2 2.4 1.2 3.6L7 9.2 3.5 11l1.2-3.6L1.5 5h4L7 1z" fill="#FDE8B0"/></svg>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:500;color:#FDE8B0">⭐ Meilleure offre · Accès à vie</p>
+          </div>
+          <div style="padding:9px 11px;display:flex;align-items:center;gap:8px">
+            <div id="radio-lifetime" style="width:15px;height:15px;border-radius:50%;border:1.5px solid #3A3530;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>
+            <div style="flex:1">
+              <p style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#2A2520">Lifetime</p>
+              <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Paiement unique · Transformation permanente</p>
+            </div>
+            <div style="text-align:right">
+              <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:#3A3530">149€</p>
+              <p style="font-family:'Jost',sans-serif;font-size:7px;color:#9A8878">une fois</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Annuel — recommandé -->
+        <div onclick="selectPlan('annuel')" id="plan-annuel" style="background:rgba(255,255,255,.7);border:1.5px solid #6B3FA0;border-radius:13px;overflow:hidden;cursor:pointer;transition:all .2s">
+          <div style="background:#FDE8B0;padding:4px;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px">
+            <svg width="9" height="9" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4l-3.2 2.4 1.2 3.6L7 9.2 3.5 11l1.2-3.6L1.5 5h4L7 1z" fill="#C89A10"/></svg>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:500;color:#7A5000">Recommandé · Économise 50%</p>
+          </div>
+          <div style="padding:9px 11px;display:flex;align-items:center;gap:8px">
+            <div id="radio-annuel" style="width:15px;height:15px;border-radius:50%;border:1.5px solid #6B3FA0;background:#6B3FA0;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+              <div style="width:6px;height:6px;border-radius:50%;background:white"></div>
+            </div>
+            <div style="flex:1">
+              <p style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#2A2520">Annuel</p>
+              <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">79€/an · soit 0,21€/jour</p>
+            </div>
+            <div style="text-align:right">
+              <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:#6B3FA0">6,58€</p>
+              <p style="font-family:'Jost',sans-serif;font-size:7px;color:#9A8878">/mois</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Plan Mensuel -->
+        <div onclick="selectPlan('mensuel')" id="plan-mensuel" style="background:rgba(255,255,255,.5);border:0.5px solid #D4C4B8;border-radius:13px;padding:9px 11px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s">
+          <div id="radio-mensuel" style="width:15px;height:15px;border-radius:50%;border:1.5px solid #C4A8D4;flex-shrink:0;display:flex;align-items:center;justify-content:center"></div>
+          <div style="flex:1">
+            <p style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#2A2520">Mensuel</p>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;font-weight:300;color:#7A7068">Résiliable à tout moment</p>
+          </div>
+          <div style="text-align:right">
+            <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-style:italic;color:#3A3530">12,99€</p>
+            <p style="font-family:'Jost',sans-serif;font-size:7px;color:#9A8878">/mois</p>
+          </div>
+        </div>
+
+        <!-- Avantages -->
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3.5L10 2" stroke="#6B3FA0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p style="font-family:'Jost',sans-serif;font-size:7.5px;color:#3A3530">365 jours de transformation guidée</p></div>
+          <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3.5L10 2" stroke="#6B3FA0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p style="font-family:'Jost',sans-serif;font-size:7.5px;color:#3A3530">Affirmations + actions quotidiennes</p></div>
+          <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3.5L10 2" stroke="#6B3FA0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p style="font-family:'Jost',sans-serif;font-size:7.5px;color:#3A3530">Journal et vision board intégrés</p></div>
+          <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3.5L10 2" stroke="#6B3FA0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p style="font-family:'Jost',sans-serif;font-size:7.5px;color:#3A3530">Suivi de progression et discipline</p></div>
+          <div style="display:flex;align-items:center;gap:5px"><svg width="8" height="8" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3.5L10 2" stroke="#6B3FA0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p style="font-family:'Jost',sans-serif;font-size:7.5px;color:#3A3530">Disponible en FR, EN &amp; ES</p></div>
+        </div>
+
+        <button class="btn-primary" onclick="goTo(5)" style="animation:unlockPulse 2.5s ease-in-out infinite">Je transforme ma vie maintenant →</button>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:9px;font-style:italic;color:#6B3FA0;text-align:center">Moins de 0,50€ pour changer ta vie</p>
+        <p style="font-family:'Jost',sans-serif;font-size:7px;color:#A09088;text-align:center"><span style="text-decoration:underline;cursor:pointer">Restaurer un achat</span></p>
+        <div class="dots">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot on"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════
+         ÉCRAN 5 : CONNEXION
+    ═══════════════════════════════════ -->
+    <div class="screen" id="s5">
+      <div class="orb" style="width:140px;height:140px;background:#C4A8D4;top:-35px;right:-35px"></div>
+      <div class="orb" style="width:80px;height:80px;background:#C4E8F0;bottom:60px;left:-20px;animation-delay:1.5s"></div>
+
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:36px 24px 24px;z-index:1">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+          <svg class="eye-svg" width="54" height="42" viewBox="0 0 56 44">
+            <clipPath id="ec5"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#ec5)"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#ec5)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#ec5)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#ec5)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#ec5)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#ec5)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#ec5)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:#2A2520">Rejoins-nous</p>
+          <p style="font-family:'Jost',sans-serif;font-size:9px;font-weight:300;color:#7A7068;letter-spacing:.06em;text-align:center">Crée ton compte pour sauvegarder<br>ta progression</p>
+        </div>
+
+        <div style="width:100%;display:flex;flex-direction:column;gap:9px">
+          <!-- Apple en premier — obligatoire Apple -->
+          <button class="btn-social btn-apple">
+            <svg width="14" height="14" viewBox="0 0 18 18" fill="white"><path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4zM12.1 3.5c.6-.7 1-1.7.9-2.7-.9.04-2 .6-2.6 1.3-.6.6-1.1 1.6-.9 2.6.9.07 1.9-.5 2.6-1.2z"/></svg>
+            Continuer avec Apple
+          </button>
+          <!-- Google -->
+          <button class="btn-social">
+            <svg width="14" height="14" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+            Continuer avec Google
+          </button>
+          <!-- Séparateur -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;height:0.5px;background:#D4C4B8"></div>
+            <p style="font-family:'Jost',sans-serif;font-size:8px;color:#A09088">ou</p>
+            <div style="flex:1;height:0.5px;background:#D4C4B8"></div>
+          </div>
+          <!-- Email -->
+          <button class="btn-outline" style="display:flex;align-items:center;justify-content:center;gap:7px">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><path d="M1 5l7 5 7-5" stroke="#6B3FA0" stroke-width="1.2" stroke-linecap="round"/></svg>
+            Continuer avec e-mail
+          </button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <p style="font-family:'Jost',sans-serif;font-size:8px;color:#A09088;text-decoration:underline;cursor:pointer">Continuer sans compte →</p>
+          <div class="dots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot on"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- fin phone -->
+
+  <!-- Boutons navigation externes -->
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo(currentScreen - 1)">← Précédent</button>
+    <button class="nav-btn" onclick="goTo(currentScreen + 1)">Suivant →</button>
+  </div>
+
+</div><!-- fin preview-wrap -->
+
+<script>
+let currentScreen = 1;
+let cguChecked = false;
+let currentLang = 'fr';
+
+const labels = [
+  '',
+  'Écran 1 — Bienvenue & Langue',
+  'Écran 2 — Fonctionnalités',
+  'Écran 3 — Confidentialité & CGU',
+  'Écran 4 — Tarifs',
+  'Écran 5 — Connexion'
+];
+
+function goTo(n) {
+  if (n < 1 || n > 5) return;
+  document.getElementById('s' + currentScreen).classList.remove('active');
+  currentScreen = n;
+  document.getElementById('s' + currentScreen).classList.add('active');
+  document.getElementById('screenLabel').textContent = labels[currentScreen];
+}
+
+function toggleCGU() {
+  cguChecked = !cguChecked;
+  const box = document.getElementById('cguCheck');
+  const btn = document.getElementById('btnCGU');
+  if (cguChecked) {
+    box.classList.add('checked');
+    box.innerHTML = '<svg width="10" height="8" viewBox="0 0 12 10" fill="none"><path d="M1 5l3 3.5L11 1" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    btn.style.animation = 'unlockPulse 2.5s ease-in-out infinite';
+  } else {
+    box.classList.remove('checked');
+    box.innerHTML = '';
+    btn.style.opacity = '.4';
+    btn.style.cursor = 'not-allowed';
+    btn.style.animation = 'none';
+  }
+}
+
+function selectPlan(plan) {
+  // Reset tous les plans
+  const plans = ['lifetime','annuel','mensuel'];
+  plans.forEach(p => {
+    const radio = document.getElementById('radio-' + p);
+    if (p === 'lifetime') {
+      radio.style.background = 'transparent';
+      radio.style.borderColor = '#3A3530';
+      radio.innerHTML = '';
+    } else if (p === 'annuel') {
+      radio.style.background = 'transparent';
+      radio.style.borderColor = '#6B3FA0';
+      radio.innerHTML = '';
+    } else {
+      radio.style.background = 'transparent';
+      radio.style.borderColor = '#C4A8D4';
+      radio.innerHTML = '';
+    }
+  });
+  // Activer le plan sélectionné
+  const r = document.getElementById('radio-' + plan);
+  if (plan === 'lifetime') {
+    r.style.background = '#3A3530';
+    r.style.borderColor = '#3A3530';
+    r.innerHTML = '<div style="width:6px;height:6px;border-radius:50%;background:white"></div>';
+  } else if (plan === 'annuel') {
+    r.style.background = '#6B3FA0';
+    r.style.borderColor = '#6B3FA0';
+    r.innerHTML = '<div style="width:6px;height:6px;border-radius:50%;background:white"></div>';
+  } else {
+    r.style.background = '#9A8878';
+    r.style.borderColor = '#9A8878';
+    r.innerHTML = '<div style="width:6px;height:6px;border-radius:50%;background:white"></div>';
+  }
+}
+
+function setLang(lang, el) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+
+</body>
+</html>
