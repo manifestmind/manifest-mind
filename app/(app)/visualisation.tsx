@@ -129,7 +129,15 @@ export default function Visualisation() {
     setToast('✦ +15 pts · Visualisation validée');
 
     setTimeout(() => {
-      router.push('/(app)/journal' as any);
+      let next: string;
+      if (status.journal && status.vision_board) {
+        next = '/(app)/home';
+      } else if (status.journal) {
+        next = '/(app)/vision-board?fromCycle=true';
+      } else {
+        next = '/(app)/journal?fromCycle=true';
+      }
+      router.push(next as any);
     }, 1500);
   }
 
@@ -142,7 +150,15 @@ export default function Visualisation() {
     await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
     setValidated(true);
-    router.push('/(app)/journal' as any);
+    let next: string;
+    if (status.journal && status.vision_board) {
+      next = '/(app)/home';
+    } else if (status.journal) {
+      next = '/(app)/vision-board?fromCycle=true';
+    } else {
+      next = '/(app)/journal?fromCycle=true';
+    }
+    router.push(next as any);
   }
 
   return (

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -40,7 +40,8 @@ export default function Home() {
   const [cycleCompleted, setCycleCompleted] = useState(false);
   const [stepStatus, setStepStatus] = useState<StepStatus>(INITIAL_STEP_STATUS);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     async function loadHome() {
       // Prénom
       const name = await AsyncStorage.getItem('user_name') || '';
@@ -91,7 +92,22 @@ export default function Home() {
 
       // Cycle complété ?
       const freshCompleted = await AsyncStorage.getItem('cycle_completed');
-      setCycleCompleted(freshCompleted === 'true');
+
+      // Auto-détecter si toutes les étapes sont faites sans que cycle_completed soit marqué
+      const allStepsDone =
+        status.opening && status.affirmation &&
+        status.action_easy && status.action_hard &&
+        status.visualisation && status.journal && status.vision_board;
+
+      if (allStepsDone && freshCompleted !== 'true') {
+        await AsyncStorage.setItem('cycle_completed', 'true');
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0);
+        await AsyncStorage.setItem('next_cycle_time', String(midnight.getTime()));
+        setCycleCompleted(true);
+      } else {
+        setCycleCompleted(freshCompleted === 'true');
+      }
 
       // Jauge : points_total / 36500
       const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
@@ -104,7 +120,8 @@ export default function Home() {
       else setLevel('Manifestant');
     }
     loadHome();
-  }, []);
+    }, [])
+  );
 
   async function handleMainBtn() {
     if (cycleCompleted) return;
@@ -127,9 +144,9 @@ export default function Home() {
       } else if (!stepStatus.visualisation) {
         router.push('/(app)/visualisation' as any);
       } else if (!stepStatus.journal) {
-        router.push('/(app)/journal' as any);
+        router.push('/(app)/journal?fromCycle=true' as any);
       } else if (!stepStatus.vision_board) {
-        router.push('/(app)/vision-board' as any);
+        router.push('/(app)/vision-board?fromCycle=true' as any);
       }
     }
   }

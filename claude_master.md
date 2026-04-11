@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 10 Avril 2026
-**État :** Affirmation + Action + Visualisation validées ✅
+**État :** Journal + Vision Board validés ✅ — logique cycles complète
 
 ---
 
@@ -20,6 +20,8 @@
 | app/(app)/affirmation.tsx | ✅ Validé (design + logique) |
 | app/(app)/action.tsx | ✅ Validé (design + logique) |
 | app/(app)/visualisation.tsx | ✅ Validé (design + logique) |
+| app/(app)/journal.tsx | ✅ Validé (design + logique) |
+| app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
 
 ---
 
@@ -67,6 +69,16 @@ L'utilisateur gère Expo Go lui-même.
 - Utiliser UNIQUEMENT dans `welcome.tsx`
 - Sur toutes les autres pages : `Animated` de React Native uniquement
 - Cause `opacity: 0` permanent sur Expo Go hors `welcome.tsx`
+- **PointsToast.tsx réécrit** : zéro Reanimated — `useRef(new Animated.Value(0))` + `Animated.timing` avec `useNativeDriver: true`
+
+### useFocusEffect — rechargement au retour sur page
+- `home.tsx` utilise `useFocusEffect(useCallback(..., []))` pour relire `cycle_completed` + `cycle_step_status` à chaque retour
+- `vision-board.tsx` idem pour les photos + créditation +5 pts
+- **Règle** : toute page qui doit refléter un état AsyncStorage mis à jour par une autre page doit utiliser `useFocusEffect` et non `useEffect([], [])`
+
+### Cycle complété — détection automatique
+- `home.tsx` détecte si toutes les étapes sont `true` et `cycle_completed=false` → auto-marque `cycle_completed=true` + `next_cycle_time=minuit`
+- Couvre le cas où l'utilisateur arrive à home sans avoir tapé "Terminer mon cycle"
 
 ### ClipPath IDs SVG — IDs uniques par fichier (ne jamais réutiliser)
 
@@ -110,9 +122,9 @@ app/
     affirmation.tsx  ✅          → Étape 2 cycle — affirmation thème
     action.tsx       ✅          → Étape 3+4 cycle — action facile + difficile
     visualisation.tsx ✅         → Étape 5 cycle — respiration + phrases guidées
+    journal.tsx      ✅          → Étape 6 cycle — journal de gratitude
+    vision-board.tsx ✅          → Étape 7 cycle — vision board photos
     celebration.tsx  placeholder → router.back()
-    journal.tsx      placeholder → router.back()
-    vision-board.tsx placeholder → router.back()
     profil.tsx       placeholder → router.back()
     parametres.tsx   placeholder → router.back()
 
@@ -120,7 +132,7 @@ services/
   firebase.ts                    → initializeAuth + inMemoryPersistence
 
 components/
-  ui/PointsToast.tsx             → Toast points animé (Reanimated interne autorisé)
+  ui/PointsToast.tsx             → Toast points animé (Animated RN — zéro Reanimated)
 
 constants/
   theme.ts                       → Couleurs et styles globaux
@@ -319,8 +331,8 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 1. ~~affirmation.tsx~~ ✅
 2. ~~action.tsx~~ ✅
 3. ~~visualisation.tsx~~ ✅
-4. journal.tsx — Journal de gratitude
-5. vision-board.tsx — Vision board
+4. ~~journal.tsx~~ ✅
+5. ~~vision-board.tsx~~ ✅
 6. celebration.tsx — Fin de cycle
 7. profil.tsx — Profil utilisateur + stats
 8. parametres.tsx — Paramètres + reset compte
@@ -328,6 +340,19 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 ---
 
 ## À IMPLÉMENTER PLUS TARD
+
+### Navigation dynamique — getNextStep()
+`getNextStepRoute()` est implémentée dans `journal.tsx` (sync, prend `status` en paramètre) et `vision-board.tsx` (async, lit AsyncStorage).
+
+**État actuel :**
+- visualisation.tsx → navigue vers journal ou vision-board selon étapes restantes, ou home si tout fait
+- journal.tsx → bouton contextuel via `getNextStepRoute(status)` (sync)
+- vision-board.tsx → bouton "Terminer mon cycle" via `getNextStepRoute()` (async)
+- home.tsx → auto-détecte cycle complet si toutes étapes = true
+
+**À faire :** affirmation.tsx et action.tsx naviguent encore en fixe (→ action, → visualisation). À mettre à jour quand getNextStep() sera mutualisée.
+
+---
 
 ### Contenu JSON — adjustsFontSizeToFit
 Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
@@ -345,6 +370,6 @@ Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'ada
 ## NETTOYAGE À FAIRE AVANT PUBLICATION
 
 - Bouton reset sur toutes les pages → à supprimer avant publication stores
-- Placeholders journal, vision-board, celebration, profil, parametres → à remplacer par vraies pages
+- Placeholders celebration, profil, parametres → à remplacer par vraies pages
 - Stubs Apple/Google Sign-In dans auth.tsx → à remplacer par vraie implémentation
 - `handlePurchase()` stub dans pricing.tsx → à remplacer par expo-in-app-purchases

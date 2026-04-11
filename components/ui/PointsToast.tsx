@@ -1,66 +1,54 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import { useEffect, useRef } from 'react';
+import { Animated, Text } from 'react-native';
 
-interface Props {
+export default function PointsToast({
+  message,
+  onHide,
+}: {
   message: string;
   onHide: () => void;
-}
-
-export default function PointsToast({ message, onHide }: Props) {
-  const opacity = useSharedValue(0);
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 300 });
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+
     const timer = setTimeout(() => {
-      opacity.value = withTiming(0, { duration: 300 });
-      setTimeout(onHide, 300);
-    }, 2300);
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => onHide());
+    }, 2000);
+
     return () => clearTimeout(timer);
   }, []);
 
-  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  const displayMessage = message.startsWith('✦')
-    ? message.slice(1).trim()
-    : message;
-
   return (
-    <Animated.View style={[styles.toast, animStyle]}>
-      <Text style={styles.icon}>✦</Text>
-      <Text style={styles.text}>{displayMessage}</Text>
+    <Animated.View style={{
+      position: 'absolute',
+      top: 60,
+      left: 16,
+      right: 16,
+      backgroundColor: '#3A2850',
+      padding: 12,
+      borderRadius: 12,
+      zIndex: 999,
+      opacity,
+      alignItems: 'center',
+    }}>
+      <Text style={{
+        color: '#FDE8B0',
+        fontSize: 13,
+        fontWeight: '500',
+        letterSpacing: 0.5,
+      }}>
+        {message}
+      </Text>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  toast: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
-    right: 16,
-    backgroundColor: '#3A2850',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    zIndex: 100,
-  },
-  icon: {
-    fontSize: 12,
-    color: '#FDE8B0',
-  },
-  text: {
-    fontFamily: 'Jost',
-    fontSize: 12,
-    color: 'white',
-    textAlign: 'center',
-  },
-});
