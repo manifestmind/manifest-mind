@@ -16,6 +16,25 @@ const THEMES = [
   'Gratitude & Paix',
 ];
 
+function getNextStepRoute(status: Record<string, boolean>): string {
+  if (!status.affirmation) return '/(app)/affirmation';
+  if (!status.action_easy || !status.action_hard) return '/(app)/action';
+  if (!status.visualisation) return '/(app)/visualisation';
+  if (!status.journal) return '/(app)/journal';
+  if (!status.vision_board) return '/(app)/vision-board';
+  return 'completed';
+}
+
+function goNext(route: string) {
+  if (route === 'completed') {
+    router.replace('/(app)/celebration' as any);
+  } else if (route === '/(app)/journal' || route === '/(app)/vision-board') {
+    router.push((route + '?fromCycle=true') as any);
+  } else {
+    router.push(route as any);
+  }
+}
+
 export default function Affirmation() {
   const insets = useSafeAreaInsets();
   const [cycleNumber, setCycleNumber] = useState(1);
@@ -56,11 +75,16 @@ export default function Affirmation() {
     const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
     await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
 
+    const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+    const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+    earned.affirmation = 15;
+    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+
     setValidated(true);
     setToast('✦ +15 pts · Affirmation validée');
 
     setTimeout(() => {
-      router.push('/(app)/action' as any);
+      goNext(getNextStepRoute(status));
     }, 1500);
   }
 
@@ -73,7 +97,7 @@ export default function Affirmation() {
     await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
     setValidated(true);
-    router.push('/(app)/action' as any);
+    goNext(getNextStepRoute(status));
   }
 
   return (

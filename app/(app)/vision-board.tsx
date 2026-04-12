@@ -28,8 +28,9 @@ export default function VisionBoard() {
         if (savedPhotos) setPhotos(JSON.parse(savedPhotos));
 
         const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+        let status: Record<string, boolean> = {};
         if (statusRaw) {
-          const status = JSON.parse(statusRaw);
+          status = JSON.parse(statusRaw);
           if (!status.vision_board) {
             setToast('✦ +5 pts · Vision Board ouvert');
 
@@ -41,25 +42,26 @@ export default function VisionBoard() {
 
             const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
             await AsyncStorage.setItem('points_total', String(pointsTotal + 5));
+
+            const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+            const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+            earned.vision_board = 5;
+            await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
           }
         }
 
-        if (fromCycle === 'true') {
-          const route = await getNextStepRoute();
-          if (route === 'completed') {
-            setShowFinishBtn(true);
-          } else {
-            router.push(route as any);
-          }
+        const route = getNextStepRoute(status);
+        if (route === 'completed') {
+          setShowFinishBtn(true);
+        } else if (fromCycle === 'true') {
+          router.push(route as any);
         }
       }
       load();
     }, [])
   );
 
-  async function getNextStepRoute(): Promise<string> {
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
+  function getNextStepRoute(status: Record<string, boolean>): string {
     if (!status.affirmation) return '/(app)/affirmation';
     if (!status.action_easy || !status.action_hard) return '/(app)/action';
     if (!status.visualisation) return '/(app)/visualisation';
@@ -88,11 +90,7 @@ export default function VisionBoard() {
   }
 
   async function handleFinishCycle() {
-    await AsyncStorage.setItem('cycle_completed', 'true');
-    const tomorrow = new Date();
-    tomorrow.setHours(24, 0, 0, 0);
-    await AsyncStorage.setItem('next_cycle_time', String(tomorrow.getTime()));
-    router.replace('/(app)/home' as any);
+    router.replace('/(app)/celebration' as any);
   }
 
   return (

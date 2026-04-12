@@ -16,6 +16,25 @@ const THEMES = [
   'Gratitude & Paix',
 ];
 
+function getNextStepRoute(status: Record<string, boolean>): string {
+  if (!status.affirmation) return '/(app)/affirmation';
+  if (!status.action_easy || !status.action_hard) return '/(app)/action';
+  if (!status.visualisation) return '/(app)/visualisation';
+  if (!status.journal) return '/(app)/journal';
+  if (!status.vision_board) return '/(app)/vision-board';
+  return 'completed';
+}
+
+function goNext(route: string) {
+  if (route === 'completed') {
+    router.replace('/(app)/celebration' as any);
+  } else if (route === '/(app)/journal' || route === '/(app)/vision-board') {
+    router.push((route + '?fromCycle=true') as any);
+  } else {
+    router.push(route as any);
+  }
+}
+
 export default function Action() {
   const insets = useSafeAreaInsets();
   const [cycleNumber, setCycleNumber] = useState(1);
@@ -58,12 +77,17 @@ export default function Action() {
     const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
     await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
 
+    const earnedRaw1 = await AsyncStorage.getItem('cycle_earned_points');
+    const earned1 = earnedRaw1 ? JSON.parse(earnedRaw1) : {};
+    earned1.action_easy = 15;
+    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned1));
+
     setEasyValidated(true);
     setToast('✦ +15 pts · Action facile validée');
 
     if (hardValidated) {
       setTimeout(() => {
-        router.push('/(app)/visualisation' as any);
+        goNext(getNextStepRoute(status));
       }, 1500);
     }
   }
@@ -79,7 +103,7 @@ export default function Action() {
     setEasyValidated(true);
 
     if (hardValidated) {
-      router.push('/(app)/visualisation' as any);
+      goNext(getNextStepRoute(status));
     }
   }
 
@@ -97,12 +121,17 @@ export default function Action() {
     const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
     await AsyncStorage.setItem('points_total', String(pointsTotal + 25));
 
+    const earnedRaw2 = await AsyncStorage.getItem('cycle_earned_points');
+    const earned2 = earnedRaw2 ? JSON.parse(earnedRaw2) : {};
+    earned2.action_hard = 25;
+    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned2));
+
     setHardValidated(true);
     setToast('✦ +25 pts · Action difficile validée');
 
     if (easyValidated) {
       setTimeout(() => {
-        router.push('/(app)/visualisation' as any);
+        goNext(getNextStepRoute(status));
       }, 1500);
     }
   }
@@ -118,7 +147,7 @@ export default function Action() {
     setHardValidated(true);
 
     if (easyValidated) {
-      router.push('/(app)/visualisation' as any);
+      goNext(getNextStepRoute(status));
     }
   }
 

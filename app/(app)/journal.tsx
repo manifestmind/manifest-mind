@@ -65,11 +65,7 @@ export default function Journal() {
   }
 
   async function handleFinishCycle() {
-    await AsyncStorage.setItem('cycle_completed', 'true');
-    const tomorrow = new Date();
-    tomorrow.setHours(24, 0, 0, 0);
-    await AsyncStorage.setItem('next_cycle_time', String(tomorrow.getTime()));
-    router.replace('/(app)/home' as any);
+    router.replace('/(app)/celebration' as any);
   }
 
   function handleTextChange(val: string) {
@@ -94,7 +90,7 @@ export default function Journal() {
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
     const status = statusRaw ? JSON.parse(statusRaw) : {};
 
-    // 3. Créditer +15 pts et marquer journal=true seulement si pas encore fait ce cycle
+    // 3. Crediter +15 pts et marquer journal=true seulement si pas encore fait ce cycle
     if (!status.journal) {
       const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
       await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
@@ -102,16 +98,21 @@ export default function Journal() {
       await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
       status.journal = true;
       await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+      earned.journal = 15;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
     }
 
     setValidated(true);
     setToast('✦ +15 pts · Journal sauvegardé');
 
-    if (fromCycle !== 'true') {
+    const route = getNextStepRoute(status);
+    if (route === 'completed') {
+      setTimeout(() => { router.replace('/(app)/celebration' as any); }, 1500);
+    } else if (fromCycle !== 'true') {
       setTimeout(() => { router.back(); }, 1500);
     } else {
-      // status.journal = true déjà sauvegardé dans AsyncStorage ci-dessus
-      const route = getNextStepRoute(status);
       setNextRoute(route);
     }
   }
@@ -130,11 +131,12 @@ export default function Journal() {
     await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
     setValidated(true);
-    if (fromCycle !== 'true') {
+    const route = getNextStepRoute(status);
+    if (route === 'completed') {
+      router.replace('/(app)/celebration' as any);
+    } else if (fromCycle !== 'true') {
       router.back();
     } else {
-      // status.journal = true déjà sauvegardé dans AsyncStorage ci-dessus
-      const route = getNextStepRoute(status);
       setNextRoute(route);
     }
   }

@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
-**Dernière mise à jour :** 10 Avril 2026
-**État :** Journal + Vision Board validés ✅ — logique cycles complète
+**Dernière mise à jour :** 12 Avril 2026
+**État :** Celebration validée ✅ — logique fin de cycle complète, tous les chemins couverts
 
 ---
 
@@ -22,6 +22,7 @@
 | app/(app)/visualisation.tsx | ✅ Validé (design + logique) |
 | app/(app)/journal.tsx | ✅ Validé (design + logique) |
 | app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
+| app/(app)/celebration.tsx | ✅ Validé (design + logique) |
 
 ---
 
@@ -124,7 +125,7 @@ app/
     visualisation.tsx ✅         → Étape 5 cycle — respiration + phrases guidées
     journal.tsx      ✅          → Étape 6 cycle — journal de gratitude
     vision-board.tsx ✅          → Étape 7 cycle — vision board photos
-    celebration.tsx  placeholder → router.back()
+    celebration.tsx  ✅          → Fin de cycle — points + détail étapes
     profil.tsx       placeholder → router.back()
     parametres.tsx   placeholder → router.back()
 
@@ -206,6 +207,7 @@ Cycle des étapes :
 | cycle_completed | true / false | Cycle terminé ? |
 | next_cycle_time | string timestamp | Minuit du jour suivant |
 | points_total | string int | Points cumulés tous cycles |
+| cycle_earned_points | JSON string | Points gagnés par étape ce cycle (pour celebration) |
 
 ### Structure cycle_step_status
 ```json
@@ -277,6 +279,10 @@ await AsyncStorage.setItem('cycle_step_status', JSON.stringify({
   action_easy: false, action_hard: false,
   visualisation: false, journal: false, vision_board: false
 }))
+await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
+  opening: 0, affirmation: 0, action_easy: 0, action_hard: 0,
+  visualisation: 0, journal: 0, vision_board: 0
+}))
 ```
 
 ### Vérification nouveau cycle (dans home.tsx au chargement)
@@ -333,26 +339,56 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 3. ~~visualisation.tsx~~ ✅
 4. ~~journal.tsx~~ ✅
 5. ~~vision-board.tsx~~ ✅
-6. celebration.tsx — Fin de cycle
+6. ~~celebration.tsx~~ ✅
 7. profil.tsx — Profil utilisateur + stats
 8. parametres.tsx — Paramètres + reset compte
 
 ---
 
-## À IMPLÉMENTER PLUS TARD
+## LOGIQUE FIN DE CYCLE — VALIDÉE ✅
 
-### Navigation dynamique — getNextStep()
-`getNextStepRoute()` est implémentée dans `journal.tsx` (sync, prend `status` en paramètre) et `vision-board.tsx` (async, lit AsyncStorage).
+### getNextStepRoute() — implémentée dans toutes les pages étapes
+Fonction sync identique dans affirmation, action, visualisation, journal, vision-board :
+```ts
+function getNextStepRoute(status: Record<string, boolean>): string {
+  if (!status.affirmation) return '/(app)/affirmation';
+  if (!status.action_easy || !status.action_hard) return '/(app)/action';
+  if (!status.visualisation) return '/(app)/visualisation';
+  if (!status.journal) return '/(app)/journal';
+  if (!status.vision_board) return '/(app)/vision-board';
+  return 'completed';
+}
+function goNext(route: string) {
+  if (route === 'completed') router.replace('/(app)/celebration' as any);
+  else if (route === '/(app)/journal' || route === '/(app)/vision-board')
+    router.push((route + '?fromCycle=true') as any);
+  else router.push(route as any);
+}
+```
 
-**État actuel :**
-- visualisation.tsx → navigue vers journal ou vision-board selon étapes restantes, ou home si tout fait
-- journal.tsx → bouton contextuel via `getNextStepRoute(status)` (sync)
-- vision-board.tsx → bouton "Terminer mon cycle" via `getNextStepRoute()` (async)
-- home.tsx → auto-détecte cycle complet si toutes étapes = true
+### Cas couverts — tous les chemins mènent à celebration
+1. Flux normal affirmation → action → visualisation → journal → vision-board → celebration
+2. Visualisation validée/passée + journal et vision_board déjà faits → celebration
+3. Journal validé/passé depuis accueil + c'était la dernière étape → celebration
+4. Vision-board ouvert + toutes étapes déjà faites → showFinishBtn → celebration
+5. Affirmation validée/passée + tout le reste déjà fait → celebration
+6. Action validée/passée + tout le reste déjà fait → celebration
 
-**À faire :** affirmation.tsx et action.tsx naviguent encore en fixe (→ action, → visualisation). À mettre à jour quand getNextStep() sera mutualisée.
+### celebration.tsx — logique
+- Lit `cycle_points` et `cycle_earned_points` depuis AsyncStorage
+- Affiche les points par étape (badge violet si gagné, gris si passé)
+- Écrit `cycle_completed=true` + `next_cycle_time=minuit`
+- Retour home → état 3 "✦ Prochain cycle à minuit"
+
+### cycle_earned_points — tracking par étape
+- Initialisé dans auth.tsx (premier cycle) et home.tsx (reset nouveau cycle)
+- Rempli dans chaque page étape lors de la validation (+pts) ou passé (0)
+- Clés : opening, affirmation, action_easy, action_hard, visualisation, journal, vision_board
 
 ---
+
+## À IMPLÉMENTER PLUS TARD
+
 
 ### Contenu JSON — adjustsFontSizeToFit
 Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
@@ -370,6 +406,6 @@ Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'ada
 ## NETTOYAGE À FAIRE AVANT PUBLICATION
 
 - Bouton reset sur toutes les pages → à supprimer avant publication stores
-- Placeholders celebration, profil, parametres → à remplacer par vraies pages
+- Placeholders profil, parametres → à remplacer par vraies pages
 - Stubs Apple/Google Sign-In dans auth.tsx → à remplacer par vraie implémentation
 - `handlePurchase()` stub dans pricing.tsx → à remplacer par expo-in-app-purchases

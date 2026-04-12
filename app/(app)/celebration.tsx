@@ -1,0 +1,443 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const STEPS_CONFIG = [
+  { key: 'opening',       label: 'Ouverture',        pts: 10 },
+  { key: 'affirmation',   label: 'Affirmation',      pts: 15 },
+  { key: 'action_easy',   label: 'Action facile',    pts: 15 },
+  { key: 'action_hard',   label: 'Action difficile', pts: 25 },
+  { key: 'visualisation', label: 'Visualisation',    pts: 15 },
+  { key: 'journal',       label: 'Journal',          pts: 15 },
+  { key: 'vision_board',  label: 'Vision Board',     pts: 5  },
+];
+
+export default function Celebration() {
+  const insets = useSafeAreaInsets();
+
+  const [cyclePoints, setCyclePoints] = useState(0);
+  const [cycleNumber, setCycleNumber] = useState(1);
+  const [earnedPoints, setEarnedPoints] = useState<Record<string, number>>({});
+
+  // Orbes
+  const orb1 = useRef(new Animated.Value(0)).current;
+  const orb2 = useRef(new Animated.Value(0)).current;
+  const orb3 = useRef(new Animated.Value(0)).current;
+  const orb4 = useRef(new Animated.Value(0)).current;
+
+  // Etoiles
+  const s1 = useRef(new Animated.Value(0)).current;
+  const s2 = useRef(new Animated.Value(0)).current;
+  const s3 = useRef(new Animated.Value(0)).current;
+  const s4 = useRef(new Animated.Value(0)).current;
+  const s5 = useRef(new Animated.Value(0)).current;
+  const s6 = useRef(new Animated.Value(0)).current;
+
+  // Autres
+  const breathe = useRef(new Animated.Value(0)).current;
+  const ring1   = useRef(new Animated.Value(0)).current;
+  const ring2   = useRef(new Animated.Value(0)).current;
+  const shimmer = useRef(new Animated.Value(0)).current;
+  const fade1   = useRef(new Animated.Value(0)).current;
+  const fade2   = useRef(new Animated.Value(0)).current;
+  const fade3   = useRef(new Animated.Value(0)).current;
+
+  // Chargement donnees
+  useEffect(() => {
+    async function load() {
+      await AsyncStorage.setItem('cycle_completed', 'true');
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0);
+      await AsyncStorage.setItem('next_cycle_time', String(tomorrow.getTime()));
+
+      const pts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+      setCyclePoints(pts);
+
+      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+      if (earnedRaw) setEarnedPoints(JSON.parse(earnedRaw));
+
+      const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+      setCycleNumber(cycle);
+    }
+    load();
+  }, []);
+
+  // Animations
+  useEffect(() => {
+    const ids: ReturnType<typeof setTimeout>[] = [];
+
+    const startLoop = (anim: Animated.Value, delay: number, duration: number) => {
+      const t = setTimeout(() => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          ])
+        ).start();
+      }, delay);
+      ids.push(t);
+    };
+
+    startLoop(orb1, 0,    2500);
+    startLoop(orb2, 1500, 2500);
+    startLoop(orb3, 3000, 2500);
+    startLoop(orb4, 2000, 2500);
+    startLoop(ring1, 0,   1500);
+    startLoop(ring2, 500, 1500);
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 0, duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start();
+
+    const popStar = (anim: Animated.Value, delay: number) => {
+      const t = setTimeout(() => {
+        Animated.timing(anim, { toValue: 1, duration: 500, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+      }, delay);
+      ids.push(t);
+    };
+
+    popStar(s1, 800);
+    popStar(s2, 1000);
+    popStar(s3, 1200);
+    popStar(s4, 900);
+    popStar(s5, 1100);
+    popStar(s6, 1300);
+
+    const fadeUp = (anim: Animated.Value, delay: number) => {
+      const t = setTimeout(() => {
+        Animated.timing(anim, { toValue: 1, duration: 600, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+      }, delay);
+      ids.push(t);
+    };
+
+    fadeUp(fade1, 100);
+    fadeUp(fade2, 300);
+    fadeUp(fade3, 500);
+
+    return () => { ids.forEach(clearTimeout); };
+  }, []);
+
+  // Styles animes
+  const orbStyle = (anim: Animated.Value) => ({
+    opacity:   anim.interpolate({ inputRange: [0, 1], outputRange: [0.22, 0.45] }),
+    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }],
+  });
+
+  const breatheScaleY = breathe.interpolate({ inputRange: [0, 1], outputRange: [1, 0.93] });
+
+  const ringStyle = (anim: Animated.Value) => ({
+    opacity:   anim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.5] }),
+    transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }],
+  });
+
+  const shimmerOpacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] });
+
+  const starStyle = (anim: Animated.Value) => ({
+    opacity:   anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0, 1, 1] }),
+    transform: [
+      { scale:  anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0, 1.2, 1] }) },
+      { rotate: anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: ['-20deg', '5deg', '0deg'] }) },
+    ],
+  });
+
+  const fadeStyle = (anim: Animated.Value) => ({
+    opacity:   anim,
+    transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
+  });
+
+  return (
+    <View style={styles.container}>
+      {/* Orbes */}
+      <Animated.View style={[styles.orb, { width: 180, height: 180, backgroundColor: '#C4A8D4', top: -50,  right: -50  }, orbStyle(orb1)]} />
+      <Animated.View style={[styles.orb, { width: 120, height: 120, backgroundColor: '#B8D4B0', bottom: -30, left: -30  }, orbStyle(orb2)]} />
+      <Animated.View style={[styles.orb, { width: 80,  height: 80,  backgroundColor: '#E8C890', top: 200,  left: -25   }, orbStyle(orb3)]} />
+      <Animated.View style={[styles.orb, { width: 60,  height: 60,  backgroundColor: '#DDD0F8', bottom: 120, right: -15 }, orbStyle(orb4)]} />
+
+      {/* Contenu */}
+      <View style={[styles.content, {
+        paddingTop:    Math.max(insets.top, 24),
+        paddingBottom: Math.max(insets.bottom, 20),
+      }]}>
+
+        {/* Section 1 : Oeil + etoiles + titre */}
+        <Animated.View style={[styles.eyeSection, fadeStyle(fade1)]}>
+          <View style={styles.eyeContainer}>
+            {/* Etoiles */}
+            <Animated.Text style={[styles.star, { top: 0,   left: 10,  fontSize: 14, color: '#EAC870' }, starStyle(s1)]}>&#10086;</Animated.Text>
+            <Animated.Text style={[styles.star, { top: 0,   right: 10, fontSize: 10, color: '#C4A8D4' }, starStyle(s2)]}>&#10086;</Animated.Text>
+            <Animated.Text style={[styles.star, { top: 46,  left: 0,   fontSize: 8,  color: '#B8D4B0' }, starStyle(s3)]}>&#10086;</Animated.Text>
+            <Animated.Text style={[styles.star, { top: 40,  right: 0,  fontSize: 12, color: '#EAC870' }, starStyle(s4)]}>&#10086;</Animated.Text>
+            <Animated.Text style={[styles.star, { bottom: 0,  left: 16,  fontSize: 9,  color: '#9B72C8' }, starStyle(s5)]}>&#10086;</Animated.Text>
+            <Animated.Text style={[styles.star, { bottom: 2,  right: 12, fontSize: 11, color: '#B8D4B0' }, starStyle(s6)]}>&#10086;</Animated.Text>
+
+            {/* Anneaux */}
+            <Animated.View style={[styles.ring, { width: 140, height: 140, borderRadius: 70, top: -10, left: 10, borderColor: 'rgba(155,114,200,0.3)' }, ringStyle(ring1)]} />
+            <Animated.View style={[styles.ring, { width: 112, height: 112, borderRadius: 56, top: 4,   left: 24, borderColor: 'rgba(155,114,200,0.2)' }, ringStyle(ring2)]} />
+
+            {/* Oeil SVG */}
+            <Animated.View style={[styles.eyeWrapper, { transform: [{ scaleY: breatheScaleY }] }]}>
+              <Svg width={110} height={85} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
+                <Defs>
+                  <ClipPath id="cc1">
+                    <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
+                  </ClipPath>
+                </Defs>
+                <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
+                <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#cc1)" />
+                <Circle cx="28" cy="22" r="8"    fill="#9B72C8" opacity="0.75" clipPath="url(#cc1)" />
+                <Circle cx="28" cy="22" r="5.8"  fill="#6B3FA0" opacity="0.9"  clipPath="url(#cc1)" />
+                <Circle cx="28" cy="22" r="3"    fill="#1A0E30" clipPath="url(#cc1)" />
+                <Circle cx="30.5" cy="19.5" r="1.3" fill="white"   opacity="0.9" clipPath="url(#cc1)" />
+                <Circle cx="28"   cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#cc1)" />
+                <Circle cx="28"   cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#cc1)" />
+                <Path d="M8 22 Q28 6 48 22"  fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
+                <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+                <Circle cx="8"  cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+                <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+              </Svg>
+            </Animated.View>
+          </View>
+
+          <Text style={styles.cycleTitle}>Cycle {cycleNumber} compl&#233;t&#233; &#10086;</Text>
+          <Text style={styles.congrats}>F&#233;licitations</Text>
+        </Animated.View>
+
+        {/* Section 2 : Carte points */}
+        <Animated.View style={fadeStyle(fade2)}>
+          <View style={styles.card}>
+            {/* Total */}
+            <View style={{ alignItems: 'center' }}>
+              <Text style={styles.cardLabel}>Points gagn&#233;s ce cycle</Text>
+              <Animated.View style={{ opacity: shimmerOpacity }}>
+                <Text style={styles.totalPts}>{cyclePoints}</Text>
+              </Animated.View>
+              <Text style={styles.totalSub}>sur 100 possibles</Text>
+            </View>
+
+            <View style={styles.cardSep} />
+
+            {/* Detail etapes */}
+            <View style={{ gap: 3 }}>
+              {STEPS_CONFIG.map((step) => (
+                <View key={step.key} style={styles.stepRow}>
+                  <Text style={styles.stepLabel}>{step.label}</Text>
+                  {(earnedPoints[step.key] ?? 0) > 0 ? (
+                    <View style={styles.badgePurple}>
+                      <Text style={styles.badgePurpleText}>+{step.pts} pts</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.badgeGrey}>
+                      <Text style={styles.badgeGreyText}>pass&#233;e</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Section 3 : Bas de page */}
+        <Animated.View style={[styles.bottom, fadeStyle(fade3)]}>
+          <View style={styles.nextCycleBadge}>
+            <Text style={styles.nextCycleText}>Prochain cycle disponible &#224; minuit</Text>
+          </View>
+          <Pressable style={styles.homeBtn} onPress={() => router.replace('/(app)/home' as any)}>
+            <Svg width={11} height={11} viewBox="0 0 16 16">
+              <Path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            <Text style={styles.homeBtnText}>Retour &#224; l&#39;accueil</Text>
+          </Pressable>
+        </Animated.View>
+
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F0EAE0',
+    overflow: 'hidden',
+  },
+  orb: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 18,
+    justifyContent: 'space-between',
+    zIndex: 1,
+  },
+
+  // Oeil
+  eyeSection: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 24,
+  },
+  eyeContainer: {
+    width: 160,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  star: {
+    position: 'absolute',
+  },
+  ring: {
+    position: 'absolute',
+    borderWidth: 0.5,
+  },
+  eyeWrapper: {
+    zIndex: 1,
+  },
+  cycleTitle: {
+    fontFamily: 'serif',
+    fontSize: 30,
+    fontStyle: 'italic',
+    color: '#2A2520',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  congrats: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#7A7068',
+    letterSpacing: 1.8,
+    textTransform: 'uppercase',
+  },
+
+  // Carte
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    borderWidth: 0.5,
+    borderColor: '#D4C4B8',
+    borderRadius: 16,
+    padding: 12,
+    paddingHorizontal: 14,
+    gap: 7,
+  },
+  cardLabel: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#7A7068',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  totalPts: {
+    fontFamily: 'serif',
+    fontSize: 44,
+    fontStyle: 'italic',
+    color: '#6B3FA0',
+    lineHeight: 48,
+    textAlign: 'center',
+  },
+  totalSub: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#9B72C8',
+  },
+  cardSep: {
+    width: '100%',
+    height: 0.5,
+    backgroundColor: '#E0D4CC',
+  },
+  stepRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepLabel: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#7A7068',
+  },
+  badgePurple: {
+    backgroundColor: '#DDD0F8',
+    borderRadius: 20,
+    paddingVertical: 1,
+    paddingHorizontal: 8,
+  },
+  badgePurpleText: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B3FA0',
+  },
+  badgeGrey: {
+    backgroundColor: '#F0EAE0',
+    borderRadius: 20,
+    paddingVertical: 1,
+    paddingHorizontal: 8,
+  },
+  badgeGreyText: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#A09088',
+  },
+
+  // Bas
+  bottom: {
+    gap: 8,
+    marginBottom: 80,
+  },
+  nextCycleBadge: {
+    backgroundColor: 'rgba(221,208,248,0.3)',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  nextCycleText: {
+    fontFamily: 'serif',
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: '#6B3FA0',
+    textAlign: 'center',
+  },
+  homeBtn: {
+    backgroundColor: '#3A3530',
+    borderRadius: 999,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  homeBtnText: {
+    fontFamily: 'Jost',
+    color: '#F0EAE0',
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+});
