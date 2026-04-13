@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ManifestMind — Célébration</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes softPulse{0%,100%{opacity:.22;transform:scale(1)}50%{opacity:.45;transform:scale(1.08)}}
+@keyframes fadeUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes starPop{0%{transform:scale(0) rotate(-20deg);opacity:0}70%{transform:scale(1.2) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes shimmer{0%,100%{opacity:.8}50%{opacity:1}}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.08);opacity:.5}}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1A1020;font-family:'Jost',sans-serif;padding:32px 20px 48px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.section-title{color:rgba(255,255,255,.35);font-size:10px;letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.lbl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.phone{
+  width:260px;height:530px;background:#F0EAE0;border-radius:38px;
+  border:0.5px solid #D4C4B8;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+  box-shadow:0 32px 64px rgba(0,0,0,.5);
+}
+.orb{position:absolute;border-radius:50%;animation:softPulse 5s ease-in-out infinite;pointer-events:none}
+</style>
+</head>
+<body>
+
+<p class="section-title">ManifestMind — Célébration fin de cycle</p>
+
+<div class="col">
+  <p class="lbl">Celebration — Fin de cycle</p>
+  <div class="phone">
+
+    <!-- Orbes plus intenses pour la fête -->
+    <div class="orb" style="width:180px;height:180px;background:#C4A8D4;top:-50px;right:-50px;animation-delay:0s"></div>
+    <div class="orb" style="width:120px;height:120px;background:#B8D4B0;bottom:-30px;left:-30px;animation-delay:1.5s"></div>
+    <div class="orb" style="width:80px;height:80px;background:#E8C890;top:200px;left:-25px;animation-delay:3s"></div>
+    <div class="orb" style="width:60px;height:60px;background:#DDD0F8;bottom:120px;right:-15px;animation-delay:2s"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:24px 18px 20px;z-index:1">
+
+      <!-- Œil grand + étoiles déco -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeUp .6s ease .1s both">
+
+        <!-- Étoiles autour de l'œil -->
+        <div style="position:relative;width:120px;height:90px;display:flex;align-items:center;justify-content:center">
+          <!-- Étoile haut gauche -->
+          <div style="position:absolute;top:0;left:8px;font-size:14px;color:#EAC870;animation:starPop .5s ease .8s both;opacity:0">✦</div>
+          <!-- Étoile haut droite -->
+          <div style="position:absolute;top:0;right:8px;font-size:10px;color:#C4A8D4;animation:starPop .5s ease 1s both;opacity:0">✦</div>
+          <!-- Étoile gauche -->
+          <div style="position:absolute;top:35px;left:0;font-size:8px;color:#B8D4B0;animation:starPop .5s ease 1.2s both;opacity:0">✦</div>
+          <!-- Étoile droite -->
+          <div style="position:absolute;top:30px;right:0;font-size:12px;color:#EAC870;animation:starPop .5s ease .9s both;opacity:0">✦</div>
+          <!-- Étoile bas gauche -->
+          <div style="position:absolute;bottom:0;left:12px;font-size:9px;color:#9B72C8;animation:starPop .5s ease 1.1s both;opacity:0">✦</div>
+          <!-- Étoile bas droite -->
+          <div style="position:absolute;bottom:2px;right:10px;font-size:11px;color:#B8D4B0;animation:starPop .5s ease 1.3s both;opacity:0">✦</div>
+
+          <!-- Anneaux lumineux -->
+          <div style="position:absolute;width:96px;height:96px;border-radius:50%;border:0.5px solid rgba(155,114,200,.3);animation:ringPulse 3s ease-in-out infinite"></div>
+          <div style="position:absolute;width:78px;height:78px;border-radius:50%;border:0.5px solid rgba(155,114,200,.2);animation:ringPulse 3s ease-in-out .5s infinite"></div>
+
+          <!-- Œil SVG grand -->
+          <svg width="72" height="55" viewBox="0 0 56 44" style="overflow:visible;position:relative;z-index:1">
+            <clipPath id="cc1"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+            <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+            <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#cc1)" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out infinite"/>
+            <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#cc1)"/>
+            <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#cc1)"/>
+            <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#cc1)"/>
+            <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#cc1)"/>
+            <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#cc1)"/>
+            <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#cc1)"/>
+            <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+            <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+            <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          </svg>
+        </div>
+
+        <!-- Titre célébration -->
+        <p style="font-family:'Cormorant Garamond',serif;font-size:28px;font-style:italic;color:#2A2520;text-align:center;line-height:1.2">Cycle complété ✦</p>
+        <p style="font-family:'Jost',sans-serif;font-size:11px;font-weight:300;color:#7A7068;letter-spacing:.16em;text-transform:uppercase">Félicitations</p>
+      </div>
+
+      <!-- Bloc points gagnés ce cycle -->
+      <div style="width:100%;animation:fadeUp .6s ease .3s both">
+        <div style="background:rgba(255,255,255,.6);border:0.5px solid #D4C4B8;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:7px">
+
+          <!-- Total points ce cycle -->
+          <div style="text-align:center">
+            <p style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Points gagnés ce cycle</p>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:40px;font-style:italic;color:#6B3FA0;line-height:1;animation:shimmer 2s ease-in-out infinite">85</p>
+            <p style="font-family:'Jost',sans-serif;font-size:10px;color:#9B72C8">sur 100 possibles</p>
+          </div>
+
+          <!-- Séparateur -->
+          <div style="width:100%;height:0.5px;background:#E0D4CC"></div>
+
+          <!-- Détail des étapes -->
+          <div style="width:100%;display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Ouverture</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+10 pts</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Affirmation</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+15 pts</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Action facile</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+15 pts</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Action difficile</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#A09088;background:#F0EAE0;padding:1px 8px;border-radius:20px">passée</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Visualisation</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+15 pts</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Journal</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+15 pts</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-family:'Jost',sans-serif;font-size:10px;color:#7A7068">Vision Board</span>
+              <span style="font-family:'Jost',sans-serif;font-size:10px;font-weight:500;color:#6B3FA0;background:#DDD0F8;padding:1px 8px;border-radius:20px">+5 pts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message prochain cycle + bouton -->
+      <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;animation:fadeUp .6s ease .5s both">
+        <div style="background:rgba(221,208,248,.3);border:0.5px solid #C4A8D4;border-radius:12px;padding:8px 16px;text-align:center">
+          <p style="font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:#6B3FA0">Prochain cycle disponible à minuit</p>
+        </div>
+        <button style="width:100%;padding:12px;border-radius:50px;border:none;background:#3A3530;color:#F0EAE0;font-family:'Jost',sans-serif;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Retour à l'accueil
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

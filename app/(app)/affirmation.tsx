@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
+import CongratulationsToast from '../../components/ui/CongratulationsToast';
 
 const THEMES = [
   'Confiance & Identité',
@@ -35,6 +36,27 @@ function goNext(route: string) {
   }
 }
 
+function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+  const getLevel = (pts: number) => {
+    const pct = (pts / 36500) * 100;
+    if (pct < 25) return 'Éveillé';
+    if (pct < 50) return 'Floraison';
+    if (pct < 75) return 'Rayonnant';
+    return 'Manifestant';
+  };
+  const oldK = Math.floor(oldTotal / 1000);
+  const newK = Math.floor(newTotal / 1000);
+  if (newK > oldK && newTotal > 0) {
+    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    return;
+  }
+  const oldLevel = getLevel(oldTotal);
+  const newLevel = getLevel(newTotal);
+  if (oldLevel !== newLevel) {
+    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+  }
+}
+
 export default function Affirmation() {
   const insets = useSafeAreaInsets();
   const [cycleNumber, setCycleNumber] = useState(1);
@@ -42,6 +64,7 @@ export default function Affirmation() {
   const [themeName, setThemeName] = useState('Confiance & Identité');
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
+  const [congratToast, setCongratToast] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -80,6 +103,7 @@ export default function Affirmation() {
     earned.affirmation = 15;
     await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
 
+    checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast);
     setValidated(true);
     setToast('✦ +15 pts · Affirmation validée');
 
@@ -103,6 +127,7 @@ export default function Affirmation() {
   return (
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
+      {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
       <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#C4A8D4', top: -35, right: -35 }]} />
       <View style={[styles.orb, { width: 80, height: 80, backgroundColor: '#B8D4B0', bottom: 55, left: -20 }]} />
 

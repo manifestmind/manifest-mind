@@ -23,6 +23,7 @@
 | app/(app)/journal.tsx | ✅ Validé (design + logique) |
 | app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
 | app/(app)/celebration.tsx | ✅ Validé (design + logique) |
+| app/(app)/profil.tsx | ⚠️ Validé partiellement (voir note ci-dessous) |
 
 ---
 
@@ -126,7 +127,7 @@ app/
     journal.tsx      ✅          → Étape 6 cycle — journal de gratitude
     vision-board.tsx ✅          → Étape 7 cycle — vision board photos
     celebration.tsx  ✅          → Fin de cycle — points + détail étapes
-    profil.tsx       placeholder → router.back()
+    profil.tsx       ⚠️ partiel  → photo, prénom, reset, jauge validés
     parametres.tsx   placeholder → router.back()
 
 services/
@@ -340,8 +341,8 @@ sendMagicLink()      → Firebase sendSignInLinkToEmail
 4. ~~journal.tsx~~ ✅
 5. ~~vision-board.tsx~~ ✅
 6. ~~celebration.tsx~~ ✅
-7. profil.tsx — Profil utilisateur + stats
-8. parametres.tsx — Paramètres + reset compte
+7. ~~profil.tsx~~ ⚠️ Validé partiellement
+8. parametres.tsx — Paramètres + notifications
 
 ---
 
@@ -384,6 +385,28 @@ function goNext(route: string) {
 - Initialisé dans auth.tsx (premier cycle) et home.tsx (reset nouveau cycle)
 - Rempli dans chaque page étape lors de la validation (+pts) ou passé (0)
 - Clés : opening, affirmation, action_easy, action_hard, visualisation, journal, vision_board
+
+---
+
+## PROFIL.TSX — VALIDATION PARTIELLE ⚠️
+
+### Validé ✅
+- Photo de profil (expo-image-picker, AsyncStorage `profile_photo`)
+- Modifier prénom → navigation vers `name.tsx?edit=true` → retour profil
+- Reset complet (Alert + AsyncStorage.getAllKeys + multiRemove + journal_cycle_*)
+- Affichage prénom + niveau + jauge progression
+
+### À retester après session contenu JSON
+- `best_cycle_points` — stat "Meilleur cycle"
+- Moyenne par cycle (`avg = points_total / cyclesCompleted`)
+- `CongratulationsToast` — seuils 1000 pts et changements de niveau
+- Compteur `cyclesCompleted` réel (basé sur historique réel)
+
+### AsyncStorage keys profil
+| Clé | Rôle |
+|-----|------|
+| profile_photo | URI photo avatar |
+| best_cycle_points | Record meilleur score cycle (écrit par celebration.tsx) |
 
 ---
 

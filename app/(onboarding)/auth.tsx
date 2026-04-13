@@ -57,6 +57,11 @@ export default function Auth() {
       action_easy: false, action_hard: false,
       visualisation: false, journal: false, vision_board: false,
     }));
+    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
+      opening: 0, affirmation: 0,
+      action_easy: 0, action_hard: 0,
+      visualisation: 0, journal: 0, vision_board: 0,
+    }));
   };
 
   const handleSkipAccount = async () => {

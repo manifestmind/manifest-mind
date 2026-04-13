@@ -63,6 +63,11 @@ export default function Celebration() {
       const pts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
       setCyclePoints(pts);
 
+      const bestSoFar = parseInt(await AsyncStorage.getItem('best_cycle_points') || '0');
+      if (pts > bestSoFar) {
+        await AsyncStorage.setItem('best_cycle_points', String(pts));
+      }
+
       const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
       if (earnedRaw) setEarnedPoints(JSON.parse(earnedRaw));
 

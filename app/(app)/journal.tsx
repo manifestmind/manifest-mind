@@ -12,6 +12,28 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
+import CongratulationsToast from '../../components/ui/CongratulationsToast';
+
+function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+  const getLevel = (pts: number) => {
+    const pct = (pts / 36500) * 100;
+    if (pct < 25) return 'Éveillé';
+    if (pct < 50) return 'Floraison';
+    if (pct < 75) return 'Rayonnant';
+    return 'Manifestant';
+  };
+  const oldK = Math.floor(oldTotal / 1000);
+  const newK = Math.floor(newTotal / 1000);
+  if (newK > oldK && newTotal > 0) {
+    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    return;
+  }
+  const oldLevel = getLevel(oldTotal);
+  const newLevel = getLevel(newTotal);
+  if (oldLevel !== newLevel) {
+    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+  }
+}
 
 type PreviousEntry = {
   cycle: number;
@@ -28,6 +50,7 @@ export default function Journal() {
   const [validated, setValidated] = useState(false);
   const [previousEntries, setPreviousEntries] = useState<PreviousEntry[]>([]);
   const [toast, setToast] = useState('');
+  const [congratToast, setCongratToast] = useState('');
   const { fromCycle } = useLocalSearchParams();
   const [nextRoute, setNextRoute] = useState('');
 
@@ -102,6 +125,7 @@ export default function Journal() {
       const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
       earned.journal = 15;
       await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+      checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast);
     }
 
     setValidated(true);
@@ -146,6 +170,7 @@ export default function Journal() {
   return (
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
+      {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
 
       {/* Orbes */}
       <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#B8D4B0', top: -35, right: -35 }]} />

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -12,12 +12,24 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 
 export default function Name() {
   const router = useRouter();
+  const { edit } = useLocalSearchParams();
+  const isEdit = edit === 'true';
   const [name, setName] = useState('');
+
+  useEffect(() => {
+    if (isEdit) {
+      AsyncStorage.getItem('user_name').then(n => { if (n) setName(n); });
+    }
+  }, []);
 
   async function handleSave() {
     if (!name.trim()) return;
     await AsyncStorage.setItem('user_name', name.trim());
-    router.replace('/(app)/home' as any);
+    if (isEdit) {
+      router.back();
+    } else {
+      router.replace('/(app)/home' as any);
+    }
   }
 
   return (
@@ -60,7 +72,7 @@ export default function Name() {
         onPress={handleSave}
         disabled={!name.trim()}
       >
-        <Text style={styles.btnText}>Continuer →</Text>
+        <Text style={styles.btnText}>{isEdit ? 'Mettre à jour →' : 'Continuer →'}</Text>
       </Pressable>
     </View>
   );

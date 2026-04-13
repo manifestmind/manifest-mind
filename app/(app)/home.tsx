@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
+import CongratulationsToast from '../../components/ui/CongratulationsToast';
 
 type StepStatus = {
   opening: boolean;
@@ -30,6 +31,27 @@ const INITIAL_STEP_STATUS: StepStatus = {
   vision_board: false,
 };
 
+function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+  const getLevel = (pts: number) => {
+    const pct = (pts / 36500) * 100;
+    if (pct < 25) return 'Éveillé';
+    if (pct < 50) return 'Floraison';
+    if (pct < 75) return 'Rayonnant';
+    return 'Manifestant';
+  };
+  const oldK = Math.floor(oldTotal / 1000);
+  const newK = Math.floor(newTotal / 1000);
+  if (newK > oldK && newTotal > 0) {
+    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    return;
+  }
+  const oldLevel = getLevel(oldTotal);
+  const newLevel = getLevel(newTotal);
+  if (oldLevel !== newLevel) {
+    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+  }
+}
+
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -39,6 +61,7 @@ export default function Home() {
   const [level, setLevel] = useState('Éveillé');
   const [cycleCompleted, setCycleCompleted] = useState(false);
   const [stepStatus, setStepStatus] = useState<StepStatus>(INITIAL_STEP_STATUS);
+  const [congratToast, setCongratToast] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -79,6 +102,7 @@ export default function Home() {
           ['cycle_points', '0'],
           ['next_cycle_time', String(midnight.getTime())],
           ['cycle_step_status', JSON.stringify(INITIAL_STEP_STATUS)],
+          ['cycle_earned_points', JSON.stringify({ opening: 0, affirmation: 0, action_easy: 0, action_hard: 0, visualisation: 0, journal: 0, vision_board: 0 })],
         ]);
         cycle = newCycle;
       }
@@ -134,6 +158,11 @@ export default function Home() {
       const newStatus = { ...stepStatus, opening: true };
       await AsyncStorage.setItem('cycle_step_status', JSON.stringify(newStatus));
       setStepStatus(newStatus);
+      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+      earned.opening = 10;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+      checkMilestones(pointsTotal, pointsTotal + 10, setCongratToast);
       router.push('/(app)/affirmation' as any);
     } else {
       // ÉTAT 2 : naviguer vers la prochaine étape non complétée
@@ -162,6 +191,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
+      {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
       {/* Bouton reset temporaire */}
       <Pressable
         onPress={async () => {

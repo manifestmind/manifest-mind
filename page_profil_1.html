@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ManifestMind — Profil</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes fadeUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.22;transform:scale(1)}50%{opacity:.35;transform:scale(1.04)}}
+@keyframes fillBar{from{width:0}to{width:13%}}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1A1020;font-family:'Jost',sans-serif;padding:32px 20px 48px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.section-title{color:rgba(255,255,255,.35);font-size:10px;letter-spacing:.2em;text-transform:uppercase;text-align:center}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.lbl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.phone{
+  width:260px;height:530px;background:#F0EAE0;border-radius:38px;
+  border:0.5px solid #D4C4B8;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+  box-shadow:0 32px 64px rgba(0,0,0,.5);
+}
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;pointer-events:none}
+.navbar{
+  height:50px;background:#F0EAE0;border-top:0.5px solid #D4C4B8;
+  display:flex;align-items:center;justify-content:space-around;
+  padding:0 6px 2px;flex-shrink:0;z-index:2;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.nl{font-size:8px;font-weight:300;color:#A09088}
+.ni.act .nl{color:#6B3FA0;font-weight:500}
+.nd{width:3px;height:3px;border-radius:50%;background:#6B3FA0}
+.card{background:rgba(255,255,255,.55);border:0.5px solid #D4C4B8;border-radius:14px;padding:10px 12px;flex-shrink:0}
+.stat{background:rgba(255,255,255,.5);border:0.5px solid #D4C4B8;border-radius:12px;padding:8px 10px}
+</style>
+</head>
+<body>
+
+<p class="section-title">ManifestMind — Profil</p>
+
+<div class="col">
+  <p class="lbl">Profil</p>
+  <div class="phone">
+    <div class="orb" style="width:140px;height:140px;background:#DDD0F8;top:-35px;right:-35px"></div>
+    <div class="orb" style="width:75px;height:75px;background:#C4E8F0;bottom:55px;left:-18px;animation-delay:2s"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;padding:12px 14px 6px;gap:5px;z-index:1;overflow:hidden">
+
+      <!-- Œil + titre -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;animation:fadeUp .5s ease .1s both;flex-shrink:0">
+        <svg width="48" height="37" viewBox="0 0 56 44" style="overflow:visible">
+          <clipPath id="pc1"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+          <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+          <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clip-path="url(#pc1)" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out infinite"/>
+          <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" clip-path="url(#pc1)"/>
+          <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" clip-path="url(#pc1)"/>
+          <circle cx="28" cy="22" r="3" fill="#1A0E30" clip-path="url(#pc1)"/>
+          <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" clip-path="url(#pc1)"/>
+          <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clip-path="url(#pc1)"/>
+          <circle cx="28" cy="15.5" r=".8" fill="#C89A30" clip-path="url(#pc1)"/>
+          <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5"/>
+          <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+          <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6"/>
+        </svg>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:#2A2520">Mon Profil</p>
+      </div>
+
+      <!-- Carte identité -->
+      <div class="card" style="animation:fadeUp .5s ease .2s both;padding:8px 12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="position:relative;flex-shrink:0">
+            <div style="width:38px;height:38px;border-radius:50%;background:#DDD0F8;border:1.5px solid #C4A8D4;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#6B3FA0" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+            </div>
+          </div>
+          <div>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:#2A2520">Lyana</p>
+            <p style="font-size:8px;color:#9A8878;margin-top:1px">Cycle 1 · Thème Confiance</p>
+            <div style="display:inline-flex;align-items:center;gap:3px;background:#DDD0F8;padding:1px 6px;border-radius:20px;margin-top:2px">
+              <div style="width:3px;height:3px;border-radius:50%;background:#9B72C8"></div>
+              <p style="font-size:8px;color:#6B3FA0;font-weight:500">✦ Éveillée</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jauge progression annuelle -->
+      <div class="card" style="animation:fadeUp .5s ease .25s both;padding:7px 12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <p style="font-size:9px;color:#7A7068;text-transform:uppercase;letter-spacing:.08em">Progression</p>
+          <p style="font-size:9px;color:#6B3FA0;font-weight:500">Cycle 1 / 365</p>
+        </div>
+        <div style="width:100%;height:12px;background:#E4DCD4;border-radius:6px;overflow:hidden;padding:2px;margin-bottom:4px">
+          <div style="height:100%;width:0.3%;border-radius:4px;background:#6B3FA0;position:relative;animation:fillBar 1.2s ease .3s both">
+            <div style="position:absolute;top:1px;left:3px;width:30%;height:40%;background:rgba(255,255,255,.3);border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="width:4px;height:4px;border-radius:50%;background:#6B3FA0"></div>
+            <span style="font-size:7px;color:#6B3FA0">Éveillé</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="width:4px;height:4px;border-radius:50%;background:#C8BEB0"></div>
+            <span style="font-size:7px;color:#B0A898">Floraison</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="width:4px;height:4px;border-radius:50%;background:#C8BEB0"></div>
+            <span style="font-size:7px;color:#B0A898">Rayonnant</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="width:4px;height:4px;border-radius:50%;background:#C8BEB0"></div>
+            <span style="font-size:7px;color:#B0A898">Manifestant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="animation:fadeUp .5s ease .28s both;padding:7px 12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <p style="font-size:9px;color:#7A7068;text-transform:uppercase;letter-spacing:.08em">Cycle en cours</p>
+          <p style="font-size:9px;color:#6B3FA0;font-weight:500">75 / 100 pts</p>
+        </div>
+        <div style="width:100%;height:8px;background:#E4DCD4;border-radius:4px;overflow:hidden;padding:1px">
+          <div style="height:100%;width:75%;border-radius:3px;background:#6B3FA0;position:relative">
+            <div style="position:absolute;top:1px;left:4px;width:20%;height:50%;background:rgba(255,255,255,.3);border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:3px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#C8E8C0"></div>
+            <span style="font-size:7px;color:#3A6A20">Ouverture ✓</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:3px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#C8E8C0"></div>
+            <span style="font-size:7px;color:#3A6A20">Affirmation ✓</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:3px">
+            <div style="width:5px;height:5px;border-radius:50%;background:#E4DCD4"></div>
+            <span style="font-size:7px;color:#B0A898">Actions</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;animation:fadeUp .5s ease .3s both;flex-shrink:0">
+        <div class="stat" style="padding:6px 10px">
+          <p style="font-size:7px;color:#9A8878;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px">Total points</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:#6B3FA0">3 820</p>
+          <p style="font-size:7px;color:#B0A898">/ 36 500 pts possibles</p>
+        </div>
+        <div class="stat" style="padding:6px 10px">
+          <p style="font-size:7px;color:#9A8878;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px">Cycles complétés</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:#6B3FA0">47</p>
+        </div>
+        <div class="stat" style="padding:6px 10px">
+          <p style="font-size:7px;color:#9A8878;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px">Meilleur cycle</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:#6B3FA0">100 pts</p>
+        </div>
+        <div class="stat" style="padding:6px 10px">
+          <p style="font-size:7px;color:#9A8878;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px">Moy. par cycle</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:#6B3FA0">81 pts</p>
+        </div>
+      </div>
+
+      <!-- Modifier le prénom -->
+      <div style="animation:fadeUp .5s ease .35s both;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.45);border:0.5px solid #D4C4B8;border-radius:10px;padding:7px 12px">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M14 2l4 4-10 10H4v-4L14 2z" stroke="#6B3FA0" stroke-width="1.2" stroke-linejoin="round" fill="none"/></svg>
+          <p style="font-size:10px;color:#6B3FA0;font-weight:500;flex:1">Modifier mon prénom</p>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="#C4A8D4" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+      <!-- Bouton reset -->
+      <div style="animation:fadeUp .5s ease .4s both;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(235,255,235,.5);border:0.5px solid #A0C890;border-radius:10px;padding:7px 12px;cursor:pointer">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 10a6 6 0 1 0 1-3.5" stroke="#2A6A20" stroke-width="1.3" stroke-linecap="round"/><path d="M4 4v3h3" stroke="#2A6A20" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="flex:1">
+            <p style="font-size:10px;color:#2A6A20;font-weight:500">Recommencer depuis le début</p>
+            <p style="font-size:7px;color:#4A8A40;margin-top:1px">Efface tout · Irréversible</p>
+          </div>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M4 2l4 4-4 4" stroke="#A0C890" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Navbar 3 onglets — Profil actif -->
+    <div class="navbar">
+      <div class="ni">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088"/></svg>
+        <span class="nl">Accueil</span>
+      </div>
+      <div class="ni act">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" stroke="#6B3FA0" stroke-width="1.2" fill="none"/><path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#6B3FA0" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+        <span class="nl" style="color:#6B3FA0">Profil</span>
+        <div class="nd"></div>
+      </div>
+      <div class="ni">
+        <svg width="17" height="17" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="3" stroke="#A09088" stroke-width="1.2" fill="none"/><path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span class="nl">Paramètres</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

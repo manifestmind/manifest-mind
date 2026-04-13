@@ -12,6 +12,28 @@ import {
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
+import CongratulationsToast from '../../components/ui/CongratulationsToast';
+
+function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+  const getLevel = (pts: number) => {
+    const pct = (pts / 36500) * 100;
+    if (pct < 25) return 'Éveillé';
+    if (pct < 50) return 'Floraison';
+    if (pct < 75) return 'Rayonnant';
+    return 'Manifestant';
+  };
+  const oldK = Math.floor(oldTotal / 1000);
+  const newK = Math.floor(newTotal / 1000);
+  if (newK > oldK && newTotal > 0) {
+    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    return;
+  }
+  const oldLevel = getLevel(oldTotal);
+  const newLevel = getLevel(newTotal);
+  if (oldLevel !== newLevel) {
+    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+  }
+}
 
 export default function VisionBoard() {
   const insets = useSafeAreaInsets();
@@ -19,6 +41,7 @@ export default function VisionBoard() {
 
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
   const [toast, setToast] = useState('');
+  const [congratToast, setCongratToast] = useState('');
   const [showFinishBtn, setShowFinishBtn] = useState(false);
 
   useFocusEffect(
@@ -42,6 +65,7 @@ export default function VisionBoard() {
 
             const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
             await AsyncStorage.setItem('points_total', String(pointsTotal + 5));
+            checkMilestones(pointsTotal, pointsTotal + 5, setCongratToast);
 
             const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
             const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
@@ -96,6 +120,7 @@ export default function VisionBoard() {
   return (
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
+      {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
       {/* Orbes */}
       <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#C4A8D4', top: -35, right: -35 }]} />
       <View style={[styles.orb, { width: 85, height: 85, backgroundColor: '#B8D4B0', bottom: 55, left: -22 }]} />
