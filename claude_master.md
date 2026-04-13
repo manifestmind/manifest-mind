@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
-**Dernière mise à jour :** 12 Avril 2026
-**État :** Celebration validée ✅ — logique fin de cycle complète, tous les chemins couverts
+**Dernière mise à jour :** 13 Avril 2026
+**État :** parametres.tsx + pricing-upgrade.tsx validés ✅ — toutes les pages construites
 
 ---
 
@@ -24,6 +24,8 @@
 | app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
 | app/(app)/celebration.tsx | ✅ Validé (design + logique) |
 | app/(app)/profil.tsx | ⚠️ Validé partiellement (voir note ci-dessous) |
+| app/(app)/parametres.tsx | ✅ Validé (design + logique) |
+| app/(app)/pricing-upgrade.tsx | ✅ Validé |
 
 ---
 
@@ -63,6 +65,10 @@ Ne jamais modifier couleurs, polices, espacements, SVG, animations, navbar ni la
 Ne pas utiliser `kill`, `taskkill` ou équivalents sur les process node/expo.
 L'utilisateur gère Expo Go lui-même.
 
+### 8. pricing-upgrade.tsx — ne jamais appeler initFirstCycle()
+`app/(app)/pricing-upgrade.tsx` est la page de changement d'abonnement depuis Paramètres.
+Elle ne doit JAMAIS toucher aux données de cycle. Après sélection : `AsyncStorage.setItem('selected_plan', ...)` + `router.back()` uniquement.
+
 ---
 
 ## RÈGLES TECHNIQUES
@@ -98,6 +104,7 @@ L'utilisateur gère Expo Go lui-même.
 | celebration.tsx | cc1 |
 | profil.tsx | pc1 |
 | parametres.tsx | prc1 |
+| pricing-upgrade.tsx | pu1 |
 
 ---
 
@@ -128,13 +135,15 @@ app/
     vision-board.tsx ✅          → Étape 7 cycle — vision board photos
     celebration.tsx  ✅          → Fin de cycle — points + détail étapes
     profil.tsx       ⚠️ partiel  → photo, prénom, reset, jauge validés
-    parametres.tsx   placeholder → router.back()
+    parametres.tsx   ✅          → Notifications, langue, abonnement, compte, légal
+    pricing-upgrade.tsx ✅       → Changement abonnement depuis Paramètres (sans init cycle)
 
 services/
   firebase.ts                    → initializeAuth + inMemoryPersistence
 
 components/
   ui/PointsToast.tsx             → Toast points animé (Animated RN — zéro Reanimated)
+  ui/CongratulationsToast.tsx    → Toast félicitations milestones (Animated RN)
 
 constants/
   theme.ts                       → Couleurs et styles globaux
@@ -183,6 +192,11 @@ app/index.tsx
   Navbar Paramètres  → /(app)/parametres
   Bouton reset (discret, top:48 right:16) → AsyncStorage.clear() → /
 
+(app)/parametres
+  Plan actuel        → /(app)/pricing-upgrade (router.push — sans toucher au cycle)
+  Se déconnecter     → AsyncStorage.removeItem('onboarding_completed') + router.replace welcome
+  Supprimer compte   → AsyncStorage.clear() + router.replace welcome
+
 Cycle des étapes :
   affirmation → action → visualisation → journal → vision-board → (celebration)
 ```
@@ -199,7 +213,7 @@ Cycle des étapes :
 | user_language | fr / en / es | Langue choisie (welcome.tsx) |
 | legal_accepted | true | CGU acceptées (privacy.tsx) |
 | legal_accepted_date | ISO string | Date acceptation CGU |
-| selected_plan | lifetime / annuel / mensuel | Plan choisi (pricing.tsx) |
+| selected_plan | lifetime / annuel / mensuel | Plan choisi (pricing.tsx / pricing-upgrade.tsx) |
 | user_name | string | Prénom utilisateur (name.tsx) |
 | current_cycle | string int 1–365 | Numéro de cycle actuel |
 | current_theme | string int 1–7 | Thème actuel = ((cycle-1) % 7) + 1 |
@@ -209,19 +223,11 @@ Cycle des étapes :
 | next_cycle_time | string timestamp | Minuit du jour suivant |
 | points_total | string int | Points cumulés tous cycles |
 | cycle_earned_points | JSON string | Points gagnés par étape ce cycle (pour celebration) |
-
-### Structure cycle_step_status
-```json
-{
-  "opening": false,
-  "affirmation": false,
-  "action_easy": false,
-  "action_hard": false,
-  "visualisation": false,
-  "journal": false,
-  "vision_board": false
-}
-```
+| profile_photo | URI string | Photo avatar profil |
+| best_cycle_points | string int | Record meilleur score cycle |
+| notif_affirmation | true / false | Toggle notification affirmation matin |
+| notif_rappel | true / false | Toggle rappel cycle incomplet 20h |
+| reminder_time | HH:MM string | Heure rappel matin (défaut 08:00) |
 
 ### Clés supprimées — ne plus utiliser
 - day_number
@@ -321,28 +327,22 @@ if (cycle_completed === 'true' && Date.now() >= next_cycle_time) {
 ## STUBS EN ATTENTE
 
 ```ts
-// pricing.tsx
-handlePurchase()   → console.log + AsyncStorage selected_plan + navigation
+// pricing.tsx (onboarding)
+handlePurchase()   → console.log + AsyncStorage selected_plan + navigation vers auth
 handleRestore()    → console.log stub
 
 // auth.tsx
 handleAppleSignIn()  → Alert stub
 handleGoogleSignIn() → Alert stub
 sendMagicLink()      → Firebase sendSignInLinkToEmail
+
+// parametres.tsx
+handleNotifAffirmation / handleNotifRappel
+  → expo-notifications wired, contenu notification à brancher sur content_fr.json réel
+handleRestorePurchases()  → Alert stub, brancher expo-in-app-purchases
+handleSignOut()           → AsyncStorage stub, brancher Firebase signOut session Auth
+handleDeleteAccount()     → AsyncStorage stub, brancher Firebase deleteUser session Auth
 ```
-
----
-
-## PROCHAINES PAGES À CONSTRUIRE
-
-1. ~~affirmation.tsx~~ ✅
-2. ~~action.tsx~~ ✅
-3. ~~visualisation.tsx~~ ✅
-4. ~~journal.tsx~~ ✅
-5. ~~vision-board.tsx~~ ✅
-6. ~~celebration.tsx~~ ✅
-7. ~~profil.tsx~~ ⚠️ Validé partiellement
-8. parametres.tsx — Paramètres + notifications
 
 ---
 
@@ -402,16 +402,42 @@ function goNext(route: string) {
 - `CongratulationsToast` — seuils 1000 pts et changements de niveau
 - Compteur `cyclesCompleted` réel (basé sur historique réel)
 
-### AsyncStorage keys profil
-| Clé | Rôle |
-|-----|------|
-| profile_photo | URI photo avatar |
-| best_cycle_points | Record meilleur score cycle (écrit par celebration.tsx) |
+---
+
+## SESSIONS À VENIR (dans l'ordre)
+
+1. **Session animations globales**
+   - Œil animé cohérent sur toutes les pages
+   - FadeUp cohérent sur les blocs contenus
+   - Migrer Reanimated → Animated RN là où c'est encore présent
+
+2. **Session contenu JSON**
+   - Intégrer `content_fr.json` (affirmations, actions, visualisations par thème)
+   - `adjustsFontSizeToFit` sur les textes dynamiques
+   - Brancher le contenu réel dans les notifications parametres.tsx
+
+3. **Session traductions EN/ES**
+   - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`
+   - Lire `user_language` au chargement pour sélectionner le bon fichier
+
+4. **Session Auth Apple/Google/Magic Link**
+   - Remplacer stubs auth.tsx
+   - Brancher Firebase signOut dans parametres.tsx `handleSignOut`
+   - Brancher Firebase deleteUser dans parametres.tsx `handleDeleteAccount`
+   - Corriger `inMemoryPersistence` → vraie persistence
+
+5. **Session Paiements expo-in-app-purchases**
+   - Brancher `handlePurchase` dans pricing.tsx + pricing-upgrade.tsx
+   - Brancher `handleRestorePurchases` dans parametres.tsx
+
+6. **Session Build EAS**
+   - Configuration eas.json
+   - Profils preview + production
+   - Soumission App Store + Play Store
 
 ---
 
 ## À IMPLÉMENTER PLUS TARD
-
 
 ### Contenu JSON — adjustsFontSizeToFit
 Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
@@ -429,6 +455,6 @@ Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'ada
 ## NETTOYAGE À FAIRE AVANT PUBLICATION
 
 - Bouton reset sur toutes les pages → à supprimer avant publication stores
-- Placeholders profil, parametres → à remplacer par vraies pages
 - Stubs Apple/Google Sign-In dans auth.tsx → à remplacer par vraie implémentation
 - `handlePurchase()` stub dans pricing.tsx → à remplacer par expo-in-app-purchases
+- `console.log` dans pricing.tsx → à supprimer
