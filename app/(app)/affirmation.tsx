@@ -6,16 +6,7 @@ import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
-
-const THEMES = [
-  'Confiance & Identité',
-  'Abondance & Prospérité',
-  'Amour & Relations',
-  'Santé & Vitalité',
-  'Carrière & Mission',
-  'Créativité & Expression',
-  'Gratitude & Paix',
-];
+import { getCycleContent } from '../../hooks/useCycleContent';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -60,8 +51,7 @@ function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: str
 export default function Affirmation() {
   const insets = useSafeAreaInsets();
   const [cycleNumber, setCycleNumber] = useState(1);
-  const [themeNumber, setThemeNumber] = useState(1);
-  const [themeName, setThemeName] = useState('Confiance & Identité');
+  const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
@@ -70,10 +60,7 @@ export default function Affirmation() {
     async function load() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
-
-      const theme = parseInt(await AsyncStorage.getItem('current_theme') || '1');
-      setThemeNumber(theme);
-      setThemeName(THEMES[theme - 1]);
+      setContent(getCycleContent(cycle));
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
@@ -173,14 +160,18 @@ export default function Affirmation() {
         {/* Badge thème */}
         <View style={styles.themeBadge}>
           <View style={styles.themeDot} />
-          <Text style={styles.themeBadgeText}>✦ Thème {themeNumber} · {themeName}</Text>
+          <Text style={styles.themeBadgeText}>✦ Thème · {content?.theme}</Text>
         </View>
 
         {/* Carte affirmation */}
         <View style={styles.card}>
           <View style={styles.cardBody}>
-            <Text style={styles.affirmationText}>
-              {"Je suis confiant·e en ma valeur\net je m'avance vers ma vie\navec grâce et assurance."}
+            <Text
+              style={styles.affirmationText}
+              adjustsFontSizeToFit
+              numberOfLines={4}
+            >
+              {content?.affirmation}
             </Text>
           </View>
           <View style={styles.cardFooter}>

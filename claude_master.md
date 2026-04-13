@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 13 Avril 2026
-**État :** parametres.tsx + pricing-upgrade.tsx validés ✅ — toutes les pages construites
+**État :** Session contenu JSON validée ✅ — content_fr.json intégré dans toutes les pages
 
 ---
 
@@ -406,17 +406,19 @@ function goNext(route: string) {
 
 ## SESSIONS À VENIR (dans l'ordre)
 
-1. **Session animations globales**
+1. ~~**Session contenu JSON**~~ ✅
+   - `hooks/useCycleContent.ts` — `getCycleContent(n)` accède à `jour_n` du JSON
+   - `affirmation.tsx`, `action.tsx`, `visualisation.tsx` : contenu réel + `adjustsFontSizeToFit`
+   - `home.tsx` : thème du cycle affiché sous la jauge
+   - `parametres.tsx` : notification affirmation = contenu réel du cycle en cours
+   - Clé technique `jour_X` ≠ mot affiché "Cycle X" — règle confirmée
+
+2. **Session animations globales**
    - Œil animé cohérent sur toutes les pages
    - FadeUp cohérent sur les blocs contenus
    - Migrer Reanimated → Animated RN là où c'est encore présent
 
-2. **Session contenu JSON**
-   - Intégrer `content_fr.json` (affirmations, actions, visualisations par thème)
-   - `adjustsFontSizeToFit` sur les textes dynamiques
-   - Brancher le contenu réel dans les notifications parametres.tsx
-
-3. **Session traductions EN/ES**
+2. **Session traductions EN/ES**
    - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`
    - Lire `user_language` au chargement pour sélectionner le bon fichier
 
@@ -439,12 +441,10 @@ function goNext(route: string) {
 
 ## À IMPLÉMENTER PLUS TARD
 
-### Contenu JSON — adjustsFontSizeToFit
-Tous les textes dynamiques (affirmations, actions, visualisations) doivent s'adapter
-à la taille de leur bloc blanc conteneur.
-- Utiliser `adjustsFontSizeToFit={true}` et `numberOfLines` adapté sur chaque `<Text>`
-  qui affiche du contenu venant du JSON
-- À implémenter lors de la session d'intégration du contenu `content_fr.json`
+### Contenu JSON — adjustsFontSizeToFit ✅
+- `affirmation.tsx` : `numberOfLines={4}`
+- `action.tsx` : `numberOfLines={3}` sur chaque action
+- `visualisation.tsx` : `numberOfLines={2}` sur chaque phrase + finale
 
 ### Firebase Auth
 - `inMemoryPersistence` utilisé temporairement

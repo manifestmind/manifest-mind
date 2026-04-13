@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
+import { getCycleContent } from '../../hooks/useCycleContent';
 
 type StepStatus = {
   opening: boolean;
@@ -57,6 +58,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState('');
   const [cycleNumber, setCycleNumber] = useState(1);
+  const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [level, setLevel] = useState('Éveillé');
   const [cycleCompleted, setCycleCompleted] = useState(false);
@@ -108,10 +110,32 @@ export default function Home() {
       }
 
       setCycleNumber(cycle);
+      setContent(getCycleContent(cycle));
 
-      // Statut étapes
+      // 1. Lire le statut des étapes
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      const status: StepStatus = statusRaw ? JSON.parse(statusRaw) : INITIAL_STEP_STATUS;
+      const status: StepStatus = statusRaw ? JSON.parse(statusRaw) : { ...INITIAL_STEP_STATUS };
+
+      // 2. Créditer +10 pts d'ouverture immédiatement (avant affichage)
+      if (!status.opening) {
+        status.opening = true;
+        await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+
+        const oldTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+        const newTotal = oldTotal + 10;
+        await AsyncStorage.setItem('points_total', String(newTotal));
+
+        const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+        await AsyncStorage.setItem('cycle_points', String(cyclePoints + 10));
+
+        const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+        const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+        earned.opening = 10;
+        await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+
+        checkMilestones(oldTotal, newTotal, setCongratToast);
+      }
+
       setStepStatus(status);
 
       // Cycle complété ?
@@ -133,9 +157,9 @@ export default function Home() {
         setCycleCompleted(freshCompleted === 'true');
       }
 
-      // Jauge : points_total / 36500
-      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-      const percent = (pointsTotal / 36500) * 100;
+      // 3. Lire points_total APRÈS créditation
+      const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      const percent = (total / 36500) * 100;
       setProgressPercent(percent);
 
       if (percent < 25) setLevel('Éveillé');
@@ -147,36 +171,19 @@ export default function Home() {
     }, [])
   );
 
-  async function handleMainBtn() {
+  function handleMainBtn() {
     if (cycleCompleted) return;
-    if (!stepStatus.opening) {
-      // ÉTAT 1 : créditer +10 pts, marquer opening, → affirmation
-      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-      await AsyncStorage.setItem('points_total', String(pointsTotal + 10));
-      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 10));
-      const newStatus = { ...stepStatus, opening: true };
-      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(newStatus));
-      setStepStatus(newStatus);
-      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
-      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
-      earned.opening = 10;
-      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
-      checkMilestones(pointsTotal, pointsTotal + 10, setCongratToast);
+    // Opening est déjà crédité dans loadHome — naviguer vers la prochaine étape
+    if (!stepStatus.affirmation) {
       router.push('/(app)/affirmation' as any);
-    } else {
-      // ÉTAT 2 : naviguer vers la prochaine étape non complétée
-      if (!stepStatus.affirmation) {
-        router.push('/(app)/affirmation' as any);
-      } else if (!stepStatus.action_easy || !stepStatus.action_hard) {
-        router.push('/(app)/action' as any);
-      } else if (!stepStatus.visualisation) {
-        router.push('/(app)/visualisation' as any);
-      } else if (!stepStatus.journal) {
-        router.push('/(app)/journal?fromCycle=true' as any);
-      } else if (!stepStatus.vision_board) {
-        router.push('/(app)/vision-board?fromCycle=true' as any);
-      }
+    } else if (!stepStatus.action_easy || !stepStatus.action_hard) {
+      router.push('/(app)/action' as any);
+    } else if (!stepStatus.visualisation) {
+      router.push('/(app)/visualisation' as any);
+    } else if (!stepStatus.journal) {
+      router.push('/(app)/journal?fromCycle=true' as any);
+    } else if (!stepStatus.vision_board) {
+      router.push('/(app)/vision-board?fromCycle=true' as any);
     }
   }
 
@@ -255,6 +262,13 @@ export default function Home() {
               <Text style={styles.levelBadgeText}>✦ {level}</Text>
             </View>
           </View>
+          {/* Thème du cycle */}
+          {content?.theme ? (
+            <Text style={{ fontFamily: 'Jost', fontSize: 10, color: '#9B80B8', marginTop: 1 }}>
+              {content.theme}
+            </Text>
+          ) : null}
+
           {/* Ligne 2 : 365 jours aligné à droite */}
           <View style={styles.gaugeDaysRow}>
             <Text style={styles.gaugeDays}>365 cycles</Text>

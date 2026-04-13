@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import * as Notifications from 'expo-notifications';
+import { getCycleContent } from '../../hooks/useCycleContent';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -76,10 +77,13 @@ export default function Parametres() {
   async function scheduleAffirmationNotif(time: Date) {
     await Notifications.cancelAllScheduledNotificationsAsync();
     if (notifRappel) await scheduleRappelNotifRaw(time);
+    const cycleNumber = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+    const cycleContent = getCycleContent(cycleNumber);
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ManifestMind ✦',
-        body: "Ton affirmation du cycle t\u2019attend. Prends un moment pour toi.",
+        title: 'ManifestMind \u2756',
+        body: cycleContent?.affirmation || "Ton affirmation du cycle t\u2019attend.",
+        data: { screen: 'affirmation' },
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,

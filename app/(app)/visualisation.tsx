@@ -6,16 +6,7 @@ import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
-
-const THEMES = [
-  'Confiance & Identité',
-  'Abondance & Prospérité',
-  'Amour & Relations',
-  'Santé & Vitalité',
-  'Carrière & Mission',
-  'Créativité & Expression',
-  'Gratitude & Paix',
-];
+import { getCycleContent } from '../../hooks/useCycleContent';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -61,7 +52,7 @@ export default function Visualisation() {
   const insets = useSafeAreaInsets();
 
   const [cycleNumber, setCycleNumber] = useState(1);
-  const [themeName, setThemeName] = useState('');
+  const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
@@ -83,9 +74,7 @@ export default function Visualisation() {
     async function load() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
-
-      const theme = parseInt(await AsyncStorage.getItem('current_theme') || '1');
-      setThemeName(THEMES[theme - 1]);
+      setContent(getCycleContent(cycle));
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
@@ -239,6 +228,14 @@ export default function Visualisation() {
           </View>
         </View>
 
+        {/* Badge thème */}
+        {content?.theme ? (
+          <View style={styles.themeBadge}>
+            <View style={styles.themeDot} />
+            <Text style={styles.themeBadgeText}>✦ Thème · {content.theme}</Text>
+          </View>
+        ) : null}
+
         {/* Cercle respiration */}
         <View style={styles.breatheBlock}>
           <Animated.View style={[styles.breatheCircle, { transform: [{ scale: breatheAnim }] }]}>
@@ -253,22 +250,22 @@ export default function Visualisation() {
         {/* Bloc texte guidé */}
         <View style={styles.textBlock}>
           <View style={styles.textPhrases}>
-            <Animated.Text style={[styles.phrase, { opacity: fade1 }]}>
-              Imagine-toi debout, rayonnant·e de confiance...
+            <Animated.Text style={[styles.phrase, { opacity: fade1 }]} adjustsFontSizeToFit numberOfLines={2}>
+              {content?.visualisation.p1}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade2 }]}>
-              Les gens autour de toi ressentent ta lumière.
+            <Animated.Text style={[styles.phrase, { opacity: fade2 }]} adjustsFontSizeToFit numberOfLines={2}>
+              {content?.visualisation.p2}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade3 }]}>
-              Tu avances avec assurance vers ce que tu désires.
+            <Animated.Text style={[styles.phrase, { opacity: fade3 }]} adjustsFontSizeToFit numberOfLines={2}>
+              {content?.visualisation.p3}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade4 }]}>
-              Tu es exactement là où tu dois être.
+            <Animated.Text style={[styles.phrase, { opacity: fade4 }]} adjustsFontSizeToFit numberOfLines={2}>
+              {content?.visualisation.p4}
             </Animated.Text>
           </View>
           <View style={styles.textFooter}>
-            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer }]}>
-              Je reçois cela maintenant. ✦
+            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer }]} adjustsFontSizeToFit numberOfLines={2}>
+              {content?.visualisation.finale}
             </Animated.Text>
           </View>
         </View>
@@ -390,6 +387,31 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#6B3FA0',
     borderRadius: 10,
+  },
+  themeBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(221,208,248,0.4)',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    flexShrink: 0,
+  },
+  themeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: '#9B72C8',
+  },
+  themeBadgeText: {
+    fontFamily: 'Jost',
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#6B3FA0',
   },
   breatheBlock: {
     alignItems: 'center',
