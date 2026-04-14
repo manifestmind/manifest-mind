@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
 import {
@@ -25,12 +26,14 @@ function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: str
   const oldK = Math.floor(oldTotal / 1000);
   const newK = Math.floor(newTotal / 1000);
   if (newK > oldK && newTotal > 0) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
     return;
   }
   const oldLevel = getLevel(oldTotal);
   const newLevel = getLevel(newTotal);
   if (oldLevel !== newLevel) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setToast(`✦ Nouveau niveau — ${newLevel} !`);
   }
 }
@@ -146,7 +149,7 @@ export default function VisionBoard() {
           {/* Rangée 1 */}
           <View style={styles.gridRow}>
             {/* Carrière */}
-            <Pressable style={[styles.cell, { backgroundColor: '#DDD0F8', borderColor: '#C4A8D4' }]} onPress={() => handlePickPhoto('carriere')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#DDD0F8', borderColor: '#C4A8D4' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('carriere'); }}>
               {photos['carriere'] && <Image source={{ uri: photos['carriere'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -166,7 +169,7 @@ export default function VisionBoard() {
             </Pressable>
 
             {/* Amour */}
-            <Pressable style={[styles.cell, { backgroundColor: '#F8D0D8', borderColor: '#E8A8B8' }]} onPress={() => handlePickPhoto('amour')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#F8D0D8', borderColor: '#E8A8B8' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('amour'); }}>
               {photos['amour'] && <Image source={{ uri: photos['amour'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -188,7 +191,7 @@ export default function VisionBoard() {
           {/* Rangée 2 */}
           <View style={styles.gridRow}>
             {/* Abondance */}
-            <Pressable style={[styles.cell, { backgroundColor: '#FDE8B0', borderColor: '#E8C860' }]} onPress={() => handlePickPhoto('abondance')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#FDE8B0', borderColor: '#E8C860' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('abondance'); }}>
               {photos['abondance'] && <Image source={{ uri: photos['abondance'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -208,7 +211,7 @@ export default function VisionBoard() {
             </Pressable>
 
             {/* Rêves */}
-            <Pressable style={[styles.cell, { backgroundColor: '#C4E8F0', borderColor: '#90C8D8' }]} onPress={() => handlePickPhoto('reves')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#C4E8F0', borderColor: '#90C8D8' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('reves'); }}>
               {photos['reves'] && <Image source={{ uri: photos['reves'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -231,7 +234,7 @@ export default function VisionBoard() {
           {/* Rangée 3 */}
           <View style={styles.gridRow}>
             {/* Voyages */}
-            <Pressable style={[styles.cell, { backgroundColor: '#C8E8C0', borderColor: '#A0C890' }]} onPress={() => handlePickPhoto('voyages')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#C8E8C0', borderColor: '#A0C890' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('voyages'); }}>
               {photos['voyages'] && <Image source={{ uri: photos['voyages'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -251,7 +254,7 @@ export default function VisionBoard() {
             </Pressable>
 
             {/* Santé */}
-            <Pressable style={[styles.cell, { backgroundColor: '#FFE4C8', borderColor: '#F0C090' }]} onPress={() => handlePickPhoto('sante')}>
+            <Pressable style={[styles.cell, { backgroundColor: '#FFE4C8', borderColor: '#F0C090' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('sante'); }}>
               {photos['sante'] && <Image source={{ uri: photos['sante'] }} style={styles.cellPhoto} />}
               <View style={styles.cellTop}>
                 <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
@@ -273,7 +276,7 @@ export default function VisionBoard() {
 
           {/* Rangée 4 — Famille pleine largeur */}
           <View style={[styles.gridRowFamille]}>
-            <Pressable style={[styles.cellFamille, { backgroundColor: '#E8F0D8', borderColor: '#C0D8A0' }]} onPress={() => handlePickPhoto('famille')}>
+            <Pressable style={[styles.cellFamille, { backgroundColor: '#E8F0D8', borderColor: '#C0D8A0' }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handlePickPhoto('famille'); }}>
               {photos['famille'] && <Image source={{ uri: photos['famille'] }} style={styles.cellPhoto} />}
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
                 <Circle cx="9" cy="7" r="3" stroke="#3A6A10" strokeWidth="1.2" fill="none" />
@@ -299,7 +302,7 @@ export default function VisionBoard() {
         <View style={styles.bottomBlock}>
           <Text style={styles.hintText}>Appuie sur une case pour ajouter ta photo</Text>
           {showFinishBtn && (
-            <Pressable style={styles.finishBtn} onPress={handleFinishCycle}>
+            <Pressable style={styles.finishBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleFinishCycle(); }}>
               <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
                 <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
@@ -312,20 +315,20 @@ export default function VisionBoard() {
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/home' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/home' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
           <Text style={styles.navLabel}>Accueil</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/profil' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/profil' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
           <Text style={styles.navLabel}>Profil</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/parametres' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />

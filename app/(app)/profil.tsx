@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -333,7 +334,7 @@ export default function Profil() {
         </View>
 
         {/* 6. Modifier prénom */}
-        <Pressable style={styles.actionRow} onPress={handleEditName}>
+        <Pressable style={styles.actionRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleEditName(); }}>
           <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
             <Path d="M14 2l4 4-10 10H4v-4L14 2z" stroke="#6B3FA0" strokeWidth="1.2" strokeLinejoin="round" />
           </Svg>
@@ -344,7 +345,7 @@ export default function Profil() {
         </Pressable>
 
         {/* 7. Recommencer */}
-        <Pressable style={styles.resetRow} onPress={handleReset}>
+        <Pressable style={styles.resetRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleReset(); }}>
           <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
             <Path d="M4 10a6 6 0 1 0 1-3.5" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" />
             <Path d="M4 4v3h3" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -362,7 +363,7 @@ export default function Profil() {
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/home' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/home' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
@@ -376,7 +377,7 @@ export default function Profil() {
           <Text style={[styles.navLabel, styles.navLabelActive]}>Profil</Text>
           <View style={styles.navDot} />
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/parametres' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />

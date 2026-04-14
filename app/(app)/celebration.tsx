@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -54,6 +55,7 @@ export default function Celebration() {
 
   // Chargement donnees
   useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     async function load() {
       await AsyncStorage.setItem('cycle_completed', 'true');
       const tomorrow = new Date();

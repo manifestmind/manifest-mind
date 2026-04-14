@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useState } from 'react';
 import {
   Pressable,
@@ -174,6 +175,7 @@ export default function Home() {
 
   function handleMainBtn() {
     if (cycleCompleted) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Opening est déjà crédité dans loadHome — naviguer vers la prochaine étape
     if (!stepStatus.affirmation) {
       router.push('/(app)/affirmation' as any);
@@ -346,7 +348,7 @@ export default function Home() {
 
         {/* Journal + Vision Board */}
         <View style={styles.cardsRow}>
-          <Pressable style={styles.card} onPress={() => router.push('/(app)/journal' as any)}>
+          <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/journal' as any); }}>
             <View style={[styles.cardIcon, { backgroundColor: '#DDD0F8' }]}>
               <Svg width={12} height={12} viewBox="0 0 20 20" fill="none">
                 <Rect x="3" y="2" width="14" height="16" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
@@ -359,7 +361,7 @@ export default function Home() {
             </View>
           </Pressable>
 
-          <Pressable style={styles.card} onPress={() => router.push('/(app)/vision-board' as any)}>
+          <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/vision-board' as any); }}>
             <View style={[styles.cardIcon, { backgroundColor: '#FDE8B0' }]}>
               <Svg width={12} height={12} viewBox="0 0 20 20" fill="none">
                 <Rect x="2" y="2" width="7" height="7" rx="1.5" fill="#E8C860" opacity="0.8" />
@@ -427,7 +429,7 @@ export default function Home() {
 
       {/* 5. NAVBAR avec safe area */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Pressable style={styles.navItem} onPress={() => router.replace('/(app)/home' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/home' as any); }}>
           <Svg width={24} height={24} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#6B3FA0" />
           </Svg>
@@ -435,7 +437,7 @@ export default function Home() {
           <View style={styles.navDot} />
         </Pressable>
 
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/profil' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/profil' as any); }}>
           <Svg width={24} height={24} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
@@ -443,7 +445,7 @@ export default function Home() {
           <Text style={styles.navLabel}>Profil</Text>
         </Pressable>
 
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/parametres' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
           <Svg width={24} height={24} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />

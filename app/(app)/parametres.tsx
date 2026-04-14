@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { getCycleContent } from '../../hooks/useCycleContent';
 import { useEffect, useState } from 'react';
@@ -269,7 +270,7 @@ export default function Parametres() {
                 <Pressable
                   key={l}
                   style={[styles.langPill, lang === l ? styles.langPillActive : styles.langPillInactive]}
-                  onPress={() => handleLanguage(l)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleLanguage(l); }}
                 >
                   <Text style={lang === l ? styles.langPillTextActive : styles.langPillTextInactive}>
                     {l.toUpperCase()}
@@ -309,7 +310,7 @@ export default function Parametres() {
               <Text style={styles.rowTitle}>Heure de rappel matin</Text>
               <Text style={styles.rowSub}>Affirmation + ouverture du cycle</Text>
             </View>
-            <Pressable onPress={() => setShowTimePicker(true)}>
+            <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowTimePicker(true); }}>
               <View style={styles.timeBadge}>
                 <Text style={styles.timeBadgeText}>{formatTime(reminderTime)}</Text>
               </View>
@@ -438,14 +439,14 @@ export default function Parametres() {
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/home' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/home' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
           <Text style={styles.navLabel}>Accueil</Text>
         </Pressable>
 
-        <Pressable style={styles.navItem} onPress={() => router.push('/(app)/profil' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/profil' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />

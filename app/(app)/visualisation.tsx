@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
@@ -38,12 +39,14 @@ function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: str
   const oldK = Math.floor(oldTotal / 1000);
   const newK = Math.floor(newTotal / 1000);
   if (newK > oldK && newTotal > 0) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
     return;
   }
   const oldLevel = getLevel(oldTotal);
   const newLevel = getLevel(newTotal);
   if (oldLevel !== newLevel) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setToast(`✦ Nouveau niveau — ${newLevel} !`);
   }
 }
@@ -154,6 +157,7 @@ export default function Visualisation() {
 
   async function handleValidate() {
     if (validated) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
     const status = statusRaw ? JSON.parse(statusRaw) : {};
@@ -182,6 +186,7 @@ export default function Visualisation() {
 
   async function handleSkip() {
     if (validated) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
     const status = statusRaw ? JSON.parse(statusRaw) : {};
@@ -326,21 +331,21 @@ export default function Visualisation() {
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-        <Pressable style={styles.navItem} onPress={() => router.replace('/(app)/home' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/home' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#6B3FA0" />
           </Svg>
           <Text style={[styles.navLabel, styles.navLabelActive]}>Accueil</Text>
           <View style={styles.navDot} />
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.replace('/(app)/profil' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/profil' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
           <Text style={styles.navLabel}>Profil</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.replace('/(app)/parametres' as any)}>
+        <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/parametres' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />
