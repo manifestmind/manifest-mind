@@ -55,15 +55,20 @@ export default function Profil() {
     visualisation: false, journal: false, vision_board: false,
   });
 
-  const breathe = useRef(new Animated.Value(1)).current;
-  const eyeAnim = useRef(new Animated.Value(0)).current;
-  const fadeUp1 = useRef(new Animated.Value(0)).current;
-  const fadeUp2 = useRef(new Animated.Value(0)).current;
-  const fadeUp3 = useRef(new Animated.Value(0)).current;
-  const fadeUp4 = useRef(new Animated.Value(0)).current;
+  const breathe       = useRef(new Animated.Value(1)).current;
+  const eyeAnim       = useRef(new Animated.Value(0)).current;
+  const fadeUp1       = useRef(new Animated.Value(0)).current;
+  const fadeUp2       = useRef(new Animated.Value(0)).current;
+  const fadeUp3       = useRef(new Animated.Value(0)).current;
+  const fadeUp4       = useRef(new Animated.Value(0)).current;
+  const gaugeAnnuelle = useRef(new Animated.Value(0)).current;
+  const gaugeCycle    = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(
     useCallback(() => {
+      gaugeAnnuelle.setValue(0);
+      gaugeCycle.setValue(0);
+
       async function load() {
         const name = await AsyncStorage.getItem('user_name') || '';
         setUserName(name);
@@ -89,6 +94,13 @@ export default function Profil() {
 
         const cpts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
         setCyclePoints(cpts);
+
+        setTimeout(() => {
+          Animated.parallel([
+            Animated.timing(gaugeAnnuelle, { toValue: pct / 100, duration: 1200, useNativeDriver: false }),
+            Animated.timing(gaugeCycle, { toValue: Math.min(cpts, 100) / 100, duration: 1000, useNativeDriver: false }),
+          ]).start();
+        }, 800);
 
         const statusRaw = await AsyncStorage.getItem('cycle_step_status');
         if (statusRaw) setStepStatus(JSON.parse(statusRaw));
@@ -134,10 +146,8 @@ export default function Profil() {
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
-  const levelPct   = progressPercent / 100;
-  const annualBarW = `${Math.max(0.5, (cycleNumber / 365) * 100)}%`;
-  const cycleBarW  = `${Math.min(100, cyclePoints)}%`;
-  const dotCol     = (on: boolean) => on ? '#C8E8C0' : '#E4DCD4';
+  const levelPct = progressPercent / 100;
+  const dotCol   = (on: boolean) => on ? '#C8E8C0' : '#E4DCD4';
   const textCol    = (on: boolean) => on ? '#3A6A20' : '#B0A898';
   const actionsOn  = stepStatus.action_easy && stepStatus.action_hard;
 
@@ -284,9 +294,9 @@ export default function Profil() {
             <Text style={styles.barValue}>Cycle {cycleNumber} / 365</Text>
           </View>
           <View style={styles.barTrackLarge}>
-            <View style={[styles.barFillLarge, { width: annualBarW as any }]}>
+            <Animated.View style={[styles.barFillLarge, { width: gaugeAnnuelle.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
               <View style={styles.barShineLarge} />
-            </View>
+            </Animated.View>
           </View>
           <View style={styles.levelsRow}>
             {(['Éveillé', 'Floraison', 'Rayonnant', 'Manifestant'] as const).map((lbl, i) => {
@@ -309,9 +319,9 @@ export default function Profil() {
             <Text style={styles.barValue}>{cyclePoints} / 100 pts</Text>
           </View>
           <View style={styles.barTrackSmall}>
-            <View style={[styles.barFillSmall, { width: cycleBarW as any }]}>
+            <Animated.View style={[styles.barFillSmall, { width: gaugeCycle.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
               <View style={styles.barShineSmall} />
-            </View>
+            </Animated.View>
           </View>
           <View style={styles.stepsRow}>
             <View style={styles.stepItem}>

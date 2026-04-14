@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 14 Avril 2026
-**État :** Animations eyeAnim + fadeUp validées sur toutes les pages ✅
+**État :** Animations globales + animations spéciales validées ✅
 
 ### Validé dans cette session
 - `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
@@ -176,7 +176,7 @@ app/
     journal.tsx      ✅          → Étape 6 cycle — journal de gratitude
     vision-board.tsx ✅          → Étape 7 cycle — vision board photos
     celebration.tsx  ✅          → Fin de cycle — points + détail étapes
-    profil.tsx       ⚠️ partiel  → photo, prénom, reset, jauge validés
+    profil.tsx       ✅          → photo, prénom, reset, jauges animées validées
     parametres.tsx   ✅          → Notifications, langue, abonnement, compte, légal
     pricing-upgrade.tsx ✅       → Changement abonnement depuis Paramètres (sans init cycle)
 
@@ -464,9 +464,27 @@ function goNext(route: string) {
 - vision-board : delays 200ms / 400ms / 600ms (page sans œil, animations plus tôt)
 - `useNativeDriver: true`
 
-#### Animations spécifiques celebration.tsx
-- `countAnim` : compteur 0→cyclePoints en 1500ms (`useNativeDriver: false`), déclenché 800ms après load
-- `b0–b6` : 7 badges étapes un par un, delay 1800ms + i×200ms, scale 0.85→1 + opacity
+#### Animations spéciales validées ✅
+
+**Jauge profil (profil.tsx)**
+- `gaugeAnnuelle` + `gaugeCycle` : deux `Animated.Value(0)` avec `useNativeDriver: false`
+- Reset `.setValue(0)` à chaque `useFocusEffect` (rechargement au retour sur page)
+- `Animated.parallel` déclenché 800ms après chargement des données
+- `gaugeAnnuelle` : `toValue: pct/100`, durée 1200ms
+- `gaugeCycle` : `toValue: Math.min(cpts,100)/100`, durée 1000ms
+- JSX : `Animated.View` avec `width: anim.interpolate({ inputRange:[0,1], outputRange:['0%','100%'] })`
+
+**Compteur points (celebration.tsx)**
+- `countAnim` : compteur 0→cyclePoints en 1500ms (`useNativeDriver: false`), `Easing.out(Easing.ease)`
+- Déclenché **600ms** après chargement des données
+- `displayPoints` state mis à jour via `addListener`
+
+**Badges étapes (celebration.tsx)**
+- `b0–b6` : 7 `useRef(new Animated.Value(0))` individuels (pas de hook en boucle)
+- `useEffect` **séparé** avec dépendance `[cyclePoints]` — se déclenche après chargement
+- Guard `if (cyclePoints === 0) return` — évite animation à vide au montage
+- Chaque badge : `opacity 0→1` + `translateY 8→0`, 300ms, delay `1800 + i×200ms`
+- `.setValue(0)` reset avant animation
 
 #### Règles animations (ne pas modifier)
 - **Zéro Reanimated** sauf welcome.tsx
@@ -500,7 +518,7 @@ function goNext(route: string) {
 
 2. ~~**Session animations globales**~~ ✅
    - eyeAnim + fadeUp validés sur toutes les pages
-   - countAnim + badges celebration validés
+   - Animations spéciales : jauge profil, compteur points, badges celebration validés
 
 3. **Session traductions EN/ES**
    - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`

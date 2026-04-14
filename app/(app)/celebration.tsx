@@ -86,7 +86,7 @@ export default function Celebration() {
           easing: Easing.out(Easing.ease),
           useNativeDriver: false,
         }).start();
-      }, 800);
+      }, 600);
 
       const bestSoFar = parseInt(await AsyncStorage.getItem('best_cycle_points') || '0');
       if (pts > bestSoFar) {
@@ -170,17 +170,23 @@ export default function Celebration() {
     fadeUp(fade2, 600);
     fadeUp(fade3, 900);
 
-    // Badges étapes 1 par 1 à partir de 1800ms
+    return () => { ids.forEach(clearTimeout); };
+  }, []);
+
+  // Badges étapes 1 par 1 — dépend de cyclePoints (déclenché après chargement)
+  useEffect(() => {
+    if (cyclePoints === 0) return;
     const badgeAnims = [b0, b1, b2, b3, b4, b5, b6];
+    const ids: ReturnType<typeof setTimeout>[] = [];
     badgeAnims.forEach((bAnim, i) => {
+      bAnim.setValue(0);
       const t = setTimeout(() => {
         Animated.timing(bAnim, { toValue: 1, duration: 300, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
       }, 1800 + i * 200);
       ids.push(t);
     });
-
     return () => { ids.forEach(clearTimeout); };
-  }, []);
+  }, [cyclePoints]);
 
   // Styles animes
   const orbStyle = (anim: Animated.Value) => ({
@@ -291,7 +297,7 @@ export default function Celebration() {
                 return (
                   <Animated.View key={step.key} style={[styles.stepRow, {
                     opacity: bAnim,
-                    transform: [{ scale: bAnim.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
+                    transform: [{ translateY: bAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
                   }]}>
                     <Text style={styles.stepLabel}>{step.label}</Text>
                     {(earnedPoints[step.key] ?? 0) > 0 ? (
