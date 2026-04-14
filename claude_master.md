@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
-**Dernière mise à jour :** 13 Avril 2026
-**État :** Design + logique validés sur toutes les pages ✅
+**Dernière mise à jour :** 14 Avril 2026
+**État :** Animations eyeAnim + fadeUp validées sur toutes les pages ✅
 
 ### Validé dans cette session
 - `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
@@ -31,7 +31,7 @@
 | app/(app)/journal.tsx | ✅ Validé (design + logique) |
 | app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
 | app/(app)/celebration.tsx | ✅ Validé (design + logique) |
-| app/(app)/profil.tsx | ⚠️ Validé partiellement (voir note ci-dessous) |
+| app/(app)/profil.tsx | ✅ Validé |
 | app/(app)/parametres.tsx | ✅ Validé (design + logique) |
 | app/(app)/pricing-upgrade.tsx | ✅ Validé |
 
@@ -430,51 +430,56 @@ function goNext(route: string) {
 
 ---
 
-## PROFIL.TSX — VALIDATION PARTIELLE ⚠️
+## PROFIL.TSX — VALIDÉ ✅
 
-### Validé ✅
 - Photo de profil (expo-image-picker, AsyncStorage `profile_photo`)
 - Modifier prénom → navigation vers `name.tsx?edit=true` → retour profil
 - Reset complet (Alert + AsyncStorage.getAllKeys + multiRemove + journal_cycle_*)
 - Affichage prénom + niveau + jauge progression
-
-### À retester après session contenu JSON
-- `best_cycle_points` — stat "Meilleur cycle"
-- Moyenne par cycle (`avg = points_total / cyclesCompleted`)
-- `CongratulationsToast` — seuils 1000 pts et changements de niveau
-- Compteur `cyclesCompleted` réel (basé sur historique réel)
+- `breathe` animation loop (scaleY 0.93↔1, Easing.inOut)
+- eyeAnim wrapper outer + breathe wrapper inner
+- fadeUp4 blocs : carte identité / 2 jauges / stats 4 cases / actionRow+resetRow
 
 ---
 
-## SESSION DYNAMISATION — À VENIR
+## SESSION DYNAMISATION
 
-### Étape 1 — Haptique (expo-haptics)
-- Vibration douce sur tous les boutons
-- Vibration validation étape complétée
-- Vibration célébration fin de cycle
-- Désactivable depuis les paramètres
+### Étape 1 — Haptique (expo-haptics) ✅ VALIDÉE
+- TYPE1 `ImpactFeedbackStyle.Light` : boutons secondaires, navbar, skip
+- TYPE2 `ImpactFeedbackStyle.Medium` : boutons de validation d'étape
+- TYPE3 `NotificationFeedbackType.Success` : milestones (1000 pts, changement de niveau), celebration.tsx
+- Appliqué sur toutes les pages : splash, home, affirmation, action, visualisation, journal, vision-board, celebration, profil, parametres
 
-### Étape 2 — Animations globales
-- Œil qui s'ouvre à l'arrivée sur chaque page (Animated RN)
-- fadeUp cohérent partout
-- Migrer welcome.tsx Reanimated → Animated RN en même temps
-- Jauge profil se remplit progressivement
-- Points comptent de 0 à X dans celebration
-- Badges apparaissent un par un
+### Étape 2 — Animations globales ✅ VALIDÉE
 
-### Étape 3 — Transitions entre pages
+#### eyeAnim — Œil s'ouvre au chargement
+- `scaleY: 0→1` + `opacity: 0→1`, durée 1200ms, delay 100ms
+- Appliqué sur toutes les pages avec un œil SVG (toutes sauf vision-board)
+- Pages avec breathe existant (profil, celebration) : wrapper outer `eyeAnim` + inner `breathe`
+- `useNativeDriver: true`
+
+#### fadeUp — Blocs apparaissent en remontant
+- `opacity: 0→1` + `translateY: 14→0`, durée 500ms
+- Delays : 400ms / 600ms / 800ms / 1000ms selon le bloc
+- vision-board : delays 200ms / 400ms / 600ms (page sans œil, animations plus tôt)
+- `useNativeDriver: true`
+
+#### Animations spécifiques celebration.tsx
+- `countAnim` : compteur 0→cyclePoints en 1500ms (`useNativeDriver: false`), déclenché 800ms après load
+- `b0–b6` : 7 badges étapes un par un, delay 1800ms + i×200ms, scale 0.85→1 + opacity
+
+#### Règles animations (ne pas modifier)
+- **Zéro Reanimated** sauf welcome.tsx
+- **Zéro `Animated.delay()`** — `setTimeout` uniquement pour tous les délais
+- `Animated` RN uniquement partout ailleurs
+
+### Étape 3 — Transitions entre pages (à venir)
 - Fondu enchaîné entre toutes les pages
 - Glissement horizontal dans le flux (Affirmation → Action → Visualisation)
 - Fondu vers le haut pour celebration
 
-### Étape 4 — Thème visuel par cycle
-- `couleur_principale` et `couleur_fond` du JSON utilisées pour teinter les orbes et accents selon le cycle
-- Pas toute l'interface — juste les éléments décoratifs
-
-### Règles animations
-- **Zéro Reanimated** sauf welcome.tsx jusqu'à la migration
-- **Zéro `Animated.delay()`** — utiliser `setTimeout` pour tous les délais
-- `Animated` RN uniquement partout ailleurs
+### Étape 4 — Thème visuel par cycle (à venir)
+- `couleur_principale` et `couleur_fond` du JSON pour teinter les orbes et accents selon le cycle
 
 ### Composants UI validés
 | Composant | Durée | Notes |
@@ -493,12 +498,11 @@ function goNext(route: string) {
    - `parametres.tsx` : notification affirmation = contenu réel du cycle en cours
    - Clé technique `jour_X` ≠ mot affiché "Cycle X" — règle confirmée
 
-2. **Session animations globales**
-   - Œil animé cohérent sur toutes les pages
-   - FadeUp cohérent sur les blocs contenus
-   - Migrer Reanimated → Animated RN là où c'est encore présent
+2. ~~**Session animations globales**~~ ✅
+   - eyeAnim + fadeUp validés sur toutes les pages
+   - countAnim + badges celebration validés
 
-2. **Session traductions EN/ES**
+3. **Session traductions EN/ES**
    - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`
    - Lire `user_language` au chargement pour sélectionner le bon fichier
 

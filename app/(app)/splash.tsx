@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,18 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 export default function Splash() {
   const router = useRouter();
   const [toast, setToast] = useState('');
+  const eyeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      Animated.timing(eyeAnim, {
+        toValue: 1,
+        duration: 1200,
+        useNativeDriver: true,
+      }).start();
+    }, 100);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     async function initSplash() {
@@ -63,28 +76,30 @@ export default function Splash() {
 
         {/* Œil SVG */}
         <View style={styles.eyeBlock}>
-          <Svg width={180} height={138} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
-            <Defs>
-              <ClipPath id="sc1">
-                <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
-              </ClipPath>
-            </Defs>
-            <Ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" strokeWidth="0.4" opacity="0.5" />
-            <Ellipse cx="28" cy="22" rx="17" ry="11" fill="none" stroke="#9B72C8" strokeWidth="0.3" opacity="0.3" />
-            <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
-            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#sc1)" />
-            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#sc1)" />
-            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#sc1)" />
-            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#sc1)" />
-            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#sc1)" />
-            <Circle cx="25.5" cy="23.5" r="0.6" fill="white" opacity="0.5" clipPath="url(#sc1)" />
-            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#sc1)" />
-            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#sc1)" />
-            <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
-            <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
-            <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-            <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-          </Svg>
+          <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
+            <Svg width={180} height={138} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
+              <Defs>
+                <ClipPath id="sc1">
+                  <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
+                </ClipPath>
+              </Defs>
+              <Ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" strokeWidth="0.4" opacity="0.5" />
+              <Ellipse cx="28" cy="22" rx="17" ry="11" fill="none" stroke="#9B72C8" strokeWidth="0.3" opacity="0.3" />
+              <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
+              <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#sc1)" />
+              <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#sc1)" />
+              <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#sc1)" />
+              <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#sc1)" />
+              <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#sc1)" />
+              <Circle cx="25.5" cy="23.5" r="0.6" fill="white" opacity="0.5" clipPath="url(#sc1)" />
+              <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#sc1)" />
+              <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#sc1)" />
+              <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
+              <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+              <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+              <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+            </Svg>
+          </Animated.View>
 
           <Text style={styles.appName}>ManifestMind</Text>
           <Text style={styles.tagline}>Bien-être & Intentions</Text>

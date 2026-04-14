@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   Pressable,
   StyleSheet,
@@ -41,6 +42,22 @@ function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: str
 export default function VisionBoard() {
   const insets = useSafeAreaInsets();
   const { fromCycle } = useLocalSearchParams();
+  const fadeUp1 = useRef(new Animated.Value(0)).current;
+  const fadeUp2 = useRef(new Animated.Value(0)).current;
+  const fadeUp3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      Animated.timing(fadeUp1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 200);
+    const t2 = setTimeout(() => {
+      Animated.timing(fadeUp2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 400);
+    const t3 = setTimeout(() => {
+      Animated.timing(fadeUp3, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 600);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
 
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
   const [toast, setToast] = useState('');
@@ -132,7 +149,7 @@ export default function VisionBoard() {
       <View style={styles.content}>
 
         {/* Titre + Badge */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>Vision Board</Text>
             <View style={styles.ptsBadge}>
@@ -141,10 +158,10 @@ export default function VisionBoard() {
           </View>
 
           <View style={styles.separator} />
-        </View>
+        </Animated.View>
 
         {/* Grille */}
-        <View style={styles.grid}>
+        <Animated.View style={[styles.grid, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
 
           {/* Rangée 1 */}
           <View style={styles.gridRow}>
@@ -296,10 +313,10 @@ export default function VisionBoard() {
             </Pressable>
           </View>
 
-        </View>
+        </Animated.View>
 
         {/* Texte bas + bouton contextuel */}
-        <View style={styles.bottomBlock}>
+        <Animated.View style={[styles.bottomBlock, { opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <Text style={styles.hintText}>Appuie sur une case pour ajouter ta photo</Text>
           {showFinishBtn && (
             <Pressable style={styles.finishBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleFinishCycle(); }}>
@@ -309,7 +326,7 @@ export default function VisionBoard() {
               <Text style={styles.finishBtnText}>Terminer mon cycle ✦</Text>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
 
       </View>
 

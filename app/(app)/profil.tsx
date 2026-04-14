@@ -56,6 +56,11 @@ export default function Profil() {
   });
 
   const breathe = useRef(new Animated.Value(1)).current;
+  const eyeAnim = useRef(new Animated.Value(0)).current;
+  const fadeUp1 = useRef(new Animated.Value(0)).current;
+  const fadeUp2 = useRef(new Animated.Value(0)).current;
+  const fadeUp3 = useRef(new Animated.Value(0)).current;
+  const fadeUp4 = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(
     useCallback(() => {
@@ -108,6 +113,25 @@ export default function Profil() {
         Animated.timing(breathe, { toValue: 1,    duration: 2000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
       ])
     ).start();
+  }, []);
+
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      Animated.timing(eyeAnim, { toValue: 1, duration: 1200, useNativeDriver: true }).start();
+    }, 100);
+    const t1 = setTimeout(() => {
+      Animated.timing(fadeUp1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 400);
+    const t2 = setTimeout(() => {
+      Animated.timing(fadeUp2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 600);
+    const t3 = setTimeout(() => {
+      Animated.timing(fadeUp3, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 800);
+    const t4 = setTimeout(() => {
+      Animated.timing(fadeUp4, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 1000);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
   const levelPct   = progressPercent / 100;
@@ -176,6 +200,7 @@ export default function Profil() {
 
         {/* 1. Œil + titre */}
         <View style={styles.header}>
+          <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
           <Animated.View style={{ transform: [{ scaleY: breathe }] }}>
             <Svg width={130} height={100} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
               <Defs>
@@ -197,11 +222,12 @@ export default function Profil() {
               <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
             </Svg>
           </Animated.View>
+          </Animated.View>
           <Text style={[styles.title, { marginTop: -18 }]}>Mon Profil</Text>
         </View>
 
         {/* 2. Carte identité */}
-        <View style={[styles.card, { paddingVertical: 16, paddingHorizontal: 16 }]}>
+        <Animated.View style={[styles.card, { paddingVertical: 16, paddingHorizontal: 16 }, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
             <Pressable onPress={handlePickPhoto} style={{ position: 'relative' }}>
               <View style={{
@@ -248,9 +274,10 @@ export default function Profil() {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* 3. Progression annuelle */}
+        {/* 3. Progression annuelle + Cycle en cours */}
+        <Animated.View style={{ gap: 5, opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
         <View style={styles.card}>
           <View style={styles.barHeader}>
             <Text style={[styles.barLabel, { color: '#C89A30' }]}>Progression</Text>
@@ -307,9 +334,10 @@ export default function Profil() {
             </View>
           </View>
         </View>
+        </Animated.View>
 
         {/* 5. Grille 4 stats */}
-        <View style={{ gap: 5, flexShrink: 0 }}>
+        <Animated.View style={{ gap: 5, flexShrink: 0, opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <View style={{ flexDirection: 'row', gap: 5 }}>
             <View style={[styles.statCell, { flex: 1 }]}>
               <Text style={styles.statLabel}>Total points</Text>
@@ -331,9 +359,10 @@ export default function Profil() {
               <Text style={styles.statValue}>{cyclesCompleted > 0 ? avgPoints + ' pts' : '—'}</Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* 6. Modifier prénom */}
+        {/* 6. Modifier prénom + Recommencer */}
+        <Animated.View style={{ gap: 5, opacity: fadeUp4, transform: [{ translateY: fadeUp4.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
         <Pressable style={styles.actionRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleEditName(); }}>
           <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
             <Path d="M14 2l4 4-10 10H4v-4L14 2z" stroke="#6B3FA0" strokeWidth="1.2" strokeLinejoin="round" />
@@ -358,6 +387,7 @@ export default function Profil() {
             <Path d="M4 2l4 4-4 4" stroke="#A0C890" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
         </Pressable>
+        </Animated.View>
 
       </View>
 

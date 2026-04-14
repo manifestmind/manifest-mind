@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
@@ -54,6 +54,26 @@ function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: str
 export default function Affirmation() {
   const insets = useSafeAreaInsets();
   const [cycleNumber, setCycleNumber] = useState(1);
+  const eyeAnim = useRef(new Animated.Value(0)).current;
+  const fadeUp1 = useRef(new Animated.Value(0)).current;
+  const fadeUp2 = useRef(new Animated.Value(0)).current;
+  const fadeUp3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      Animated.timing(eyeAnim, { toValue: 1, duration: 1200, useNativeDriver: true }).start();
+    }, 100);
+    const t1 = setTimeout(() => {
+      Animated.timing(fadeUp1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 400);
+    const t2 = setTimeout(() => {
+      Animated.timing(fadeUp2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 600);
+    const t3 = setTimeout(() => {
+      Animated.timing(fadeUp3, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 800);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
   const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
@@ -138,25 +158,27 @@ export default function Affirmation() {
 
         {/* Œil + Titre */}
         <View style={styles.header}>
-          <Svg width={116} height={89} viewBox="0 0 56 44">
-            <Defs>
-              <ClipPath id="ac1">
-                <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
-              </ClipPath>
-            </Defs>
-            <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
-            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#ac1)" />
-            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#ac1)" />
-            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#ac1)" />
-            <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
-            <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
-            <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-            <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-          </Svg>
+          <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
+            <Svg width={116} height={89} viewBox="0 0 56 44">
+              <Defs>
+                <ClipPath id="ac1">
+                  <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
+                </ClipPath>
+              </Defs>
+              <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
+              <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#ac1)" />
+              <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#ac1)" />
+              <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#ac1)" />
+              <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#ac1)" />
+              <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#ac1)" />
+              <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#ac1)" />
+              <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#ac1)" />
+              <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
+              <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+              <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+              <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+            </Svg>
+          </Animated.View>
           <Text style={styles.title}>Affirmation</Text>
         </View>
 
@@ -174,13 +196,13 @@ export default function Affirmation() {
         </View>
 
         {/* Badge thème */}
-        <View style={styles.themeBadge}>
+        <Animated.View style={[styles.themeBadge, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <View style={styles.themeDot} />
           <Text style={styles.themeBadgeText}>✦ Thème · {content?.theme}</Text>
-        </View>
+        </Animated.View>
 
         {/* Carte affirmation */}
-        <View style={styles.card}>
+        <Animated.View style={[styles.card, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <View
             style={styles.cardBody}
             onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}
@@ -201,10 +223,10 @@ export default function Affirmation() {
               {'Répète cette phrase à voix haute,\nplusieurs fois, avec sincérité.'}
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Bouton + passer */}
-        <View style={styles.bottomBlock}>
+        <Animated.View style={[styles.bottomBlock, { opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <Pressable
             style={[styles.validateBtn, validated && { opacity: 0.5 }]}
             onPress={handleValidate}
@@ -220,7 +242,7 @@ export default function Affirmation() {
               <Text style={styles.skipText}>Passer cette étape sans points</Text>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
 
       </View>
 

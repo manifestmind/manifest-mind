@@ -4,8 +4,9 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { getCycleContent } from '../../hooks/useCycleContent';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Alert,
   Linking,
   Platform,
@@ -36,6 +37,12 @@ function Toggle({ on }: { on: boolean }) {
 
 export default function Parametres() {
   const insets = useSafeAreaInsets();
+  const eyeAnim = useRef(new Animated.Value(0)).current;
+  const fadeUp1 = useRef(new Animated.Value(0)).current;
+  const fadeUp2 = useRef(new Animated.Value(0)).current;
+  const fadeUp3 = useRef(new Animated.Value(0)).current;
+  const fadeUp4 = useRef(new Animated.Value(0)).current;
+
   const [lang, setLang] = useState<'fr' | 'en' | 'es'>('fr');
   const [notifAffirmation, setNotifAffirmation] = useState(true);
   const [notifRappel, setNotifRappel] = useState(false);
@@ -45,6 +52,25 @@ export default function Parametres() {
     return d;
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
+
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      Animated.timing(eyeAnim, { toValue: 1, duration: 1200, useNativeDriver: true }).start();
+    }, 100);
+    const t1 = setTimeout(() => {
+      Animated.timing(fadeUp1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 400);
+    const t2 = setTimeout(() => {
+      Animated.timing(fadeUp2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 600);
+    const t3 = setTimeout(() => {
+      Animated.timing(fadeUp3, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 800);
+    const t4 = setTimeout(() => {
+      Animated.timing(fadeUp4, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 1000);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, []);
 
   // ── Load persisted settings ──────────────────────────────────────────────
   useEffect(() => {
@@ -232,30 +258,32 @@ export default function Parametres() {
 
         {/* 1. ŒIL + TITRE */}
         <View style={styles.header}>
-          <Svg width={120} height={92} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
-            <Defs>
-              <ClipPath id="prc1">
-                <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
-              </ClipPath>
-            </Defs>
-            <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
-            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#prc1)" />
-            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#prc1)" />
-            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#prc1)" />
-            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#prc1)" />
-            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#prc1)" />
-            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#prc1)" />
-            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#prc1)" />
-            <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
-            <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
-            <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-            <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-          </Svg>
+          <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
+            <Svg width={120} height={92} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
+              <Defs>
+                <ClipPath id="prc1">
+                  <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
+                </ClipPath>
+              </Defs>
+              <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
+              <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#prc1)" />
+              <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#prc1)" />
+              <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#prc1)" />
+              <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#prc1)" />
+              <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#prc1)" />
+              <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#prc1)" />
+              <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#prc1)" />
+              <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
+              <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+              <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+              <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+            </Svg>
+          </Animated.View>
           <Text style={styles.title}>Paramètres</Text>
         </View>
 
         {/* 2. LANGUE */}
-        <View>
+        <Animated.View style={{ opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>Langue</Text>
           <View style={[styles.rowBase, styles.rowSolo]}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
@@ -279,10 +307,10 @@ export default function Parametres() {
               ))}
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* 3. NOTIFICATIONS */}
-        <View>
+        <Animated.View style={{ opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>Notifications</Text>
 
           {/* Ligne 1 — Affirmation du cycle */}
@@ -331,10 +359,10 @@ export default function Parametres() {
               <Toggle on={notifRappel} />
             </Pressable>
           </View>
-        </View>
+        </Animated.View>
 
         {/* 4. ABONNEMENT */}
-        <View>
+        <Animated.View style={{ opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>Abonnement</Text>
 
           {/* Ligne 1 — Plan actuel */}
@@ -363,9 +391,10 @@ export default function Parametres() {
             <Text style={[styles.rowTitle, { flex: 1 }]}>Restaurer les achats</Text>
             <Chevron />
           </Pressable>
-        </View>
+        </Animated.View>
 
-        {/* 5. COMPTE */}
+        {/* 5. COMPTE + LÉGAL + VERSION */}
+        <Animated.View style={{ gap: 8, opacity: fadeUp4, transform: [{ translateY: fadeUp4.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
         <View>
           <Text style={styles.sectionLabel}>Compte</Text>
 
@@ -423,6 +452,7 @@ export default function Parametres() {
           <Text style={styles.versionText}>ManifestMind v1.0.0</Text>
           <Text style={styles.versionTagline}>Fait avec ✦ pour ton épanouissement</Text>
         </View>
+        </Animated.View>
 
       </ScrollView>
 

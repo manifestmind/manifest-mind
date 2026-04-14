@@ -27,8 +27,22 @@ export default function Celebration() {
   const insets = useSafeAreaInsets();
 
   const [cyclePoints, setCyclePoints] = useState(0);
+  const [displayPoints, setDisplayPoints] = useState(0);
   const [cycleNumber, setCycleNumber] = useState(1);
   const [earnedPoints, setEarnedPoints] = useState<Record<string, number>>({});
+
+  // Eye open + count
+  const eyeAnim  = useRef(new Animated.Value(0)).current;
+  const countAnim = useRef(new Animated.Value(0)).current;
+
+  // Badges étapes
+  const b0 = useRef(new Animated.Value(0)).current;
+  const b1 = useRef(new Animated.Value(0)).current;
+  const b2 = useRef(new Animated.Value(0)).current;
+  const b3 = useRef(new Animated.Value(0)).current;
+  const b4 = useRef(new Animated.Value(0)).current;
+  const b5 = useRef(new Animated.Value(0)).current;
+  const b6 = useRef(new Animated.Value(0)).current;
 
   // Orbes
   const orb1 = useRef(new Animated.Value(0)).current;
@@ -64,6 +78,15 @@ export default function Celebration() {
 
       const pts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
       setCyclePoints(pts);
+      countAnim.addListener(({ value }) => setDisplayPoints(Math.round(value)));
+      setTimeout(() => {
+        Animated.timing(countAnim, {
+          toValue: pts,
+          duration: 1500,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: false,
+        }).start();
+      }, 800);
 
       const bestSoFar = parseInt(await AsyncStorage.getItem('best_cycle_points') || '0');
       if (pts > bestSoFar) {
@@ -137,9 +160,24 @@ export default function Celebration() {
       ids.push(t);
     };
 
-    fadeUp(fade1, 100);
-    fadeUp(fade2, 300);
-    fadeUp(fade3, 500);
+    // eyeAnim ouverture
+    const te = setTimeout(() => {
+      Animated.timing(eyeAnim, { toValue: 1, duration: 1200, useNativeDriver: true }).start();
+    }, 100);
+    ids.push(te);
+
+    fadeUp(fade1, 400);
+    fadeUp(fade2, 600);
+    fadeUp(fade3, 900);
+
+    // Badges étapes 1 par 1 à partir de 1800ms
+    const badgeAnims = [b0, b1, b2, b3, b4, b5, b6];
+    badgeAnims.forEach((bAnim, i) => {
+      const t = setTimeout(() => {
+        Animated.timing(bAnim, { toValue: 1, duration: 300, easing: Easing.out(Easing.ease), useNativeDriver: true }).start();
+      }, 1800 + i * 200);
+      ids.push(t);
+    });
 
     return () => { ids.forEach(clearTimeout); };
   }, []);
@@ -202,6 +240,7 @@ export default function Celebration() {
             <Animated.View style={[styles.ring, { width: 112, height: 112, borderRadius: 56, top: 4,   left: 24, borderColor: 'rgba(155,114,200,0.2)' }, ringStyle(ring2)]} />
 
             {/* Oeil SVG */}
+            <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
             <Animated.View style={[styles.eyeWrapper, { transform: [{ scaleY: breatheScaleY }] }]}>
               <Svg width={110} height={85} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
                 <Defs>
@@ -223,6 +262,7 @@ export default function Celebration() {
                 <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
               </Svg>
             </Animated.View>
+            </Animated.View>
           </View>
 
           <Text style={styles.cycleTitle}>Cycle {cycleNumber} compl&#233;t&#233; &#10086;</Text>
@@ -236,7 +276,7 @@ export default function Celebration() {
             <View style={{ alignItems: 'center' }}>
               <Text style={styles.cardLabel}>Points gagn&#233;s ce cycle</Text>
               <Animated.View style={{ opacity: shimmerOpacity }}>
-                <Text style={styles.totalPts}>{cyclePoints}</Text>
+                <Text style={styles.totalPts}>{displayPoints}</Text>
               </Animated.View>
               <Text style={styles.totalSub}>sur 100 possibles</Text>
             </View>
@@ -245,20 +285,27 @@ export default function Celebration() {
 
             {/* Detail etapes */}
             <View style={{ gap: 3 }}>
-              {STEPS_CONFIG.map((step) => (
-                <View key={step.key} style={styles.stepRow}>
-                  <Text style={styles.stepLabel}>{step.label}</Text>
-                  {(earnedPoints[step.key] ?? 0) > 0 ? (
-                    <View style={styles.badgePurple}>
-                      <Text style={styles.badgePurpleText}>+{step.pts} pts</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.badgeGrey}>
-                      <Text style={styles.badgeGreyText}>pass&#233;e</Text>
-                    </View>
-                  )}
-                </View>
-              ))}
+              {STEPS_CONFIG.map((step, index) => {
+                const badgeAnims = [b0, b1, b2, b3, b4, b5, b6];
+                const bAnim = badgeAnims[index];
+                return (
+                  <Animated.View key={step.key} style={[styles.stepRow, {
+                    opacity: bAnim,
+                    transform: [{ scale: bAnim.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
+                  }]}>
+                    <Text style={styles.stepLabel}>{step.label}</Text>
+                    {(earnedPoints[step.key] ?? 0) > 0 ? (
+                      <View style={styles.badgePurple}>
+                        <Text style={styles.badgePurpleText}>+{step.pts} pts</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.badgeGrey}>
+                        <Text style={styles.badgeGreyText}>pass&#233;e</Text>
+                      </View>
+                    )}
+                  </Animated.View>
+                );
+              })}
             </View>
           </View>
         </Animated.View>

@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Pressable,
   StyleSheet,
   Text,
@@ -59,6 +60,26 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState('');
   const [cycleNumber, setCycleNumber] = useState(1);
+  const eyeAnim = useRef(new Animated.Value(0)).current;
+  const fadeUp1 = useRef(new Animated.Value(0)).current;
+  const fadeUp2 = useRef(new Animated.Value(0)).current;
+  const fadeUp3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      Animated.timing(eyeAnim, { toValue: 1, duration: 1200, useNativeDriver: true }).start();
+    }, 100);
+    const t1 = setTimeout(() => {
+      Animated.timing(fadeUp1, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 400);
+    const t2 = setTimeout(() => {
+      Animated.timing(fadeUp2, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 600);
+    const t3 = setTimeout(() => {
+      Animated.timing(fadeUp3, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    }, 800);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
   const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [level, setLevel] = useState('Éveillé');
@@ -245,25 +266,27 @@ export default function Home() {
         {/* Œil + Bonjour */}
         <View style={styles.headerBlock}>
           {/* 1. ŒIL +30% : 64×1.3=83, 49×1.3=64 */}
-          <Svg width={160} height={123} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
-            <Defs>
-              <ClipPath id="hc1">
-                <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
-              </ClipPath>
-            </Defs>
-            <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
-            <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#hc1)" />
-            <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#hc1)" />
-            <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#hc1)" />
-            <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#hc1)" />
-            <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#hc1)" />
-            <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#hc1)" />
-            <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#hc1)" />
-            <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
-            <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
-            <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-            <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
-          </Svg>
+          <Animated.View style={{ transform: [{ scaleY: eyeAnim }], opacity: eyeAnim }}>
+            <Svg width={160} height={123} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
+              <Defs>
+                <ClipPath id="hc1">
+                  <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
+                </ClipPath>
+              </Defs>
+              <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0" />
+              <Circle cx="28" cy="22" r="10.5" fill="#DDD0F8" clipPath="url(#hc1)" />
+              <Circle cx="28" cy="22" r="8" fill="#9B72C8" opacity="0.75" clipPath="url(#hc1)" />
+              <Circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity="0.9" clipPath="url(#hc1)" />
+              <Circle cx="28" cy="22" r="3" fill="#1A0E30" clipPath="url(#hc1)" />
+              <Circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity="0.9" clipPath="url(#hc1)" />
+              <Circle cx="28" cy="15.5" r="1.8" fill="#EAC870" clipPath="url(#hc1)" />
+              <Circle cx="28" cy="15.5" r="0.8" fill="#C89A30" clipPath="url(#hc1)" />
+              <Path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" strokeWidth="1.4" strokeLinecap="round" />
+              <Path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" strokeWidth="0.9" strokeLinecap="round" opacity="0.5" />
+              <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+              <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
+            </Svg>
+          </Animated.View>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.bonjour}>Bienvenue</Text>
             <Text style={styles.prenom}>{userName || 'toi'}</Text>
@@ -278,7 +301,7 @@ export default function Home() {
         </View>
 
         {/* 3. JAUGE PROGRESSION */}
-        <View style={styles.gaugeBlock}>
+        <Animated.View style={[styles.gaugeBlock, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           {/* Ligne 1 : PROGRESSION + badge niveau */}
           <View style={styles.gaugeHeader}>
             <Text style={styles.gaugeLabel}>Progression · Cycle {cycleNumber}</Text>
@@ -326,10 +349,10 @@ export default function Home() {
               );
             })}
           </View>
-        </View>
+        </Animated.View>
 
         {/* BOUTON PRINCIPAL — 3 états */}
-        <View style={styles.mainBtnWrap}>
+        <Animated.View style={[styles.mainBtnWrap, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           {cycleCompleted ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>
               <Text style={styles.mainBtnText}>✦ Prochain cycle à minuit</Text>
@@ -344,10 +367,10 @@ export default function Home() {
               </Text>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
 
         {/* Journal + Vision Board */}
-        <View style={styles.cardsRow}>
+        <Animated.View style={[styles.cardsRow, { opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <Pressable style={styles.card} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/journal' as any); }}>
             <View style={[styles.cardIcon, { backgroundColor: '#DDD0F8' }]}>
               <Svg width={12} height={12} viewBox="0 0 20 20" fill="none">
@@ -375,7 +398,7 @@ export default function Home() {
               <Text style={[styles.cardBadgeText, { color: '#9A6A00' }]}>+5 pts/cycle</Text>
             </View>
           </Pressable>
-        </View>
+        </Animated.View>
 
         {/* Puces fonctionnalités — informatif uniquement */}
         <View style={styles.featBlock} pointerEvents="none">
