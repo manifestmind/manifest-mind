@@ -7,264 +7,65 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 @keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
-@keyframes irisAppear{0%,35%{transform:scale(0);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
-@keyframes pupilAppear{0%,50%{transform:scale(0);opacity:0}80%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
-@keyframes refletAppear{0%,65%{opacity:0}100%{opacity:1}}
-@keyframes thirdEye{0%,70%{opacity:0;transform:scale(0)}85%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:.9}}
 @keyframes dashDraw{to{stroke-dashoffset:0}}
 @keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes softPulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.45;transform:scale(1.03)}}
-
 *{margin:0;padding:0;box-sizing:border-box}
-
-body{
-  background:#E8E0D8;
-  color:#3A3530;
-  font-family:'Jost',sans-serif;
-  font-weight:300;
-  line-height:1.8;
-  min-height:100vh;
-}
-
-.hero{
-  background:#F0EAE0;
-  border-bottom:0.5px solid #D4C4B8;
-  padding:60px 32px 52px;
-  text-align:center;
-  position:relative;
-  overflow:hidden;
-}
-.orb{
-  position:absolute;
-  border-radius:50%;
-  animation:softPulse 6s ease-in-out infinite;
-}
+body{background:#E8E0D8;color:#3A3530;font-family:'Jost',sans-serif;font-weight:300;line-height:1.8;min-height:100vh;}
+.hero{background:#F0EAE0;border-bottom:0.5px solid #D4C4B8;padding:60px 32px 52px;text-align:center;position:relative;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;}
 .hero-inner{position:relative;z-index:1}
-.logo-wrap{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  margin-bottom:24px;
-  animation:fadeUp .6s ease .1s both;
-}
-.app-name{
-  font-family:'Cormorant Garamond',serif;
-  font-style:italic;
-  font-weight:400;
-  font-size:1.3rem;
-  color:#2A2520;
-  letter-spacing:.04em;
-}
-.app-tagline{
-  font-family:'Jost',sans-serif;
-  font-size:0.65rem;
-  font-weight:300;
-  color:#7A7068;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-}
-.hero h1{
-  font-family:'Cormorant Garamond',serif;
-  font-style:italic;
-  font-weight:300;
-  font-size:2.2rem;
-  color:#2A2520;
-  letter-spacing:.02em;
-  margin-bottom:8px;
-  animation:fadeUp .6s ease .3s both;opacity:0;
-}
-.hero .subtitle{
-  font-size:0.72rem;
-  font-weight:500;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  color:#9A8878;
-  animation:fadeUp .6s ease .5s both;opacity:0;
-}
-.update-badge{
-  display:inline-block;
-  margin-top:14px;
-  background:#DDD0F8;
-  border:0.5px solid #C4A8D4;
-  color:#6B3FA0;
-  font-size:0.7rem;
-  font-family:'Jost',sans-serif;
-  font-weight:500;
-  letter-spacing:.08em;
-  padding:3px 14px;
-  border-radius:20px;
-  animation:fadeUp .6s ease .7s both;opacity:0;
-}
-
-.container{
-  max-width:700px;
-  margin:0 auto;
-  padding:48px 28px 80px;
-}
-
-.intro-box{
-  background:rgba(221,208,248,.4);
-  border:0.5px solid #C4A8D4;
-  border-left:3px solid #6B3FA0;
-  border-radius:0 10px 10px 0;
-  padding:18px 22px;
-  margin-bottom:48px;
-  font-size:0.9rem;
-  color:#4A3060;
-  line-height:1.7;
-}
-
-section{
-  margin-bottom:40px;
-  padding-bottom:40px;
-  border-bottom:0.5px solid #C4A8D4;
-}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;animation:fadeUp .6s ease .1s both;}
+.app-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.3rem;color:#2A2520;letter-spacing:.04em;}
+.app-tagline{font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:2.2rem;color:#2A2520;letter-spacing:.02em;margin-bottom:8px;animation:fadeUp .6s ease .3s both;opacity:0;}
+.hero .subtitle{font-size:0.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9A8878;animation:fadeUp .6s ease .5s both;opacity:0;}
+.update-badge{display:inline-block;margin-top:14px;background:#DDD0F8;border:0.5px solid #C4A8D4;color:#6B3FA0;font-size:0.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.08em;padding:3px 14px;border-radius:20px;animation:fadeUp .6s ease .7s both;opacity:0;}
+.container{max-width:700px;margin:0 auto;padding:48px 28px 80px;}
+.intro-box{background:rgba(221,208,248,.4);border:0.5px solid #C4A8D4;border-left:3px solid #6B3FA0;border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:48px;font-size:0.9rem;color:#4A3060;line-height:1.7;}
+section{margin-bottom:40px;padding-bottom:40px;border-bottom:0.5px solid #C4A8D4;}
 section:last-of-type{border-bottom:none}
-
-.section-number{
-  font-size:0.62rem;
-  font-weight:500;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  color:#9B72C8;
-  margin-bottom:5px;
-}
-
-h2{
-  font-family:'Cormorant Garamond',serif;
-  font-style:italic;
-  font-weight:400;
-  font-size:1.55rem;
-  color:#2A2520;
-  margin-bottom:14px;
-  line-height:1.3;
-}
-
-p{
-  font-size:0.9rem;
-  color:#3A3530;
-  margin-bottom:12px;
-  line-height:1.75;
-}
-
+.section-number{font-size:0.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9B72C8;margin-bottom:5px;}
+h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.55rem;color:#2A2520;margin-bottom:14px;line-height:1.3;}
+p{font-size:0.9rem;color:#3A3530;margin-bottom:12px;line-height:1.75;}
 ul{padding-left:0;list-style:none;margin-bottom:12px}
-ul li{
-  font-size:0.9rem;
-  padding:5px 0 5px 18px;
-  position:relative;
-  color:#3A3530;
-  line-height:1.65;
-}
-ul li::before{
-  content:'—';
-  position:absolute;
-  left:0;
-  color:#9B72C8;
-  font-weight:300;
-}
-
-.highlight{
-  background:rgba(221,208,248,.35);
-  border:0.5px solid #C4A8D4;
-  border-radius:8px;
-  padding:14px 18px;
-  margin:14px 0;
-  font-size:0.87rem;
-  color:#4A3060;
-  line-height:1.65;
-}
-
-.warning-box{
-  background:#FDE8B0;
-  border:0.5px solid #C89A10;
-  border-left:3px solid #C89A10;
-  border-radius:0 8px 8px 0;
-  padding:14px 18px;
-  margin:14px 0;
-  font-size:0.87rem;
-  color:#7A5000;
-  line-height:1.65;
-}
-
-.contact-box{
-  background:#F0EAE0;
-  border:0.5px solid #C4A8D4;
-  border-radius:16px;
-  padding:32px;
-  text-align:center;
-  margin-top:48px;
-}
-.contact-box h3{
-  font-family:'Cormorant Garamond',serif;
-  font-style:italic;
-  font-size:1.4rem;
-  font-weight:300;
-  color:#2A2520;
-  margin-bottom:6px;
-}
-.contact-sub{
-  font-size:0.8rem;
-  color:#7A7068;
-  margin:6px 0 18px;
-}
-.contact-btn{
-  display:inline-block;
-  background:#3A3530;
-  color:#F0EAE0;
-  text-decoration:none;
-  font-size:0.82rem;
-  font-family:'Jost',sans-serif;
-  font-weight:400;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  padding:11px 28px;
-  border-radius:50px;
-}
-
-.footer{
-  text-align:center;
-  padding:24px;
-  font-size:0.7rem;
-  color:#9A8878;
-  letter-spacing:.08em;
-  border-top:0.5px solid #C4A8D4;
-  background:#F0EAE0;
-}
+ul li{font-size:0.9rem;padding:5px 0 5px 18px;position:relative;color:#3A3530;line-height:1.65;}
+ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:300;}
+.highlight{background:rgba(221,208,248,.35);border:0.5px solid #C4A8D4;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:0.87rem;color:#4A3060;line-height:1.65;}
+.contact-box{background:#F0EAE0;border:0.5px solid #C4A8D4;border-radius:16px;padding:32px;text-align:center;margin-top:48px;}
+.contact-box h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;font-weight:300;color:#2A2520;margin-bottom:6px;}
+.contact-sub{font-size:0.8rem;color:#7A7068;margin:6px 0 18px;}
+.contact-btn{display:inline-block;background:#3A3530;color:#F0EAE0;text-decoration:none;font-size:0.82rem;font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;padding:11px 28px;border-radius:50px;}
+.footer{text-align:center;padding:24px;font-size:0.7rem;color:#9A8878;letter-spacing:.08em;border-top:0.5px solid #C4A8D4;background:#F0EAE0;}
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="orb" style="width:200px;height:200px;background:#C4A8D4;top:-60px;right:-60px;opacity:.22"></div>
-  <div class="orb" style="width:120px;height:120px;background:#B8D4B0;bottom:-30px;left:-40px;animation-delay:1s;opacity:.2"></div>
+  <div class="orb" style="width:200px;height:200px;background:#B8D4B0;top:-60px;right:-60px;opacity:.25"></div>
+  <div class="orb" style="width:120px;height:120px;background:#C4A8D4;bottom:-30px;left:-40px;animation-delay:1s;opacity:.2"></div>
   <div class="orb" style="width:80px;height:80px;background:#E8C890;top:40px;left:10%;animation-delay:2s;opacity:.18"></div>
-
   <div class="hero-inner">
     <div class="logo-wrap">
       <svg width="110" height="85" viewBox="0 0 56 44" style="overflow:visible" aria-label="ManifestMind">
         <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2s infinite"/>
-        <ellipse cx="28" cy="22" rx="17" ry="11" fill="none" stroke="#9B72C8" stroke-width=".3" opacity=".3" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2.3s infinite"/>
         <clipPath id="ec2"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
         <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
-        <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .5s both;clip-path:url(#ec2)"/>
-        <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .6s both;clip-path:url(#ec2)"/>
-        <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="transform-origin:28px 22px;animation:irisAppear .5s cubic-bezier(.34,1.56,.64,1) .75s both;clip-path:url(#ec2)"/>
-        <circle cx="28" cy="22" r="3" fill="#1A0E30" style="transform-origin:28px 22px;animation:pupilAppear .4s cubic-bezier(.34,1.56,.64,1) .95s both;clip-path:url(#ec2)"/>
-        <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="animation:refletAppear .3s ease 1.1s both;opacity:0;clip-path:url(#ec2)"/>
-        <circle cx="25.5" cy="23.5" r=".6" fill="white" opacity=".5" style="animation:refletAppear .3s ease 1.2s both;opacity:0;clip-path:url(#ec2)"/>
-        <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="transform-origin:28px 15.5px;animation:thirdEye .5s cubic-bezier(.34,1.56,.64,1) 1.3s both;opacity:0;clip-path:url(#ec2)"/>
-        <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="transform-origin:28px 15.5px;animation:thirdEye .5s cubic-bezier(.34,1.56,.64,1) 1.4s both;opacity:0;clip-path:url(#ec2)"/>
+        <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="clip-path:url(#ec2)"/>
+        <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="clip-path:url(#ec2)"/>
+        <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="clip-path:url(#ec2)"/>
+        <circle cx="28" cy="22" r="3" fill="#1A0E30" style="clip-path:url(#ec2)"/>
+        <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="clip-path:url(#ec2)"/>
+        <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="clip-path:url(#ec2)"/>
+        <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="clip-path:url(#ec2)"/>
         <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .1s forwards"/>
         <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .2s forwards"/>
-        <circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .8s both;opacity:0"/>
-        <circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity=".6" style="animation:refletAppear .3s ease .8s both;opacity:0"/>
       </svg>
       <p class="app-name">ManifestMind</p>
       <p class="app-tagline">Bien-être &amp; Intentions</p>
     </div>
     <h1>Conditions d'utilisation</h1>
-    <p class="subtitle">Transparence &amp; confiance</p>
+    <p class="subtitle">Utilise l'app en toute clarté</p>
     <span class="update-badge">Dernière mise à jour : avril 2026</span>
   </div>
 </div>
@@ -272,116 +73,124 @@ ul li::before{
 <div class="container">
 
   <div class="intro-box">
-    En téléchargeant ou en utilisant ManifestMind, tu acceptes les présentes conditions d'utilisation. Nous t'invitons à les lire attentivement — elles sont rédigées pour être claires et accessibles.
+    En utilisant ManifestMind, tu acceptes les présentes conditions d'utilisation. Nous t'invitons à les lire attentivement. Elles définissent les règles d'utilisation de l'application et les droits de chacun.
   </div>
 
   <section>
     <div class="section-number">01</div>
     <h2>Acceptation des conditions</h2>
-    <p>Les présentes Conditions d'utilisation régissent ton accès et ton utilisation de l'application mobile ManifestMind. En créant un compte ou en utilisant l'application, tu confirmes avoir lu, compris et accepté ces conditions.</p>
-    <p>Si tu n'acceptes pas ces conditions, merci de ne pas utiliser l'application.</p>
+    <p>En téléchargeant, installant ou utilisant ManifestMind, tu acceptes d'être lié·e par ces conditions d'utilisation. Si tu n'acceptes pas ces conditions, tu ne dois pas utiliser l'application.</p>
+    <p>Ces conditions peuvent être mises à jour occasionnellement. Nous t'en informerons via une notification dans l'app ou par e-mail en cas de modification significative.</p>
   </section>
 
   <section>
     <div class="section-number">02</div>
-    <h2>Description du service</h2>
-    <p>ManifestMind est une application mobile de bien-être et de développement personnel qui propose :</p>
+    <h2>Description de l'application</h2>
+    <p>ManifestMind est une application mobile de bien-être et de développement personnel. Elle propose un parcours structuré de 365 cycles thématiques comprenant :</p>
     <ul>
-      <li>Un programme de 365 jours d'affirmations, d'actions et de visualisations guidées</li>
-      <li>Un système de suivi de progression et de récompenses (points, badges, niveaux)</li>
-      <li>Un journal personnel et un vision board</li>
-      <li>Des notifications quotidiennes personnalisables</li>
-      <li>Un contenu disponible en français, anglais et espagnol</li>
+      <li>Des affirmations quotidiennes personnalisées selon le cycle en cours</li>
+      <li>Des actions faciles et difficiles pour ancrer de nouvelles habitudes</li>
+      <li>Des exercices de visualisation guidée</li>
+      <li>Un journal personnel pour noter ses réflexions</li>
+      <li>Un Vision Board pour visualiser ses intentions</li>
+      <li>Un système de points et de niveaux pour encourager la régularité</li>
     </ul>
-    <div class="warning-box">
-      ManifestMind est une application de bien-être à vocation positive. Elle ne constitue pas un avis médical, psychologique ou thérapeutique et ne saurait se substituer à un suivi professionnel de santé.
-    </div>
+    <p>L'application est disponible en français, anglais et espagnol.</p>
   </section>
 
   <section>
     <div class="section-number">03</div>
-    <h2>Création de compte</h2>
-    <p>Pour accéder à l'ensemble des fonctionnalités, tu dois créer un compte via :</p>
+    <h2>Abonnement et paiement</h2>
+    <p>L'accès à ManifestMind est conditionné à la souscription d'un abonnement payant. Plusieurs formules sont disponibles :</p>
     <ul>
-      <li>Connexion avec ton compte Google</li>
-      <li>Connexion avec ton identifiant Apple</li>
-      <li>Connexion avec ton adresse e-mail (lien de connexion)</li>
+      <li><strong>Mensuel :</strong> facturation mensuelle, résiliable à tout moment</li>
+      <li><strong>Annuel :</strong> facturation annuelle, avec renouvellement automatique</li>
+      <li><strong>À vie :</strong> paiement unique, accès permanent aux 365 cycles</li>
     </ul>
-    <p>Tu es responsable de maintenir la confidentialité de ton compte et de toutes les activités qui s'y déroulent. Tu acceptes de nous informer immédiatement de toute utilisation non autorisée de ton compte.</p>
-    <p>Tu dois avoir au moins 13 ans pour utiliser ManifestMind.</p>
+    <div class="highlight">
+      Les paiements sont traités par l'App Store (Apple) ou Google Play selon ta plateforme. ManifestMind n'a pas accès à tes informations bancaires.
+    </div>
+    <p>Le renouvellement automatique peut être désactivé depuis les paramètres de ton compte App Store ou Google Play au moins 24h avant la date de renouvellement.</p>
   </section>
 
   <section>
     <div class="section-number">04</div>
-    <h2>Utilisation acceptable</h2>
-    <p>Tu t'engages à utiliser ManifestMind uniquement à des fins personnelles et légales. Il t'est notamment interdit de :</p>
+    <h2>Remboursement</h2>
+    <p>Les demandes de remboursement sont gérées directement par Apple ou Google selon leur politique respective :</p>
     <ul>
-      <li>Copier, modifier ou distribuer le contenu de l'application sans autorisation</li>
-      <li>Tenter de contourner les mesures de sécurité de l'application</li>
-      <li>Utiliser l'application à des fins commerciales sans accord préalable</li>
-      <li>Partager ton compte avec d'autres personnes</li>
-      <li>Extraire ou reproduire le contenu (affirmations, visualisations, programme des 365 jours)</li>
+      <li><strong>iOS :</strong> via reportaproblem.apple.com</li>
+      <li><strong>Android :</strong> via le Google Play Store dans les 48h suivant l'achat</li>
     </ul>
+    <p>Nous n'avons pas la capacité de traiter directement les remboursements depuis l'application.</p>
   </section>
 
   <section>
     <div class="section-number">05</div>
-    <h2>Propriété intellectuelle</h2>
-    <p>L'ensemble du contenu de ManifestMind — programme de 365 jours, affirmations, visualisations, design, logo et interface — est protégé par les droits de propriété intellectuelle et appartient exclusivement à ManifestMind.</p>
-    <p>Aucune partie de ce contenu ne peut être reproduite, distribuée, modifiée ou exploitée commercialement sans autorisation écrite préalable.</p>
-    <div class="highlight">
-      Le contenu que tu crées dans l'app (journal, vision board) t'appartient entièrement. Nous ne revendiquons aucun droit sur tes créations personnelles.
-    </div>
+    <h2>Restauration des achats</h2>
+    <p>Si tu réinstalles l'application ou changes d'appareil, tu peux restaurer ton abonnement actif depuis les Paramètres de l'app via le bouton "Restaurer les achats". Cette fonctionnalité te permet de récupérer l'accès sans repayer.</p>
   </section>
 
   <section>
     <div class="section-number">06</div>
-    <h2>Abonnements et paiements</h2>
-    <p>ManifestMind est une application entièrement payante dès le premier jour. Trois plans sont disponibles, présentés lors de l'inscription :</p>
+    <h2>Contenu et propriété intellectuelle</h2>
+    <p>Tout le contenu de ManifestMind — affirmations, actions, visualisations, design, animations, logo — est la propriété exclusive de ManifestMind et protégé par les lois sur la propriété intellectuelle.</p>
     <ul>
-      <li><strong>Accès Fondateur (anciennement Lifetime) :</strong> paiement unique de 149€ — accès complet à l'application tant que le service ManifestMind est opérationnel</li>
-      <li><strong>Abonnement annuel :</strong> accès complet à l'application, renouvelable chaque année — le meilleur tarif récurrent</li>
-      <li><strong>Abonnement mensuel :</strong> accès complet, résiliable à tout moment</li>
+      <li>Tu ne peux pas reproduire, distribuer ou modifier ce contenu sans autorisation écrite</li>
+      <li>Les textes du journal et les photos que tu ajoutes restent ta propriété</li>
+      <li>Tu nous accordes le droit de les stocker sur ton appareil pour le bon fonctionnement de l'app</li>
     </ul>
-    <div class="highlight">
-      L'Accès Fondateur garantit un accès à l'application tant que le service ManifestMind est opérationnel. En cas de cessation définitive du service, les utilisateurs Accès Fondateur seront informés par email avec un préavis minimum de 90 jours. ManifestMind ne peut être tenu responsable de circonstances indépendantes de sa volonté rendant impossible la continuité du service, notamment en cas de force majeure, défaillance technique majeure, ou contraintes légales. Aucun remboursement ne sera dû si le service a été fourni pendant au moins 36 mois suivant l'achat de l'Accès Fondateur.
-    </div>
-    <p>Les achats effectués via l'App Store (Apple) ou le Google Play Store sont soumis aux conditions de ces plateformes. Le renouvellement des abonnements mensuel et annuel est automatique sauf résiliation avant la fin de la période en cours. Les remboursements sont gérés conformément aux politiques de ces stores.</p>
-    <p>Tu peux gérer ou annuler ton abonnement à tout moment depuis les paramètres de l'application ou directement depuis les paramètres de ton appareil.</p>
   </section>
-
 
   <section>
     <div class="section-number">07</div>
-    <h2>Limitation de responsabilité</h2>
-    <p>ManifestMind est fournie "telle quelle", sans garantie d'aucune sorte. Nous ne garantissons pas que l'application sera disponible en permanence, sans interruption ni erreur.</p>
-    <p>Dans les limites autorisées par la loi applicable, ManifestMind ne saurait être tenue responsable des dommages indirects, accessoires ou consécutifs découlant de l'utilisation ou de l'impossibilité d'utiliser l'application.</p>
-    <p>ManifestMind est un outil de bien-être et de développement personnel. Les résultats dépendent de l'engagement et des efforts de chaque utilisateur. Nous ne garantissons aucun résultat spécifique.</p>
+    <h2>Réinitialisation et suppression des données</h2>
+    <p>Tu disposes de deux options pour gérer tes données depuis l'application :</p>
+    <ul>
+      <li><strong>Réinitialisation du parcours :</strong> accessible depuis le Profil. Remet ton parcours au Cycle 1 et efface définitivement tous tes points, cycles, entrées de journal et photos. Ton compte et ton abonnement restent actifs.</li>
+      <li><strong>Suppression du compte :</strong> accessible depuis les Paramètres. Efface définitivement ton compte et toutes tes données. Ton abonnement doit être résilié séparément depuis l'App Store ou Google Play.</li>
+    </ul>
+    <div class="highlight">
+      Ces deux actions sont irréversibles. Aucune récupération de données n'est possible après confirmation.
+    </div>
   </section>
 
   <section>
     <div class="section-number">08</div>
-    <h2>Suppression de compte</h2>
-    <p>Tu peux supprimer ton compte à tout moment depuis la section Paramètres de l'application. La suppression entraîne l'effacement définitif de toutes tes données personnelles dans un délai maximum de 30 jours.</p>
-    <p>Certaines données peuvent être conservées si la loi nous y oblige, notamment à des fins comptables ou de prévention des fraudes.</p>
+    <h2>Utilisation acceptable</h2>
+    <p>En utilisant ManifestMind, tu t'engages à :</p>
+    <ul>
+      <li>Utiliser l'application uniquement à des fins personnelles et non commerciales</li>
+      <li>Ne pas tenter de contourner les systèmes de paiement ou d'authentification</li>
+      <li>Ne pas reproduire ou redistribuer le contenu de l'application</li>
+      <li>Ne pas utiliser l'application d'une manière qui pourrait nuire à son fonctionnement</li>
+    </ul>
   </section>
 
   <section>
     <div class="section-number">09</div>
-    <h2>Modifications du service</h2>
-    <p>Nous nous réservons le droit de modifier, suspendre ou interrompre tout ou partie de l'application à tout moment. Nous nous efforcerons de te prévenir des changements significatifs.</p>
-    <p>Nous pouvons également modifier ces conditions d'utilisation. Les modifications entrent en vigueur dès leur publication. Ton utilisation continue de l'application vaut acceptation des nouvelles conditions.</p>
+    <h2>Avertissement médical</h2>
+    <p>ManifestMind est une application de bien-être et de développement personnel. Elle ne constitue pas un avis médical, psychologique ou thérapeutique et ne remplace en aucun cas un suivi professionnel de santé mentale.</p>
+    <div class="highlight">
+      Si tu traverses une période difficile, nous t'encourageons à consulter un professionnel de santé qualifié.
+    </div>
   </section>
 
   <section>
     <div class="section-number">10</div>
+    <h2>Limitation de responsabilité</h2>
+    <p>ManifestMind est fournie "telle quelle". Nous ne garantissons pas que l'application sera exempte d'erreurs ou disponible en permanence. Nous ne sommes pas responsables des pertes de données liées à une panne technique, une réinitialisation volontaire ou une suppression de compte.</p>
+    <p>Notre responsabilité est limitée au montant payé pour l'abonnement au cours des 12 derniers mois.</p>
+  </section>
+
+  <section>
+    <div class="section-number">11</div>
     <h2>Droit applicable</h2>
-    <p>Les présentes conditions sont soumises au droit français. En cas de litige, les parties s'efforceront de trouver une solution amiable. À défaut, les tribunaux compétents seront ceux du ressort du siège social de ManifestMind.</p>
+    <p>Ces conditions sont régies par le droit applicable dans le territoire de l'utilisateur. En cas de litige, nous privilégions une résolution amiable. Tu peux nous contacter à tout moment à l'adresse indiquée ci-dessous.</p>
   </section>
 
   <div class="contact-box">
-    <h3>Des questions sur nos conditions ?</h3>
-    <p class="contact-sub">Nous sommes disponibles pour toute question ou réclamation.</p>
+    <h3>Une question sur ces conditions ?</h3>
+    <p class="contact-sub">Notre équipe est disponible pour répondre à toutes tes questions.</p>
     <a class="contact-btn" href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a>
   </div>
 
