@@ -56,6 +56,17 @@ export default function Action() {
   const [hardValidated, setHardValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
+  const [boxWidth, setBoxWidth] = useState(0);
+
+  function getFontSize(text: string): number {
+    if (!boxWidth || !text) return 15;
+    const len = text.length;
+    if (len < 70)  return 20;
+    if (len < 100) return 17;
+    if (len < 130) return 15;
+    if (len < 155) return 13;
+    return 12;
+  }
 
   useEffect(() => {
     async function load() {
@@ -226,8 +237,15 @@ export default function Action() {
               <Text style={styles.badgeGreenText}>+15 pts</Text>
             </View>
           </View>
-          <View style={styles.cardBody}>
-            <Text style={styles.actionText} adjustsFontSizeToFit numberOfLines={3}>
+          <View style={styles.cardBody} onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}>
+            <Text style={{
+              fontFamily: 'serif',
+              fontStyle: 'italic',
+              color: '#3A3030',
+              textAlign: 'center',
+              fontSize: getFontSize(content?.actionFacile || ''),
+              lineHeight: getFontSize(content?.actionFacile || '') * 1.55,
+            }}>
               {content?.actionFacile}
             </Text>
           </View>
@@ -262,7 +280,14 @@ export default function Action() {
             </View>
           </View>
           <View style={styles.cardBody}>
-            <Text style={styles.actionText} adjustsFontSizeToFit numberOfLines={3}>
+            <Text style={{
+              fontFamily: 'serif',
+              fontStyle: 'italic',
+              color: '#3A3030',
+              textAlign: 'center',
+              fontSize: getFontSize(content?.actionDifficile || ''),
+              lineHeight: getFontSize(content?.actionDifficile || '') * 1.55,
+            }}>
               {content?.actionDifficile}
             </Text>
           </View>
@@ -488,14 +513,6 @@ const styles = StyleSheet.create({
   cardBody: {
     flex: 1,
     justifyContent: 'center',
-  },
-  actionText: {
-    fontFamily: 'serif',
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#3A3030',
-    lineHeight: 22,
-    textAlign: 'center',
   },
   btnEasy: {
     backgroundColor: '#3A6A20',

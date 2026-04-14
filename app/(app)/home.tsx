@@ -65,110 +65,111 @@ export default function Home() {
   const [stepStatus, setStepStatus] = useState<StepStatus>(INITIAL_STEP_STATUS);
   const [congratToast, setCongratToast] = useState('');
 
+  const loadHome = useCallback(async () => {
+    // Prénom
+    const name = await AsyncStorage.getItem('user_name') || '';
+    setUserName(name);
+
+    // Initialisation si les clés cycle sont absentes
+    let cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '0');
+    if (cycle === 0) {
+      cycle = 1;
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      await AsyncStorage.multiSet([
+        ['current_cycle', '1'],
+        ['current_theme', '1'],
+        ['cycle_completed', 'false'],
+        ['cycle_points', '0'],
+        ['points_total', '0'],
+        ['next_cycle_time', String(midnight.getTime())],
+        ['cycle_step_status', JSON.stringify(INITIAL_STEP_STATUS)],
+      ]);
+    }
+
+    // Vérifier si minuit est passé et le cycle était terminé → avancer
+    const completedRaw = await AsyncStorage.getItem('cycle_completed');
+    const nextCycleTime = parseInt(await AsyncStorage.getItem('next_cycle_time') || '0');
+    if (completedRaw === 'true' && Date.now() >= nextCycleTime) {
+      const newCycle = Math.min(cycle + 1, 365);
+      const newTheme = ((newCycle - 1) % 7) + 1;
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      await AsyncStorage.multiSet([
+        ['current_cycle', String(newCycle)],
+        ['current_theme', String(newTheme)],
+        ['cycle_completed', 'false'],
+        ['cycle_points', '0'],
+        ['next_cycle_time', String(midnight.getTime())],
+        ['cycle_step_status', JSON.stringify(INITIAL_STEP_STATUS)],
+        ['cycle_earned_points', JSON.stringify({ opening: 0, affirmation: 0, action_easy: 0, action_hard: 0, visualisation: 0, journal: 0, vision_board: 0 })],
+      ]);
+      cycle = newCycle;
+    }
+
+    setCycleNumber(cycle);
+    setContent(getCycleContent(cycle));
+
+    // 1. Lire le statut des étapes
+    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+    const status: StepStatus = statusRaw ? JSON.parse(statusRaw) : { ...INITIAL_STEP_STATUS };
+
+    // 2. Créditer +10 pts d'ouverture immédiatement (avant affichage)
+    if (!status.opening) {
+      status.opening = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+
+      const oldTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      const newTotal = oldTotal + 10;
+      await AsyncStorage.setItem('points_total', String(newTotal));
+
+      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 10));
+
+      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+      earned.opening = 10;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+
+      checkMilestones(oldTotal, newTotal, setCongratToast);
+    }
+
+    setStepStatus(status);
+
+    // Cycle complété ?
+    const freshCompleted = await AsyncStorage.getItem('cycle_completed');
+
+    // Auto-détecter si toutes les étapes sont faites sans que cycle_completed soit marqué
+    const allStepsDone =
+      status.opening && status.affirmation &&
+      status.action_easy && status.action_hard &&
+      status.visualisation && status.journal && status.vision_board;
+
+    if (allStepsDone && freshCompleted !== 'true') {
+      await AsyncStorage.setItem('cycle_completed', 'true');
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      await AsyncStorage.setItem('next_cycle_time', String(midnight.getTime()));
+      setCycleCompleted(true);
+    } else {
+      setCycleCompleted(freshCompleted === 'true');
+    }
+
+    // 3. Lire points_total APRÈS créditation
+    const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
+    const percent = (total / 36500) * 100;
+    setProgressPercent(percent);
+
+    if (percent < 25) setLevel('Éveillé');
+    else if (percent < 50) setLevel('Floraison');
+    else if (percent < 75) setLevel('Rayonnant');
+    else setLevel('Manifestant');
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-    async function loadHome() {
-      // Prénom
-      const name = await AsyncStorage.getItem('user_name') || '';
-      setUserName(name);
-
-      // Initialisation si les clés cycle sont absentes
-      let cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '0');
-      if (cycle === 0) {
-        cycle = 1;
-        const midnight = new Date();
-        midnight.setHours(24, 0, 0, 0);
-        await AsyncStorage.multiSet([
-          ['current_cycle', '1'],
-          ['current_theme', '1'],
-          ['cycle_completed', 'false'],
-          ['cycle_points', '0'],
-          ['points_total', '0'],
-          ['next_cycle_time', String(midnight.getTime())],
-          ['cycle_step_status', JSON.stringify(INITIAL_STEP_STATUS)],
-        ]);
-      }
-
-      // Vérifier si minuit est passé et le cycle était terminé → avancer
-      const completedRaw = await AsyncStorage.getItem('cycle_completed');
-      const nextCycleTime = parseInt(await AsyncStorage.getItem('next_cycle_time') || '0');
-      if (completedRaw === 'true' && Date.now() >= nextCycleTime) {
-        const newCycle = Math.min(cycle + 1, 365);
-        const newTheme = ((newCycle - 1) % 7) + 1;
-        const midnight = new Date();
-        midnight.setHours(24, 0, 0, 0);
-        await AsyncStorage.multiSet([
-          ['current_cycle', String(newCycle)],
-          ['current_theme', String(newTheme)],
-          ['cycle_completed', 'false'],
-          ['cycle_points', '0'],
-          ['next_cycle_time', String(midnight.getTime())],
-          ['cycle_step_status', JSON.stringify(INITIAL_STEP_STATUS)],
-          ['cycle_earned_points', JSON.stringify({ opening: 0, affirmation: 0, action_easy: 0, action_hard: 0, visualisation: 0, journal: 0, vision_board: 0 })],
-        ]);
-        cycle = newCycle;
-      }
-
-      setCycleNumber(cycle);
-      setContent(getCycleContent(cycle));
-
-      // 1. Lire le statut des étapes
-      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      const status: StepStatus = statusRaw ? JSON.parse(statusRaw) : { ...INITIAL_STEP_STATUS };
-
-      // 2. Créditer +10 pts d'ouverture immédiatement (avant affichage)
-      if (!status.opening) {
-        status.opening = true;
-        await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
-
-        const oldTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-        const newTotal = oldTotal + 10;
-        await AsyncStorage.setItem('points_total', String(newTotal));
-
-        const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-        await AsyncStorage.setItem('cycle_points', String(cyclePoints + 10));
-
-        const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
-        const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
-        earned.opening = 10;
-        await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
-
-        checkMilestones(oldTotal, newTotal, setCongratToast);
-      }
-
-      setStepStatus(status);
-
-      // Cycle complété ?
-      const freshCompleted = await AsyncStorage.getItem('cycle_completed');
-
-      // Auto-détecter si toutes les étapes sont faites sans que cycle_completed soit marqué
-      const allStepsDone =
-        status.opening && status.affirmation &&
-        status.action_easy && status.action_hard &&
-        status.visualisation && status.journal && status.vision_board;
-
-      if (allStepsDone && freshCompleted !== 'true') {
-        await AsyncStorage.setItem('cycle_completed', 'true');
-        const midnight = new Date();
-        midnight.setHours(24, 0, 0, 0);
-        await AsyncStorage.setItem('next_cycle_time', String(midnight.getTime()));
-        setCycleCompleted(true);
-      } else {
-        setCycleCompleted(freshCompleted === 'true');
-      }
-
-      // 3. Lire points_total APRÈS créditation
-      const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
-      const percent = (total / 36500) * 100;
-      setProgressPercent(percent);
-
-      if (percent < 25) setLevel('Éveillé');
-      else if (percent < 50) setLevel('Floraison');
-      else if (percent < 75) setLevel('Rayonnant');
-      else setLevel('Manifestant');
-    }
-    loadHome();
-    }, [])
+      loadHome();
+    }, [loadHome])
   );
 
   function handleMainBtn() {
@@ -185,6 +186,26 @@ export default function Home() {
     } else if (!stepStatus.vision_board) {
       router.push('/(app)/vision-board?fromCycle=true' as any);
     }
+  }
+
+  async function handleNextCycleDebug() {
+    const currentCycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+    const newCycle = Math.min(currentCycle + 1, 365);
+    const newTheme = ((newCycle - 1) % 7) + 1;
+    await AsyncStorage.setItem('current_cycle', String(newCycle));
+    await AsyncStorage.setItem('current_theme', String(newTheme));
+    await AsyncStorage.setItem('cycle_completed', 'false');
+    await AsyncStorage.setItem('cycle_points', '0');
+    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
+      opening: 0, affirmation: 0, action_easy: 0, action_hard: 0,
+      visualisation: 0, journal: 0, vision_board: 0,
+    }));
+    await AsyncStorage.setItem('cycle_step_status', JSON.stringify({
+      opening: false, affirmation: false, action_easy: false, action_hard: false,
+      visualisation: false, journal: false, vision_board: false,
+    }));
+    await AsyncStorage.removeItem('next_cycle_time');
+    await loadHome();
   }
 
   async function skipStep(step: 'journal' | 'vision_board') {
@@ -208,6 +229,13 @@ export default function Home() {
         style={{ position: 'absolute', top: 48, right: 16, zIndex: 10 }}
       >
         <Text style={{ fontSize: 10, color: '#C4A8D4' }}>reset</Text>
+      </Pressable>
+      {/* Bouton debug cycle suivant — à supprimer avant publication */}
+      <Pressable
+        onPress={handleNextCycleDebug}
+        style={{ position: 'absolute', top: 48, right: 60, zIndex: 10 }}
+      >
+        <Text style={{ fontSize: 10, color: '#C4A8D4' }}>⏭ cycle suivant</Text>
       </Pressable>
 
       {/* Orbes */}

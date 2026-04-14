@@ -14,14 +14,12 @@ export default function Pricing() {
   }
 
   async function handlePurchase() {
-    console.log('ACHAT_EN_ATTENTE - plan:', selectedPlan);
     await AsyncStorage.setItem('selected_plan', selectedPlan);
     await AsyncStorage.setItem('user_language', 'fr');
     router.push('/(onboarding)/auth');
   }
 
   function handleRestore() {
-    console.log('RESTAURATION_EN_ATTENTE');
   }
 
   return (

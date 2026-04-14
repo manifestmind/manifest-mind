@@ -55,6 +55,17 @@ export default function Affirmation() {
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
+  const [boxWidth, setBoxWidth] = useState(0);
+
+  function getFontSize(text: string): number {
+    if (!boxWidth || !text) return 15;
+    const len = text.length;
+    if (len < 70)  return 20;
+    if (len < 100) return 17;
+    if (len < 130) return 15;
+    if (len < 155) return 13;
+    return 12;
+  }
 
   useEffect(() => {
     async function load() {
@@ -165,12 +176,18 @@ export default function Affirmation() {
 
         {/* Carte affirmation */}
         <View style={styles.card}>
-          <View style={styles.cardBody}>
-            <Text
-              style={styles.affirmationText}
-              adjustsFontSizeToFit
-              numberOfLines={4}
-            >
+          <View
+            style={styles.cardBody}
+            onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}
+          >
+            <Text style={{
+              fontFamily: 'serif',
+              fontStyle: 'italic',
+              color: '#3A2850',
+              textAlign: 'center',
+              fontSize: getFontSize(content?.affirmation || ''),
+              lineHeight: getFontSize(content?.affirmation || '') * 1.55,
+            }}>
               {content?.affirmation}
             </Text>
           </View>
@@ -256,7 +273,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'serif',
-    fontSize: 22,
+    fontSize: 25,
     fontStyle: 'italic',
     color: '#2A2520',
   },
@@ -271,7 +288,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#9B80B8',
   },
   ptsBadge: {
@@ -282,7 +299,7 @@ const styles = StyleSheet.create({
   },
   ptsBadgeText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#9A6A00',
   },
   progressBar: {
@@ -320,12 +337,12 @@ const styles = StyleSheet.create({
   },
   themeBadgeText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '500',
     color: '#6B3FA0',
   },
   card: {
-    flex: 0.6,
+    flex: 0.85,
     marginTop: 56,
     backgroundColor: 'rgba(255,255,255,0.55)',
     borderWidth: 0.5,
@@ -339,15 +356,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-  },
-  affirmationText: {
-    fontFamily: 'serif',
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#3A2850',
-    lineHeight: 27,
-    textAlign: 'center',
+    paddingVertical: 30,
   },
   cardFooter: {
     borderTopWidth: 0.5,
@@ -356,10 +365,10 @@ const styles = StyleSheet.create({
   },
   instructionText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#9A8878',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 19,
   },
   bottomBlock: {
     flexShrink: 0,
@@ -377,14 +386,14 @@ const styles = StyleSheet.create({
   validateBtnText: {
     fontFamily: 'Jost',
     color: '#F0EAE0',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '500',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   skipText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#A09088',
     textDecorationLine: 'underline',
     textAlign: 'center',
@@ -405,7 +414,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     fontWeight: '300',
     color: '#A09088',
   },

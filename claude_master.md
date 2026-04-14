@@ -1,7 +1,15 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 13 Avril 2026
-**État :** Session contenu JSON validée ✅ — content_fr.json intégré dans toutes les pages
+**État :** Design + logique validés sur toutes les pages ✅
+
+### Validé dans cette session
+- `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
+- `hooks/useCycleContent.ts` — `getCycleContent(n)` ✅
+- `getFontSize()` adaptatif — deux versions distinctes (voir section dédiée) ✅
+- Animation respiration étoiles or (`#C89A30`) dans visualisation.tsx ✅
+- Notifications parametres.tsx branchées sur `content?.affirmation` réel ✅
+- Bouton debug "⏭ cycle suivant" sur home.tsx (à supprimer avant store) ✅
 
 ---
 
@@ -68,6 +76,40 @@ L'utilisateur gère Expo Go lui-même.
 ### 8. pricing-upgrade.tsx — ne jamais appeler initFirstCycle()
 `app/(app)/pricing-upgrade.tsx` est la page de changement d'abonnement depuis Paramètres.
 Elle ne doit JAMAIS toucher aux données de cycle. Après sélection : `AsyncStorage.setItem('selected_plan', ...)` + `router.back()` uniquement.
+
+---
+
+## getFontSize() — DEUX VERSIONS DISTINCTES (ne jamais mélanger)
+
+### VERSION visualisation.tsx
+5 phrases dans une seule grande carte — seuils plus serrés :
+```ts
+function getFontSize(text: string): number {
+  if (!boxWidth || !text) return 13;
+  const len = text.length;
+  if (len < 60)  return 17;
+  if (len < 90)  return 15;
+  if (len < 120) return 13;
+  if (len < 150) return 12;
+  return 11;
+}
+```
+
+### VERSION affirmation.tsx et action.tsx
+1 phrase par carte — cartes plus petites, seuils plus généreux :
+```ts
+function getFontSize(text: string): number {
+  if (!boxWidth || !text) return 15;
+  const len = text.length;
+  if (len < 70)  return 20;
+  if (len < 100) return 17;
+  if (len < 130) return 15;
+  if (len < 155) return 13;
+  return 12;
+}
+```
+
+> **Règle** : Ne jamais copier la version visualisation sur affirmation/action ni l'inverse.
 
 ---
 
@@ -441,10 +483,10 @@ function goNext(route: string) {
 
 ## À IMPLÉMENTER PLUS TARD
 
-### Contenu JSON — adjustsFontSizeToFit ✅
-- `affirmation.tsx` : `numberOfLines={4}`
-- `action.tsx` : `numberOfLines={3}` sur chaque action
-- `visualisation.tsx` : `numberOfLines={2}` sur chaque phrase + finale
+### Contenu JSON — getFontSize() ✅
+- `affirmation.tsx` : `onLayout` + `getFontSize(affirmation)` — version seuils généreux
+- `action.tsx` : `onLayout` + `getFontSize(actionFacile/actionDifficile)` — version seuils généreux
+- `visualisation.tsx` : `onLayout` + `getFontSize(p1–p4/finale)` — version seuils serrés
 
 ### Firebase Auth
 - `inMemoryPersistence` utilisé temporairement

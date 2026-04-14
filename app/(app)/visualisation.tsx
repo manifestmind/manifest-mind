@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
@@ -56,10 +56,25 @@ export default function Visualisation() {
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
-  const [breathePhase, setBreathePhase] = useState<'inspire' | 'retiens' | 'expire'>('inspire');
+  const [phase, setPhase] = useState<'inspire' | 'retiens' | 'expire'>('inspire');
+  const [starIndex, setStarIndex] = useState(0);
+  const [boxWidth, setBoxWidth] = useState(0);
+  const [boxHeight, setBoxHeight] = useState(0);
 
-  // Animation cercle respiration
-  const breatheAnim = useRef(new Animated.Value(1)).current;
+  function getFontSize(text: string): number {
+    if (!boxWidth || !text) return 13;
+    const len = text.length;
+    if (len < 60)  return 17;
+    if (len < 90)  return 15;
+    if (len < 120) return 13;
+    if (len < 150) return 12;
+    return 11;
+  }
+
+  function starOpacity(p: string, i: number): number {
+    if (phase !== p) return 0.15;
+    return i <= starIndex ? 1 : 0.15;
+  }
 
   // Animations fadeWord pour les 4 phrases
   const fade1 = useRef(new Animated.Value(0)).current;
@@ -86,15 +101,6 @@ export default function Visualisation() {
   }, []);
 
   useEffect(() => {
-    // Breathe animation synced with phases: inspire 4s, retiens 2s, expire 4s
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(breatheAnim, { toValue: 1.12, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(breatheAnim, { toValue: 1.12, duration: 2000, easing: Easing.linear, useNativeDriver: true }),
-        Animated.timing(breatheAnim, { toValue: 0.95, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
-    ).start();
-
     // FadeWord séquentiel
     Animated.sequence([Animated.delay(500), Animated.timing(fade1, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
     Animated.sequence([Animated.delay(1200), Animated.timing(fade2, { toValue: 1, duration: 800, useNativeDriver: true })]).start();
@@ -114,33 +120,37 @@ export default function Visualisation() {
     return () => clearTimeout(t);
   }, []);
 
-  // Cycle de respiration — texte selon phase
+  // Cycle de respiration étoiles
   useEffect(() => {
     if (validated) return;
-
+    const phases = [
+      { name: 'inspire', count: 4, duration: 4000 },
+      { name: 'retiens', count: 2, duration: 2000 },
+      { name: 'expire', count: 4, duration: 4000 },
+    ];
+    let phaseIdx = 0;
     let running = true;
-
-    const loop = async () => {
-      while (running) {
-        setBreathePhase('inspire');
-        await new Promise(r => setTimeout(r, 4000));
-        if (!running) break;
-        setBreathePhase('retiens');
-        await new Promise(r => setTimeout(r, 2000));
-        if (!running) break;
-        setBreathePhase('expire');
-        await new Promise(r => setTimeout(r, 4000));
-      }
+    const runPhase = () => {
+      if (!running) return;
+      const current = phases[phaseIdx];
+      setPhase(current.name as any);
+      setStarIndex(-1);
+      const interval = current.duration / current.count;
+      let i = 0;
+      const t = setInterval(() => {
+        if (!running) { clearInterval(t); return; }
+        setStarIndex(i);
+        i++;
+        if (i >= current.count) {
+          clearInterval(t);
+          phaseIdx = (phaseIdx + 1) % phases.length;
+          setTimeout(runPhase, 300);
+        }
+      }, interval);
     };
-
-    loop();
+    setTimeout(runPhase, 400);
     return () => { running = false; };
   }, [validated]);
-
-  const breatheText =
-    breathePhase === 'inspire' ? 'Inspire\ndoucement' :
-    breathePhase === 'retiens' ? 'Retiens' :
-    'Expire\nlentement';
 
   async function handleValidate() {
     if (validated) return;
@@ -236,35 +246,58 @@ export default function Visualisation() {
           </View>
         ) : null}
 
-        {/* Cercle respiration */}
-        <View style={styles.breatheBlock}>
-          <Animated.View style={[styles.breatheCircle, { transform: [{ scale: breatheAnim }] }]}>
-            <View style={styles.breatheRing} />
-            <View style={styles.breatheInner}>
-              <Text style={styles.breatheText}>{breatheText}</Text>
+        {/* Respiration en étoiles */}
+        <View style={styles.breatheRow}>
+          <View style={styles.breatheSegment}>
+            <Text style={[styles.breatheLabel, { color: phase === 'inspire' ? '#2A6A20' : '#B0A8C0' }]}>Inspire</Text>
+            <View style={styles.breatheStars}>
+              {[0,1,2,3].map(i => (
+                <Text key={i} style={[styles.breatheStar, { opacity: starOpacity('inspire', i) }]}>✦</Text>
+              ))}
             </View>
-          </Animated.View>
-          <Text style={styles.breatheHint}>inspire 4s · retiens 2s · expire 4s</Text>
+          </View>
+          <View style={styles.breatheSegment}>
+            <Text style={[styles.breatheLabel, { color: phase === 'retiens' ? '#2A6A20' : '#B0A8C0' }]}>Retiens</Text>
+            <View style={styles.breatheStars}>
+              {[0,1].map(i => (
+                <Text key={i} style={[styles.breatheStar, { opacity: starOpacity('retiens', i) }]}>✦</Text>
+              ))}
+            </View>
+          </View>
+          <View style={styles.breatheSegment}>
+            <Text style={[styles.breatheLabel, { color: phase === 'expire' ? '#2A6A20' : '#B0A8C0' }]}>Expire</Text>
+            <View style={styles.breatheStars}>
+              {[0,1,2,3].map(i => (
+                <Text key={i} style={[styles.breatheStar, { opacity: starOpacity('expire', i) }]}>✦</Text>
+              ))}
+            </View>
+          </View>
         </View>
 
         {/* Bloc texte guidé */}
         <View style={styles.textBlock}>
-          <View style={styles.textPhrases}>
-            <Animated.Text style={[styles.phrase, { opacity: fade1 }]} adjustsFontSizeToFit numberOfLines={2}>
+          <View
+            style={{ flex: 1 }}
+            onLayout={e => {
+              setBoxWidth(e.nativeEvent.layout.width);
+              setBoxHeight(e.nativeEvent.layout.height);
+            }}
+          >
+            <Animated.Text style={[styles.phraseBase, { opacity: fade1, fontSize: getFontSize(content?.visualisation.p1 || ''), lineHeight: getFontSize(content?.visualisation.p1 || '') * 1.55 }]}>
               {content?.visualisation.p1}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade2 }]} adjustsFontSizeToFit numberOfLines={2}>
+            <Animated.Text style={[styles.phraseBase, { opacity: fade2, fontSize: getFontSize(content?.visualisation.p2 || ''), lineHeight: getFontSize(content?.visualisation.p2 || '') * 1.55 }]}>
               {content?.visualisation.p2}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade3 }]} adjustsFontSizeToFit numberOfLines={2}>
+            <Animated.Text style={[styles.phraseBase, { opacity: fade3, fontSize: getFontSize(content?.visualisation.p3 || ''), lineHeight: getFontSize(content?.visualisation.p3 || '') * 1.55 }]}>
               {content?.visualisation.p3}
             </Animated.Text>
-            <Animated.Text style={[styles.phrase, { opacity: fade4 }]} adjustsFontSizeToFit numberOfLines={2}>
+            <Animated.Text style={[styles.phraseBase, { opacity: fade4, fontSize: getFontSize(content?.visualisation.p4 || ''), lineHeight: getFontSize(content?.visualisation.p4 || '') * 1.55 }]}>
               {content?.visualisation.p4}
             </Animated.Text>
           </View>
           <View style={styles.textFooter}>
-            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer }]} adjustsFontSizeToFit numberOfLines={2}>
+            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer, fontSize: getFontSize(content?.visualisation.finale || '') + 1, lineHeight: (getFontSize(content?.visualisation.finale || '') + 1) * 1.55 }]}>
               {content?.visualisation.finale}
             </Animated.Text>
           </View>
@@ -413,56 +446,31 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B3FA0',
   },
-  breatheBlock: {
+  breatheRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    flexShrink: 0,
+    marginTop: 8,
+  },
+  breatheSegment: {
     alignItems: 'center',
     gap: 4,
-    flexShrink: 0,
-    marginTop: 16,
   },
-  breatheCircle: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
-    borderWidth: 1,
-    borderColor: 'rgba(155,114,200,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'visible',
-  },
-  breatheRing: {
-    position: 'absolute',
-    width: 142,
-    height: 142,
-    borderRadius: 71,
-    borderWidth: 0.5,
-    borderColor: 'rgba(155,114,200,0.2)',
-    top: -13,
-    left: -13,
-  },
-  breatheInner: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-    backgroundColor: 'rgba(155,114,200,0.12)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(155,114,200,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
-  },
-  breatheText: {
+  breatheLabel: {
     fontFamily: 'Jost',
-    fontSize: 13,
-    color: '#6B3FA0',
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  breatheHint: {
-    fontFamily: 'Jost',
-    fontSize: 11,
+    fontSize: 14,
     color: '#9A8878',
-    letterSpacing: 0.4,
-    marginTop: 16,
+    letterSpacing: 0.5,
+  },
+  breatheStars: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  breatheStar: {
+    fontFamily: 'Jost',
+    fontSize: 20,
+    color: '#C89A30',
   },
   textBlock: {
     flex: 1,
@@ -476,15 +484,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
   },
-  textPhrases: {
-    gap: 5,
-  },
-  phrase: {
-    fontFamily: 'serif',
-    fontSize: 14,
+  phraseBase: {
+    fontFamily: 'Cormorant Garamond',
     fontStyle: 'italic',
     color: '#4A3060',
-    lineHeight: 22,
     textAlign: 'center',
   },
   textFooter: {
@@ -494,8 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   phraseFinale: {
-    fontFamily: 'serif',
-    fontSize: 16,
+    fontFamily: 'Cormorant Garamond',
     fontStyle: 'italic',
     color: '#6B3FA0',
     textAlign: 'center',
