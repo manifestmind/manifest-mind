@@ -7,7 +7,7 @@ import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
-import { getCycleContent } from '../../hooks/useCycleContent';
+import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -74,6 +74,7 @@ export default function Action() {
     }, 800);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+  const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
   const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [easyValidated, setEasyValidated] = useState(false);
   const [hardValidated, setHardValidated] = useState(false);
@@ -96,6 +97,7 @@ export default function Action() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
       setContent(getCycleContent(cycle));
+      setCycleColors(getCycleColors(cycle));
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
@@ -205,8 +207,8 @@ export default function Action() {
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
-      <View style={[styles.orb, { width: 130, height: 130, backgroundColor: '#B8D4B0', top: -32, left: -32 }]} />
-      <View style={[styles.orb, { width: 75, height: 75, backgroundColor: '#FDE8B0', bottom: 55, right: -18 }]} />
+      <View style={[styles.orb, { width: 130, height: 130, backgroundColor: cycleColors.orb1, top: -32, left: -32 }]} />
+      <View style={[styles.orb, { width: 75, height: 75, backgroundColor: cycleColors.orb2, bottom: 55, right: -18 }]} />
 
       <View style={styles.content}>
 
@@ -249,9 +251,9 @@ export default function Action() {
             </View>
           </View>
 
-          <Animated.View style={[styles.themeBadge, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
+          <Animated.View style={[styles.themeBadge, { backgroundColor: cycleColors.orb1 + '59', opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
             <View style={styles.themeDot} />
-            <Text style={styles.themeBadgeText}>✦ Thème · {content?.theme}</Text>
+            <Text style={[styles.themeBadgeText, { color: content?.couleurPrincipale || '#6B3FA0' }]}>✦ Thème · {content?.theme}</Text>
           </Animated.View>
         </View>
 

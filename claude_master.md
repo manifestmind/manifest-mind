@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 14 Avril 2026
-**État :** Animations globales + animations spéciales + transitions validées ✅
+**État :** Session dynamisation complète validée ✅ (haptique + animations + transitions + thème visuel)
 
 ### Validé dans cette session
 - `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
@@ -505,8 +505,20 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
 - Chaque `Stack.Screen` surcharge avec ses propres `options` si besoin
 - Ne toucher qu'à `app/_layout.tsx` pour modifier les transitions
 
-### Étape 4 — Thème visuel par cycle (à venir)
-- `couleur_principale` et `couleur_fond` du JSON pour teinter les orbes et accents selon le cycle
+### Étape 4 — Thème visuel par cycle ✅ VALIDÉE
+
+**Hook `hooks/useCycleContent.ts`**
+- `getCycleColors(n)` → `{ orb1: couleur_principale, orb2: couleur_fond }`, fallback `#C4A8D4` / `#B8D4B0`
+- `getCycleContent(n)` enrichi avec `couleurPrincipale: data.couleur_principale`
+
+**Orbes colorés** — `colors.orb1` / `colors.orb2` sur les 2 premiers orbes de :
+`home`, `affirmation`, `action`, `visualisation`, `journal`, `celebration`, `vision-board`
+
+**Badge thème coloré** — sur `home`, `affirmation`, `action`, `visualisation` :
+- `backgroundColor: cycleColors.orb1 + '59'` (35% opacity)
+- `color: content.couleurPrincipale || '#6B3FA0'`
+
+**Règle** : violet `#6B3FA0` et crème `#F0EAE0` de l'interface restent inchangés — seuls les orbes et badges thème sont teintés.
 
 ### Composants UI validés
 | Composant | Durée | Notes |
@@ -525,10 +537,11 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
    - `parametres.tsx` : notification affirmation = contenu réel du cycle en cours
    - Clé technique `jour_X` ≠ mot affiché "Cycle X" — règle confirmée
 
-2. ~~**Session animations globales**~~ ✅
-   - eyeAnim + fadeUp validés sur toutes les pages
-   - Animations spéciales : jauge profil, compteur points, badges celebration validés
-   - Transitions : fade / slide_from_right / slide_from_bottom validées
+2. ~~**Session dynamisation complète**~~ ✅
+   - Étape 1 : expo-haptics sur tous les boutons
+   - Étape 2 : eyeAnim + fadeUp toutes pages · jauge profil · compteur · badges celebration
+   - Étape 3 : transitions fade / slide_from_right / slide_from_bottom
+   - Étape 4 : getCycleColors() orbes + badge thème coloré · couleurPrincipale dans getCycleContent()
 
 3. **Session traductions EN/ES**
    - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`

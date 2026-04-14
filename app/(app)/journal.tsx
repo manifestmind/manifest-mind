@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getCycleColors } from '../../hooks/useCycleContent';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 
@@ -69,6 +70,7 @@ export default function Journal() {
   }, []);
 
   const [cycleNumber, setCycleNumber] = useState(1);
+  const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
   const [journalText, setJournalText] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [validated, setValidated] = useState(false);
@@ -82,6 +84,7 @@ export default function Journal() {
     async function load() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
+      setCycleColors(getCycleColors(cycle));
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
@@ -199,8 +202,8 @@ export default function Journal() {
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
 
       {/* Orbes */}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#B8D4B0', top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 80, height: 80, backgroundColor: '#E8C890', bottom: 55, left: -20 }]} />
+      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
+      <View style={[styles.orb, { width: 80, height: 80, backgroundColor: cycleColors.orb2, bottom: 55, left: -20 }]} />
 
       {/* Contenu scrollable */}
       <ScrollView

@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
-import { getCycleContent } from '../../hooks/useCycleContent';
+import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 
 type StepStatus = {
   opening: boolean;
@@ -60,6 +60,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const [userName, setUserName] = useState('');
   const [cycleNumber, setCycleNumber] = useState(1);
+  const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
   const eyeAnim = useRef(new Animated.Value(0)).current;
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
@@ -131,6 +132,7 @@ export default function Home() {
 
     setCycleNumber(cycle);
     setContent(getCycleContent(cycle));
+    setCycleColors(getCycleColors(cycle));
 
     // 1. Lire le statut des étapes
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
@@ -256,8 +258,8 @@ export default function Home() {
       </Pressable>
 
       {/* Orbes */}
-      <View style={[styles.orb, { width: 150, height: 150, backgroundColor: '#B8D4B0', top: -40, right: -40 }]} />
-      <View style={[styles.orb, { width: 90, height: 90, backgroundColor: '#C4A8D4', top: 160, left: -28 }]} />
+      <View style={[styles.orb, { width: 150, height: 150, backgroundColor: cycleColors.orb1, top: -40, right: -40 }]} />
+      <View style={[styles.orb, { width: 90, height: 90, backgroundColor: cycleColors.orb2, top: 160, left: -28 }]} />
       <View style={[styles.orb, { width: 60, height: 60, backgroundColor: '#E8C890', top: 310, right: -15 }]} />
 
       {/* Contenu principal */}
@@ -311,9 +313,11 @@ export default function Home() {
           </View>
           {/* Thème du cycle */}
           {content?.theme ? (
-            <Text style={{ fontFamily: 'Jost', fontSize: 14, color: '#9B80B8', marginTop: 1 }}>
-              {content.theme}
-            </Text>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: cycleColors.orb1 + '59', borderRadius: 20, paddingVertical: 2, paddingHorizontal: 10, marginTop: 3 }}>
+              <Text style={{ fontFamily: 'Jost', fontSize: 12, fontWeight: '500', color: content.couleurPrincipale || '#6B3FA0' }}>
+                {content.theme}
+              </Text>
+            </View>
           ) : null}
 
           {/* Ligne 2 : 365 jours aligné à droite */}

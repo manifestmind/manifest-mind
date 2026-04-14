@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { getCycleColors } from '../../hooks/useCycleContent';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -29,6 +30,7 @@ export default function Celebration() {
   const [cyclePoints, setCyclePoints] = useState(0);
   const [displayPoints, setDisplayPoints] = useState(0);
   const [cycleNumber, setCycleNumber] = useState(1);
+  const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
   const [earnedPoints, setEarnedPoints] = useState<Record<string, number>>({});
 
   // Eye open + count
@@ -98,6 +100,7 @@ export default function Celebration() {
 
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
+      setCycleColors(getCycleColors(cycle));
     }
     load();
   }, []);
@@ -219,8 +222,8 @@ export default function Celebration() {
   return (
     <View style={styles.container}>
       {/* Orbes */}
-      <Animated.View style={[styles.orb, { width: 180, height: 180, backgroundColor: '#C4A8D4', top: -50,  right: -50  }, orbStyle(orb1)]} />
-      <Animated.View style={[styles.orb, { width: 120, height: 120, backgroundColor: '#B8D4B0', bottom: -30, left: -30  }, orbStyle(orb2)]} />
+      <Animated.View style={[styles.orb, { width: 180, height: 180, backgroundColor: cycleColors.orb1, top: -50,  right: -50  }, orbStyle(orb1)]} />
+      <Animated.View style={[styles.orb, { width: 120, height: 120, backgroundColor: cycleColors.orb2, bottom: -30, left: -30  }, orbStyle(orb2)]} />
       <Animated.View style={[styles.orb, { width: 80,  height: 80,  backgroundColor: '#E8C890', top: 200,  left: -25   }, orbStyle(orb3)]} />
       <Animated.View style={[styles.orb, { width: 60,  height: 60,  backgroundColor: '#DDD0F8', bottom: 120, right: -15 }, orbStyle(orb4)]} />
 

@@ -15,6 +15,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
+import { getCycleColors } from '../../hooks/useCycleContent';
 
 function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
   const getLevel = (pts: number) => {
@@ -60,6 +61,7 @@ export default function VisionBoard() {
   }, []);
 
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
   const [showFinishBtn, setShowFinishBtn] = useState(false);
@@ -67,6 +69,9 @@ export default function VisionBoard() {
   useFocusEffect(
     useCallback(() => {
       async function load() {
+        const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+        setCycleColors(getCycleColors(cycle));
+
         const savedPhotos = await AsyncStorage.getItem('vision_board_photos');
         if (savedPhotos) setPhotos(JSON.parse(savedPhotos));
 
@@ -142,8 +147,8 @@ export default function VisionBoard() {
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
       {/* Orbes */}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#C4A8D4', top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 85, height: 85, backgroundColor: '#B8D4B0', bottom: 55, left: -22 }]} />
+      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
+      <View style={[styles.orb, { width: 85, height: 85, backgroundColor: cycleColors.orb2, bottom: 55, left: -22 }]} />
 
       {/* Contenu */}
       <View style={styles.content}>
