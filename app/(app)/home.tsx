@@ -245,7 +245,7 @@ export default function Home() {
         {/* Œil + Bonjour */}
         <View style={styles.headerBlock}>
           {/* 1. ŒIL +30% : 64×1.3=83, 49×1.3=64 */}
-          <Svg width={120} height={92} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
+          <Svg width={160} height={123} viewBox="0 0 56 44" style={{ overflow: 'visible' }}>
             <Defs>
               <ClipPath id="hc1">
                 <Path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" />
