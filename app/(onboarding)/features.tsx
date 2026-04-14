@@ -66,7 +66,7 @@ export default function Features() {
           </Svg>
 
           <Text style={styles.title}>Un programme complet</Text>
-          <Text style={styles.subtitle}>365 cycles · 4 phases · 7 thèmes</Text>
+          <Text style={styles.subtitle}>365 cycles · 2555 étapes · 4 phases · 7 thèmes</Text>
           <Text style={styles.purpleText}>365 cycles pour transformer ta vie étape par étape</Text>
         </View>
 
@@ -96,12 +96,12 @@ export default function Features() {
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>Affirmations quotidiennes</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Un message puissant chaque matin.</Text>
+              <Text style={styles.cardText}>Un message puissant à chaque cycle.</Text>
               <View style={styles.badgeGold}>
                 <Text style={styles.badgeGoldText}>+15 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>Reprogramme ton esprit dès le réveil.</Text>
+            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>Reprogramme ton esprit dès le début du cycle.</Text>
           </View>
         </View>
 
@@ -216,21 +216,21 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'serif',
-    fontSize: 23,
+    fontSize: 26,
     fontStyle: 'italic',
     color: '#2A2520',
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'Jost',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '300',
     color: '#7A7068',
     textAlign: 'center',
   },
   purpleText: {
     fontFamily: 'serif',
-    fontSize: 14,
+    fontSize: 17,
     fontStyle: 'italic',
     color: '#6B3FA0',
     textAlign: 'center',
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#9B80B8',
   },
   progressBar: {
@@ -279,13 +279,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: 'Jost',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '500',
     color: '#2A2520',
   },
   cardText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '300',
     color: '#7A7068',
   },
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   badgeGoldText: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     color: '#9A6A00',
   },
   badgeGreen: {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   badgeGreenText: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     color: '#2A6A20',
   },
   badgePurple: {
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   },
   badgePurpleText: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     color: '#6B3FA0',
   },
   badgeBlue: {
@@ -336,12 +336,12 @@ const styles = StyleSheet.create({
   },
   badgeBlueText: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     color: '#1A6A80',
   },
   cardNote: {
     fontFamily: 'serif',
-    fontSize: 11,
+    fontSize: 14,
     fontStyle: 'italic',
   },
   bottomBlock: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: {
     color: '#F0EAE0',
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: '500',
     letterSpacing: 1.5,
     textTransform: 'uppercase',

@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'serif',
-    fontSize: 23,
+    fontSize: 26,
     fontStyle: 'italic',
     color: '#2A2520',
     textAlign: 'center',
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     color: '#9B80B8',
   },
   progressBar: {
@@ -299,13 +299,13 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontFamily: 'Jost',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '500',
     color: '#2A2520',
   },
   itemText: {
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '300',
     color: '#7A7068',
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   checkboxText: {
     flex: 1,
     fontFamily: 'Jost',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '300',
     color: '#4A3060',
     lineHeight: 16,
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: {
     color: '#F0EAE0',
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: '500',
     letterSpacing: 1.5,
     textTransform: 'uppercase',

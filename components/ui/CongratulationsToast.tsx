@@ -23,7 +23,7 @@ export default function CongratulationsToast({
         duration: 300,
         useNativeDriver: true,
       }).start(() => onHide());
-    }, 3000);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, []);

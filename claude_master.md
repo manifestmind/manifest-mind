@@ -446,6 +446,44 @@ function goNext(route: string) {
 
 ---
 
+## SESSION DYNAMISATION — À VENIR
+
+### Étape 1 — Haptique (expo-haptics)
+- Vibration douce sur tous les boutons
+- Vibration validation étape complétée
+- Vibration célébration fin de cycle
+- Désactivable depuis les paramètres
+
+### Étape 2 — Animations globales
+- Œil qui s'ouvre à l'arrivée sur chaque page (Animated RN)
+- fadeUp cohérent partout
+- Migrer welcome.tsx Reanimated → Animated RN en même temps
+- Jauge profil se remplit progressivement
+- Points comptent de 0 à X dans celebration
+- Badges apparaissent un par un
+
+### Étape 3 — Transitions entre pages
+- Fondu enchaîné entre toutes les pages
+- Glissement horizontal dans le flux (Affirmation → Action → Visualisation)
+- Fondu vers le haut pour celebration
+
+### Étape 4 — Thème visuel par cycle
+- `couleur_principale` et `couleur_fond` du JSON utilisées pour teinter les orbes et accents selon le cycle
+- Pas toute l'interface — juste les éléments décoratifs
+
+### Règles animations
+- **Zéro Reanimated** sauf welcome.tsx jusqu'à la migration
+- **Zéro `Animated.delay()`** — utiliser `setTimeout` pour tous les délais
+- `Animated` RN uniquement partout ailleurs
+
+### Composants UI validés
+| Composant | Durée | Notes |
+|---|---|---|
+| PointsToast | 2s | fond #3A3530 texte #F0EAE0, zéro Reanimated |
+| CongratulationsToast | 6s | fond #4A2080 texte white, zéro Reanimated |
+
+---
+
 ## SESSIONS À VENIR (dans l'ordre)
 
 1. ~~**Session contenu JSON**~~ ✅

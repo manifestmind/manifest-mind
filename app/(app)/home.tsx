@@ -208,12 +208,6 @@ export default function Home() {
     await loadHome();
   }
 
-  async function skipStep(step: 'journal' | 'vision_board') {
-    const newStatus = { ...stepStatus, [step]: true };
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(newStatus));
-    setStepStatus(newStatus);
-  }
-
   const LEVELS = ['Éveillé', 'Floraison', 'Rayonnant', 'Manifestant'];
   const currentLevelIndex = LEVELS.indexOf(level);
 
@@ -269,7 +263,7 @@ export default function Home() {
             <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
           </Svg>
           <View style={{ alignItems: 'center' }}>
-            <Text style={styles.bonjour}>Bonjour</Text>
+            <Text style={styles.bonjour}>Bienvenue</Text>
             <Text style={styles.prenom}>{userName || 'toi'}</Text>
           </View>
         </View>
@@ -292,7 +286,7 @@ export default function Home() {
           </View>
           {/* Thème du cycle */}
           {content?.theme ? (
-            <Text style={{ fontFamily: 'Jost', fontSize: 10, color: '#9B80B8', marginTop: 1 }}>
+            <Text style={{ fontFamily: 'Jost', fontSize: 14, color: '#9B80B8', marginTop: 1 }}>
               {content.theme}
             </Text>
           ) : null}
@@ -378,16 +372,6 @@ export default function Home() {
             <View style={[styles.cardBadge, { backgroundColor: '#FDE8B0' }]}>
               <Text style={[styles.cardBadgeText, { color: '#9A6A00' }]}>+5 pts/cycle</Text>
             </View>
-          </Pressable>
-        </View>
-
-        {/* Liens Passer — alignés sous les cartes */}
-        <View style={{ flexDirection: 'row', gap: 7 }}>
-          <Pressable style={{ flex: 1 }} onPress={() => skipStep('journal')}>
-            <Text style={styles.skipLink}>Passer cette étape sans points</Text>
-          </Pressable>
-          <Pressable style={{ flex: 1 }} onPress={() => skipStep('vision_board')}>
-            <Text style={styles.skipLink}>Passer cette étape sans points</Text>
           </Pressable>
         </View>
 
@@ -672,13 +656,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost',
     fontSize: 8,
     fontWeight: '500',
-  },
-  skipLink: {
-    fontSize: 11,
-    color: '#A09088',
-    textDecorationLine: 'underline',
-    textAlign: 'center',
-    fontFamily: 'Jost',
   },
   featBlock: {
     backgroundColor: 'rgba(255,255,255,0.35)',
