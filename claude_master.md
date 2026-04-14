@@ -1,7 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
 **Dernière mise à jour :** 14 Avril 2026
-**État :** Animations globales + animations spéciales validées ✅
+**État :** Animations globales + animations spéciales + transitions validées ✅
 
 ### Validé dans cette session
 - `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
@@ -491,10 +491,19 @@ function goNext(route: string) {
 - **Zéro `Animated.delay()`** — `setTimeout` uniquement pour tous les délais
 - `Animated` RN uniquement partout ailleurs
 
-### Étape 3 — Transitions entre pages (à venir)
-- Fondu enchaîné entre toutes les pages
-- Glissement horizontal dans le flux (Affirmation → Action → Visualisation)
-- Fondu vers le haut pour celebration
+### Étape 3 — Transitions entre pages ✅ VALIDÉE
+
+Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
+
+| Type | Animation | Durée | Pages |
+|------|-----------|-------|-------|
+| Fondu | `fade` | 300ms | home, splash, profil, parametres, name, onboarding |
+| Glissement droite | `slide_from_right` | 280ms | affirmation, action, visualisation, journal, vision-board |
+| Glissement bas | `slide_from_bottom` | 400ms | celebration |
+
+- `screenOptions` global : `animation: 'fade'`, `animationDuration: 300`, `headerShown: false`
+- Chaque `Stack.Screen` surcharge avec ses propres `options` si besoin
+- Ne toucher qu'à `app/_layout.tsx` pour modifier les transitions
 
 ### Étape 4 — Thème visuel par cycle (à venir)
 - `couleur_principale` et `couleur_fond` du JSON pour teinter les orbes et accents selon le cycle
@@ -519,6 +528,7 @@ function goNext(route: string) {
 2. ~~**Session animations globales**~~ ✅
    - eyeAnim + fadeUp validés sur toutes les pages
    - Animations spéciales : jauge profil, compteur points, badges celebration validés
+   - Transitions : fade / slide_from_right / slide_from_bottom validées
 
 3. **Session traductions EN/ES**
    - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`
