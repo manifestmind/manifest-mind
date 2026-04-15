@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { shareProgress } from '../../hooks/useShare';
 
 type StepStatus = {
   opening: boolean;
@@ -204,6 +205,22 @@ export default function Profil() {
       {/* Orbes */}
       <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#DDD0F8', top: -35, right: -35 }]} />
       <View style={[styles.orb, { width: 75,  height: 75,  backgroundColor: '#C4E8F0', bottom: 55, left: -18 }]} />
+
+      {/* Icône partage */}
+      <View style={{ position: 'absolute', top: 76, right: 28, zIndex: 10, alignItems: 'center', gap: 3 }}>
+        <Pressable
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); shareProgress(); }}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 0.5, borderColor: '#D4C4B8', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <Path d="M18 8a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M6 15a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M18 20a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#6B3FA0" strokeWidth={1.4} strokeLinecap="round" />
+          </Svg>
+        </Pressable>
+        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>Partager</Text>
+      </View>
 
       {/* Contenu */}
       <View style={[styles.content, { paddingTop: Math.max(insets.top, 12) }]}>

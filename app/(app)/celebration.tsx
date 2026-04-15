@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { getCycleColors } from '../../hooks/useCycleContent';
+import { shareProgress } from '../../hooks/useShare';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -226,6 +227,22 @@ export default function Celebration() {
       <Animated.View style={[styles.orb, { width: 120, height: 120, backgroundColor: cycleColors.orb2, bottom: -30, left: -30  }, orbStyle(orb2)]} />
       <Animated.View style={[styles.orb, { width: 80,  height: 80,  backgroundColor: '#E8C890', top: 200,  left: -25   }, orbStyle(orb3)]} />
       <Animated.View style={[styles.orb, { width: 60,  height: 60,  backgroundColor: '#DDD0F8', bottom: 120, right: -15 }, orbStyle(orb4)]} />
+
+      {/* Icône partage */}
+      <View style={{ position: 'absolute', top: 76, right: 28, zIndex: 10, alignItems: 'center', gap: 3 }}>
+        <Pressable
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); shareProgress(); }}
+          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 0.5, borderColor: '#D4C4B8', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+            <Path d="M18 8a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M6 15a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M18 20a3 3 0 100-6 3 3 0 000 6z" stroke="#6B3FA0" strokeWidth={1.4} fill="none" />
+            <Path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#6B3FA0" strokeWidth={1.4} strokeLinecap="round" />
+          </Svg>
+        </Pressable>
+        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>Partager</Text>
+      </View>
 
       {/* Contenu */}
       <View style={[styles.content, {

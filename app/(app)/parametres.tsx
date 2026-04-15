@@ -450,7 +450,7 @@ export default function Parametres() {
         {/* 7. VERSION */}
         <View style={styles.versionBlock}>
           <Text style={styles.versionText}>ManifestMind v1.0.0</Text>
-          <Text style={styles.versionTagline}>Fait avec ✦ pour ton épanouissement</Text>
+          <Text style={styles.versionTagline}>Fait avec amour pour ton épanouissement personnel</Text>
         </View>
         </Animated.View>
 
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   },
   versionTagline: {
     fontFamily: 'serif',
-    fontSize: 11,
+    fontSize: 13,
     fontStyle: 'italic',
     color: '#C4A8D4',
   },

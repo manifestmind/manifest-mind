@@ -505,6 +505,15 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
 - Chaque `Stack.Screen` surcharge avec ses propres `options` si besoin
 - Ne toucher qu'à `app/_layout.tsx` pour modifier les transitions
 
+### Partage ✅ VALIDÉ
+
+- `hooks/useShare.ts` — `shareProgress()` : lit `current_cycle` + `points_total`, compose un message texte + emojis, partage via `expo-sharing` (fichier `.txt` temporaire dans `FileSystem.cacheDirectory`)
+- Fallback : `expo-clipboard` + `Alert` si partage non disponible
+- Icône SVG cercle blanc semi-transparent, position `absolute top:76 right:28`, label "Partager" dessous en 9px
+- Appliqué sur `celebration.tsx` et `profil.tsx` uniquement
+- Packages : `expo-sharing`, `expo-clipboard`, `expo-file-system/legacy`
+- Zéro image — texte pur avec emojis
+
 ### Étape 4 — Thème visuel par cycle ✅ VALIDÉE
 
 **Hook `hooks/useCycleContent.ts`**
