@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import { useEffect, useState } from 'react';
 import {
   Pressable,
@@ -12,6 +13,7 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 
 export default function Name() {
   const router = useRouter();
+  const t = useTranslation();
   const { edit } = useLocalSearchParams();
   const isEdit = edit === 'true';
   const [name, setName] = useState('');
@@ -58,10 +60,10 @@ export default function Name() {
         <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
       </Svg>
 
-      <Text style={styles.title}>Comment tu t'appelles ?</Text>
+      <Text style={styles.title}>{t.name.titre}</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ton prénom"
+        placeholder={t.name.placeholder}
         placeholderTextColor="#B0A898"
         value={name}
         onChangeText={setName}
@@ -72,7 +74,7 @@ export default function Name() {
         onPress={handleSave}
         disabled={!name.trim()}
       >
-        <Text style={styles.btnText}>{isEdit ? 'Mettre à jour →' : 'Continuer →'}</Text>
+        <Text style={styles.btnText}>{isEdit ? t.name.btnEdit : t.name.btnNouvel}</Text>
       </Pressable>
     </View>
   );

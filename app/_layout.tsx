@@ -1,7 +1,9 @@
 import { Stack } from 'expo-router';
+import { LanguageProvider } from '../src/i18n/LanguageContext';
 
 export default function RootLayout() {
   return (
+    <LanguageProvider>
     <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>
       <Stack.Screen name="(onboarding)" />
       <Stack.Screen name="(app)/splash"        options={{ animation: 'fade' }} />
@@ -16,5 +18,6 @@ export default function RootLayout() {
       <Stack.Screen name="(app)/parametres"    options={{ animation: 'fade' }} />
       <Stack.Screen name="(app)/name"          options={{ animation: 'fade' }} />
     </Stack>
+    </LanguageProvider>
   );
 }

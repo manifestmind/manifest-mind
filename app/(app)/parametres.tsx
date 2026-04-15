@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { getCycleContent } from '../../hooks/useCycleContent';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -37,13 +39,14 @@ function Toggle({ on }: { on: boolean }) {
 
 export default function Parametres() {
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
+  const { lang, setLang: setLangContext } = useLanguage();
   const eyeAnim = useRef(new Animated.Value(0)).current;
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
   const fadeUp3 = useRef(new Animated.Value(0)).current;
   const fadeUp4 = useRef(new Animated.Value(0)).current;
 
-  const [lang, setLang] = useState<'fr' | 'en' | 'es'>('fr');
   const [notifAffirmation, setNotifAffirmation] = useState(true);
   const [notifRappel, setNotifRappel] = useState(false);
   const [reminderTime, setReminderTime] = useState<Date>(() => {
@@ -75,15 +78,13 @@ export default function Parametres() {
   // ── Load persisted settings ──────────────────────────────────────────────
   useEffect(() => {
     (async () => {
-      const [storedLang, storedNotifAff, storedNotifRappel, storedTime] =
+      const [storedNotifAff, storedNotifRappel, storedTime] =
         await AsyncStorage.multiGet([
-          'user_language',
           'notif_affirmation',
           'notif_rappel',
           'reminder_time',
         ]);
 
-      if (storedLang[1]) setLang(storedLang[1] as 'fr' | 'en' | 'es');
       if (storedNotifAff[1] !== null) setNotifAffirmation(storedNotifAff[1] === 'true');
       if (storedNotifRappel[1] !== null) setNotifRappel(storedNotifRappel[1] === 'true');
       if (storedTime[1]) {
@@ -105,11 +106,11 @@ export default function Parametres() {
     await Notifications.cancelAllScheduledNotificationsAsync();
     if (notifRappel) await scheduleRappelNotifRaw(time);
     const cycleNumber = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-    const cycleContent = getCycleContent(cycleNumber);
+    const cycleContent = getCycleContent(cycleNumber, lang);
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'ManifestMind \u2756',
-        body: cycleContent?.affirmation || "Ton affirmation du cycle t\u2019attend.",
+        title: 'ManifestMind ✦',
+        body: cycleContent?.affirmation || t.notifications.affirmationBody,
         data: { screen: 'affirmation' },
       },
       trigger: {
@@ -124,7 +125,7 @@ export default function Parametres() {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'ManifestMind ✦',
-        body: "Ton cycle d\u2019aujourd\u2019hui n\u2019est pas encore termin\u00e9. Tu peux encore le compl\u00e9ter !",
+        body: t.notifications.rappelBody,
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -146,13 +147,7 @@ export default function Parametres() {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   function handleLanguage(l: 'fr' | 'en' | 'es') {
-    setLang(l);
-    AsyncStorage.setItem('user_language', l);
-    if (l !== 'fr') {
-      Alert.alert('Langue', "Seul le fran\u00e7ais est disponible pour l\u2019instant.");
-      setLang('fr');
-      AsyncStorage.setItem('user_language', 'fr');
-    }
+    setLangContext(l);
   }
 
   async function handleNotifAffirmation() {
@@ -160,7 +155,7 @@ export default function Parametres() {
     if (next) {
       const ok = await requestPermissions();
       if (!ok) {
-        Alert.alert('Notifications désactivées', 'Active les notifications dans les réglages de ton téléphone.');
+        Alert.alert(t.parametres.alertNotifsDesactivees.titre, t.parametres.alertNotifsDesactivees.corps);
         return;
       }
       await scheduleAffirmationNotif(reminderTime);
@@ -176,7 +171,7 @@ export default function Parametres() {
     if (next) {
       const ok = await requestPermissions();
       if (!ok) {
-        Alert.alert('Notifications désactivées', 'Active les notifications dans les réglages de ton téléphone.');
+        Alert.alert(t.parametres.alertNotifsDesactivees.titre, t.parametres.alertNotifsDesactivees.corps);
         return;
       }
       await scheduleRappelNotifRaw(reminderTime);
@@ -199,12 +194,12 @@ export default function Parametres() {
 
   function handleSignOut() {
     Alert.alert(
-      'Se déconnecter',
-      "Tu seras redirig\u00e9 vers l\u2019\u00e9cran d\u2019accueil.",
+      t.parametres.alertDeconnecter.titre,
+      t.parametres.alertDeconnecter.corps,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.parametres.alertDeconnecter.annuler, style: 'cancel' },
         {
-          text: 'Déconnecter',
+          text: t.parametres.alertDeconnecter.confirmer,
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.removeItem('onboarding_completed');
@@ -217,12 +212,12 @@ export default function Parametres() {
 
   function handleDeleteAccount() {
     Alert.alert(
-      'Supprimer mon compte',
-      'Toutes tes données seront effacées définitivement. Cette action est irréversible.',
+      t.parametres.alertSupprimer.titre,
+      t.parametres.alertSupprimer.corps,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.parametres.alertSupprimer.annuler, style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t.parametres.alertSupprimer.confirmer,
           style: 'destructive',
           onPress: async () => {
             await AsyncStorage.clear();
@@ -234,7 +229,7 @@ export default function Parametres() {
   }
 
   function handleRestorePurchases() {
-    Alert.alert('Restaurer les achats', 'Aucun achat à restaurer pour le moment.');
+    Alert.alert(t.parametres.alertRestaurer.titre, t.parametres.alertRestaurer.corps);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -279,12 +274,12 @@ export default function Parametres() {
               <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
             </Svg>
           </Animated.View>
-          <Text style={styles.title}>Paramètres</Text>
+          <Text style={styles.title}>{t.parametres.titre}</Text>
         </View>
 
         {/* 2. LANGUE */}
         <Animated.View style={{ opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
-          <Text style={styles.sectionLabel}>Langue</Text>
+          <Text style={styles.sectionLabel}>{t.parametres.sections.langue}</Text>
           <View style={[styles.rowBase, styles.rowSolo]}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Circle cx="10" cy="10" r="7" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
@@ -292,7 +287,7 @@ export default function Parametres() {
               <Path d="M10 3c2 2 3 4.5 3 7s-1 5-3 7" stroke="#6B3FA0" strokeWidth="1" fill="none" />
               <Path d="M3 10h14" stroke="#6B3FA0" strokeWidth="1" strokeLinecap="round" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>Langue de l'application</Text>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.langueApp}</Text>
             <View style={{ flexDirection: 'row', gap: 4 }}>
               {(['fr', 'en', 'es'] as const).map((l) => (
                 <Pressable
@@ -311,7 +306,7 @@ export default function Parametres() {
 
         {/* 3. NOTIFICATIONS */}
         <Animated.View style={{ opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
-          <Text style={styles.sectionLabel}>Notifications</Text>
+          <Text style={styles.sectionLabel}>{t.parametres.sections.notifications}</Text>
 
           {/* Ligne 1 — Affirmation du cycle */}
           <View style={[styles.rowBase, styles.rowFirst]}>
@@ -320,8 +315,8 @@ export default function Parametres() {
               <Path d="M8 17a2 2 0 0 0 4 0" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Affirmation du cycle</Text>
-              <Text style={styles.rowSub}>Reçois ton affirmation chaque matin</Text>
+              <Text style={styles.rowTitle}>{t.parametres.notifs.affirmationTitre}</Text>
+              <Text style={styles.rowSub}>{t.parametres.notifs.affirmationSub}</Text>
             </View>
             <Pressable onPress={handleNotifAffirmation}>
               <Toggle on={notifAffirmation} />
@@ -335,8 +330,8 @@ export default function Parametres() {
               <Path d="M10 6v4l3 2" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Heure de rappel matin</Text>
-              <Text style={styles.rowSub}>Affirmation + ouverture du cycle</Text>
+              <Text style={styles.rowTitle}>{t.parametres.notifs.heureTitre}</Text>
+              <Text style={styles.rowSub}>{t.parametres.notifs.heureSub}</Text>
             </View>
             <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowTimePicker(true); }}>
               <View style={styles.timeBadge}>
@@ -352,8 +347,8 @@ export default function Parametres() {
               <Path d="M8 17a2 2 0 0 0 4 0" stroke="#9B72C8" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Rappel cycle incomplet</Text>
-              <Text style={styles.rowSub}>Si cycle non terminé à 20h</Text>
+              <Text style={styles.rowTitle}>{t.parametres.notifs.rappelTitre}</Text>
+              <Text style={styles.rowSub}>{t.parametres.notifs.rappelSub}</Text>
             </View>
             <Pressable onPress={handleNotifRappel}>
               <Toggle on={notifRappel} />
@@ -363,7 +358,7 @@ export default function Parametres() {
 
         {/* 4. ABONNEMENT */}
         <Animated.View style={{ opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
-          <Text style={styles.sectionLabel}>Abonnement</Text>
+          <Text style={styles.sectionLabel}>{t.parametres.sections.abonnement}</Text>
 
           {/* Ligne 1 — Plan actuel */}
           <Pressable
@@ -374,11 +369,11 @@ export default function Parametres() {
               <Path d="M10 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z" fill="#EAC870" stroke="#C89A30" strokeWidth="0.8" />
             </Svg>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>Plan actuel</Text>
-              <Text style={styles.rowSub}>Annuel · Renouvellement auto</Text>
+              <Text style={styles.rowTitle}>{t.parametres.abonnement.planActuel}</Text>
+              <Text style={styles.rowSub}>{t.parametres.abonnement.planSub}</Text>
             </View>
             <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>Actif</Text>
+              <Text style={styles.activeBadgeText}>{t.parametres.abonnement.actif}</Text>
             </View>
           </Pressable>
 
@@ -388,7 +383,7 @@ export default function Parametres() {
               <Rect x="3" y="5" width="14" height="10" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
               <Path d="M3 9h14" stroke="#6B3FA0" strokeWidth="1.2" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>Restaurer les achats</Text>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.abonnement.restaurer}</Text>
             <Chevron />
           </Pressable>
         </Animated.View>
@@ -396,14 +391,14 @@ export default function Parametres() {
         {/* 5. COMPTE + LÉGAL + VERSION */}
         <Animated.View style={{ gap: 8, opacity: fadeUp4, transform: [{ translateY: fadeUp4.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
         <View>
-          <Text style={styles.sectionLabel}>Compte</Text>
+          <Text style={styles.sectionLabel}>{t.parametres.sections.compte}</Text>
 
           {/* Ligne 1 — Se déconnecter */}
           <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={handleSignOut}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M13 3h4v14h-4M9 14l4-4-4-4M3 10h10" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>Se déconnecter</Text>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.compte.deconnecter}</Text>
             <Chevron />
           </Pressable>
 
@@ -412,37 +407,37 @@ export default function Parametres() {
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M5 5l10 10M15 5L5 15" stroke="#C04040" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1, color: '#C04040' }]}>Supprimer mon compte</Text>
+            <Text style={[styles.rowTitle, { flex: 1, color: '#C04040' }]}>{t.parametres.compte.supprimer}</Text>
             <Chevron color="#D08080" />
           </Pressable>
         </View>
 
         {/* 6. LÉGAL */}
         <View>
-          <Text style={styles.sectionLabel}>Légal</Text>
+          <Text style={styles.sectionLabel}>{t.parametres.sections.legal}</Text>
 
           {/* Ligne 1 — Politique de confidentialité */}
           <Pressable
             style={[styles.rowBase, styles.rowFirst]}
-            onPress={() => Linking.openURL('https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html')}
+            onPress={() => Linking.openURL(t.legal.privacyUrl)}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Rect x="4" y="2" width="12" height="16" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
               <Path d="M7 7h6M7 10h6M7 13h4" stroke="#6B3FA0" strokeWidth="1" strokeLinecap="round" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>Politique de confidentialité</Text>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.confidentialite}</Text>
             <Chevron />
           </Pressable>
 
           {/* Ligne 2 — Conditions d'utilisation */}
           <Pressable
             style={[styles.rowBase, styles.rowLast]}
-            onPress={() => Linking.openURL('https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html')}
+            onPress={() => Linking.openURL(t.legal.termsUrl)}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2l7 4v5c0 4-3 7-7 8-4-1-7-4-7-8V6l7-4z" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
             </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>Conditions d'utilisation</Text>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.conditions}</Text>
             <Chevron />
           </Pressable>
         </View>
@@ -450,7 +445,7 @@ export default function Parametres() {
         {/* 7. VERSION */}
         <View style={styles.versionBlock}>
           <Text style={styles.versionText}>ManifestMind v1.0.0</Text>
-          <Text style={styles.versionTagline}>Fait avec amour pour ton épanouissement personnel</Text>
+          <Text style={styles.versionTagline}>{t.parametres.tagline}</Text>
         </View>
         </Animated.View>
 
@@ -473,7 +468,7 @@ export default function Parametres() {
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
-          <Text style={styles.navLabel}>Accueil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.accueil}</Text>
         </Pressable>
 
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/profil' as any); }}>
@@ -481,7 +476,7 @@ export default function Parametres() {
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
-          <Text style={styles.navLabel}>Profil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.profil}</Text>
         </Pressable>
 
         <Pressable style={styles.navItem}>
@@ -489,7 +484,7 @@ export default function Parametres() {
             <Circle cx="11" cy="11" r="3" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" />
           </Svg>
-          <Text style={[styles.navLabel, styles.navLabelActive]}>Paramètres</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>{t.commun.navbar.parametres}</Text>
           <View style={styles.navDot} />
         </Pressable>
       </View>

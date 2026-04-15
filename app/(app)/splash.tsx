@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -13,6 +14,7 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 
 export default function Splash() {
   const router = useRouter();
+  const t = useTranslation();
   const [toast, setToast] = useState('');
   const eyeAnim = useRef(new Animated.Value(0)).current;
 
@@ -39,7 +41,7 @@ export default function Splash() {
       const newCycleStarting = cycleCompleted === 'true' && nextCycleTime > 0 && Date.now() >= nextCycleTime;
 
       if (!opening || newCycleStarting) {
-        setToast('+10 pts · Ouverture du cycle');
+        setToast(t.splash.toast);
         setTimeout(() => setToast(''), 2500);
       }
     }
@@ -102,12 +104,12 @@ export default function Splash() {
           </Animated.View>
 
           <Text style={styles.appName}>ManifestMind</Text>
-          <Text style={styles.tagline}>Bien-être & Intentions</Text>
+          <Text style={styles.tagline}>{t.splash.tagline}</Text>
         </View>
 
         {/* Badge points */}
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>✦ +10 pts au démarrage</Text>
+          <Text style={styles.badgeText}>{t.splash.badge}</Text>
         </View>
 
         {/* Citation */}
@@ -115,7 +117,7 @@ export default function Splash() {
           <View style={styles.divider} />
           <View style={{ flexShrink: 1, width: '100%', alignItems: 'center' }}>
             <Text style={styles.quote} numberOfLines={0} adjustsFontSizeToFit={false}>
-              Chaque pensée{'\n'}façonne ton futur
+              {t.splash.quote}
             </Text>
           </View>
           <View style={styles.dots3}>
@@ -128,9 +130,9 @@ export default function Splash() {
         {/* Bouton */}
         <View style={styles.btnBlock}>
           <Pressable style={styles.btn} onPress={handleStart}>
-            <Text style={styles.btnText}>Commencer →</Text>
+            <Text style={styles.btnText}>{t.splash.commencer}</Text>
           </Pressable>
-          <Text style={styles.hint}>Ton espace de croissance personnelle</Text>
+          <Text style={styles.hint}>{t.splash.hint}</Text>
         </View>
       </ScrollView>
     </View>

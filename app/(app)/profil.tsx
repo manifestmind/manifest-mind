@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -27,24 +28,17 @@ type StepStatus = {
   vision_board: boolean;
 };
 
-const THEMES = [
-  'Confiance & Identité',
-  'Abondance & Prospérité',
-  'Amour & Relations',
-  'Santé & Vitalité',
-  'Carrière & Mission',
-  'Créativité & Expression',
-  'Gratitude & Paix',
-];
-
 export default function Profil() {
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
+
+  const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
 
   const [userName, setUserName] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(1);
   const [themeName, setThemeName] = useState('');
-  const [level, setLevel] = useState('Éveillé');
+  const [levelIndex, setLevelIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [cyclePoints, setCyclePoints] = useState(0);
   const [pointsTotal, setPointsTotal] = useState(0);
@@ -81,17 +75,17 @@ export default function Profil() {
         setCycleNumber(cycle);
 
         const theme = parseInt(await AsyncStorage.getItem('current_theme') || '1');
-        setThemeName(THEMES[theme - 1]);
+        setThemeName(t.themes[theme - 1]);
 
         const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
         setPointsTotal(total);
         const pct = (total / 36500) * 100;
         setProgressPercent(pct);
 
-        if (pct < 25) setLevel('Éveillé');
-        else if (pct < 50) setLevel('Floraison');
-        else if (pct < 75) setLevel('Rayonnant');
-        else setLevel('Manifestant');
+        if (pct < 25) setLevelIndex(0);
+        else if (pct < 50) setLevelIndex(1);
+        else if (pct < 75) setLevelIndex(2);
+        else setLevelIndex(3);
 
         const cpts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
         setCyclePoints(cpts);
@@ -176,12 +170,12 @@ export default function Profil() {
 
   async function handleReset() {
     Alert.alert(
-      'Recommencer depuis le début ?',
-      'Cette action est irréversible.\n\nTous tes points, cycles, entrées de journal et photos seront définitivement effacés.\nTu recommenceras au Cycle 1.\n\nTon abonnement reste actif.',
+      t.profil.alertReset.titre,
+      t.profil.alertReset.corps,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.profil.alertReset.annuler, style: 'cancel' },
         {
-          text: 'Confirmer',
+          text: t.profil.alertReset.confirmer,
           style: 'destructive',
           onPress: async () => {
             const keys = [
@@ -219,7 +213,7 @@ export default function Profil() {
             <Path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#6B3FA0" strokeWidth={1.4} strokeLinecap="round" />
           </Svg>
         </Pressable>
-        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>Partager</Text>
+        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>{t.commun.partager}</Text>
       </View>
 
       {/* Contenu */}
@@ -250,7 +244,7 @@ export default function Profil() {
             </Svg>
           </Animated.View>
           </Animated.View>
-          <Text style={[styles.title, { marginTop: -18 }]}>Mon Profil</Text>
+          <Text style={[styles.title, { marginTop: -18 }]}>{t.profil.titre}</Text>
         </View>
 
         {/* 2. Carte identité */}
@@ -293,11 +287,11 @@ export default function Profil() {
               </View>
             </Pressable>
             <View style={{ gap: 3 }}>
-              <Text style={[styles.userName, { fontSize: 22, color: '#C89A30' }]}>{userName || 'Toi'}</Text>
-              <Text style={[styles.cycleTheme, { fontSize: 13 }]}>Cycle {cycleNumber} · Th&#232;me {themeName.split(' &')[0]}</Text>
+              <Text style={[styles.userName, { fontSize: 22, color: '#C89A30' }]}>{userName || t.home.defautPrenom}</Text>
+              <Text style={[styles.cycleTheme, { fontSize: 13 }]}>{t.profil.cycleTheme.replace('{n}', String(cycleNumber)).replace('{theme}', themeName.split(' &')[0])}</Text>
               <View style={styles.levelBadge}>
                 <View style={styles.levelDot} />
-                <Text style={[styles.levelText, { fontSize: 13 }]}>&#10086; {level}</Text>
+                <Text style={[styles.levelText, { fontSize: 13 }]}>&#10086; {LEVELS[levelIndex]}</Text>
               </View>
             </View>
           </View>
@@ -307,8 +301,8 @@ export default function Profil() {
         <Animated.View style={{ gap: 5, opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
         <View style={styles.card}>
           <View style={styles.barHeader}>
-            <Text style={[styles.barLabel, { color: '#C89A30' }]}>Progression</Text>
-            <Text style={styles.barValue}>Cycle {cycleNumber} / 365</Text>
+            <Text style={[styles.barLabel, { color: '#C89A30' }]}>{t.profil.progression}</Text>
+            <Text style={styles.barValue}>{t.commun.cycle} {cycleNumber} / 365</Text>
           </View>
           <View style={styles.barTrackLarge}>
             <Animated.View style={[styles.barFillLarge, { width: gaugeAnnuelle.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
@@ -316,7 +310,7 @@ export default function Profil() {
             </Animated.View>
           </View>
           <View style={styles.levelsRow}>
-            {(['Éveillé', 'Floraison', 'Rayonnant', 'Manifestant'] as const).map((lbl, i) => {
+            {LEVELS.map((lbl, i) => {
               const thresholds = [0, 0.25, 0.5, 0.75];
               const active = levelPct >= thresholds[i];
               return (
@@ -332,8 +326,8 @@ export default function Profil() {
         {/* 4. Cycle en cours */}
         <View style={styles.card}>
           <View style={styles.barHeader}>
-            <Text style={styles.barLabel}>Cycle en cours</Text>
-            <Text style={styles.barValue}>{cyclePoints} / 100 pts</Text>
+            <Text style={styles.barLabel}>{t.profil.cycleEnCours}</Text>
+            <Text style={styles.barValue}>{cyclePoints} / 100 {t.profil.stats.pts}</Text>
           </View>
           <View style={styles.barTrackSmall}>
             <Animated.View style={[styles.barFillSmall, { width: gaugeCycle.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
@@ -344,19 +338,19 @@ export default function Profil() {
             <View style={styles.stepItem}>
               <View style={[styles.stepDot, { backgroundColor: dotCol(stepStatus.opening) }]} />
               <Text style={[styles.stepText, { color: textCol(stepStatus.opening) }]}>
-                Ouverture{stepStatus.opening ? ' ✓' : ''}
+                {t.profil.etapes.ouverture}{stepStatus.opening ? ' ✓' : ''}
               </Text>
             </View>
             <View style={styles.stepItem}>
               <View style={[styles.stepDot, { backgroundColor: dotCol(stepStatus.affirmation) }]} />
               <Text style={[styles.stepText, { color: textCol(stepStatus.affirmation) }]}>
-                Affirmation{stepStatus.affirmation ? ' ✓' : ''}
+                {t.profil.etapes.affirmation}{stepStatus.affirmation ? ' ✓' : ''}
               </Text>
             </View>
             <View style={styles.stepItem}>
               <View style={[styles.stepDot, { backgroundColor: dotCol(actionsOn) }]} />
               <Text style={[styles.stepText, { color: textCol(actionsOn) }]}>
-                Actions{actionsOn ? ' ✓' : ''}
+                {t.profil.etapes.actions}{actionsOn ? ' ✓' : ''}
               </Text>
             </View>
           </View>
@@ -367,23 +361,23 @@ export default function Profil() {
         <Animated.View style={{ gap: 5, flexShrink: 0, opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <View style={{ flexDirection: 'row', gap: 5 }}>
             <View style={[styles.statCell, { flex: 1 }]}>
-              <Text style={styles.statLabel}>Total points</Text>
+              <Text style={styles.statLabel}>{t.profil.stats.totalPoints}</Text>
               <Text style={[styles.statValue, { color: '#C89A30' }]}>{pointsTotal.toLocaleString('fr-FR')}</Text>
-              <Text style={styles.statSub}>/ 36 500 pts possibles</Text>
+              <Text style={styles.statSub}>{t.profil.stats.ptsPossibles}</Text>
             </View>
             <View style={[styles.statCell, { flex: 1 }]}>
-              <Text style={styles.statLabel}>Cycles compl&#233;t&#233;s</Text>
+              <Text style={styles.statLabel}>{t.profil.stats.cyclesCompletes}</Text>
               <Text style={[styles.statValue, { color: '#C89A30' }]}>{cyclesCompleted}</Text>
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 5 }}>
             <View style={[styles.statCell, { flex: 1 }]}>
-              <Text style={styles.statLabel}>Meilleur cycle</Text>
-              <Text style={styles.statValue}>{bestCycle > 0 ? bestCycle + ' pts' : '—'}</Text>
+              <Text style={styles.statLabel}>{t.profil.stats.meilleurCycle}</Text>
+              <Text style={styles.statValue}>{bestCycle > 0 ? bestCycle + ' ' + t.profil.stats.pts : '—'}</Text>
             </View>
             <View style={[styles.statCell, { flex: 1 }]}>
-              <Text style={styles.statLabel}>Moy. par cycle</Text>
-              <Text style={styles.statValue}>{cyclesCompleted > 0 ? avgPoints + ' pts' : '—'}</Text>
+              <Text style={styles.statLabel}>{t.profil.stats.moyenneCycle}</Text>
+              <Text style={styles.statValue}>{cyclesCompleted > 0 ? avgPoints + ' ' + t.profil.stats.pts : '—'}</Text>
             </View>
           </View>
         </Animated.View>
@@ -394,7 +388,7 @@ export default function Profil() {
           <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
             <Path d="M14 2l4 4-10 10H4v-4L14 2z" stroke="#6B3FA0" strokeWidth="1.2" strokeLinejoin="round" />
           </Svg>
-          <Text style={styles.actionText}>Modifier mon pr&#233;nom</Text>
+          <Text style={styles.actionText}>{t.profil.modifierPrenom}</Text>
           <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
             <Path d="M4 2l4 4-4 4" stroke="#C4A8D4" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
@@ -407,8 +401,8 @@ export default function Profil() {
             <Path d="M4 4v3h3" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
           <View style={{ flex: 1 }}>
-            <Text style={styles.resetText}>Recommencer depuis le d&#233;but</Text>
-            <Text style={styles.resetSub}>Efface tout · Irr&#233;versible</Text>
+            <Text style={styles.resetText}>{t.profil.recommencer}</Text>
+            <Text style={styles.resetSub}>{t.profil.recommencerSub}</Text>
           </View>
           <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
             <Path d="M4 2l4 4-4 4" stroke="#A0C890" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -424,14 +418,14 @@ export default function Profil() {
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
-          <Text style={styles.navLabel}>Accueil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.accueil}</Text>
         </Pressable>
         <Pressable style={styles.navItem}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
-          <Text style={[styles.navLabel, styles.navLabelActive]}>Profil</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>{t.commun.navbar.profil}</Text>
           <View style={styles.navDot} />
         </Pressable>
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
@@ -439,7 +433,7 @@ export default function Profil() {
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />
           </Svg>
-          <Text style={styles.navLabel}>Param&#232;tres</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.parametres}</Text>
         </Pressable>
       </View>
     </View>

@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -34,30 +36,39 @@ const INITIAL_STEP_STATUS: StepStatus = {
   vision_board: false,
 };
 
-function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+function checkMilestones(
+  oldTotal: number,
+  newTotal: number,
+  setToast: (msg: string) => void,
+  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
+  toastMilestone: string,
+  toastNewLevel: string,
+) {
   const getLevel = (pts: number) => {
     const pct = (pts / 36500) * 100;
-    if (pct < 25) return 'Éveillé';
-    if (pct < 50) return 'Floraison';
-    if (pct < 75) return 'Rayonnant';
-    return 'Manifestant';
+    if (pct < 25) return niveaux.eveil;
+    if (pct < 50) return niveaux.ancrage;
+    if (pct < 75) return niveaux.expansion;
+    return niveaux.manifestation;
   };
   const oldK = Math.floor(oldTotal / 1000);
   const newK = Math.floor(newTotal / 1000);
   if (newK > oldK && newTotal > 0) {
-    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    setToast(toastMilestone.replace('{n}', String(newK * 1000)));
     return;
   }
   const oldLevel = getLevel(oldTotal);
   const newLevel = getLevel(newTotal);
   if (oldLevel !== newLevel) {
-    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+    setToast(toastNewLevel.replace('{level}', newLevel));
   }
 }
 
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
+  const { lang } = useLanguage();
   const [userName, setUserName] = useState('');
   const [cycleNumber, setCycleNumber] = useState(1);
   const [cycleColors, setCycleColors] = useState({ orb1: '#C4A8D4', orb2: '#B8D4B0' });
@@ -83,7 +94,7 @@ export default function Home() {
   }, []);
   const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [progressPercent, setProgressPercent] = useState(0);
-  const [level, setLevel] = useState('Éveillé');
+  const [levelIndex, setLevelIndex] = useState(0);
   const [cycleCompleted, setCycleCompleted] = useState(false);
   const [stepStatus, setStepStatus] = useState<StepStatus>(INITIAL_STEP_STATUS);
   const [congratToast, setCongratToast] = useState('');
@@ -131,8 +142,8 @@ export default function Home() {
     }
 
     setCycleNumber(cycle);
-    setContent(getCycleContent(cycle));
-    setCycleColors(getCycleColors(cycle));
+    setContent(getCycleContent(cycle, lang));
+    setCycleColors(getCycleColors(cycle, lang));
 
     // 1. Lire le statut des étapes
     const statusRaw = await AsyncStorage.getItem('cycle_step_status');
@@ -155,7 +166,7 @@ export default function Home() {
       earned.opening = 10;
       await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
 
-      checkMilestones(oldTotal, newTotal, setCongratToast);
+      checkMilestones(oldTotal, newTotal, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
     }
 
     setStepStatus(status);
@@ -184,10 +195,10 @@ export default function Home() {
     const percent = (total / 36500) * 100;
     setProgressPercent(percent);
 
-    if (percent < 25) setLevel('Éveillé');
-    else if (percent < 50) setLevel('Floraison');
-    else if (percent < 75) setLevel('Rayonnant');
-    else setLevel('Manifestant');
+    if (percent < 25) setLevelIndex(0);
+    else if (percent < 50) setLevelIndex(1);
+    else if (percent < 75) setLevelIndex(2);
+    else setLevelIndex(3);
   }, []);
 
   useFocusEffect(
@@ -233,8 +244,8 @@ export default function Home() {
     await loadHome();
   }
 
-  const LEVELS = ['Éveillé', 'Floraison', 'Rayonnant', 'Manifestant'];
-  const currentLevelIndex = LEVELS.indexOf(level);
+  const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
+  const currentLevelIndex = levelIndex;
 
   return (
     <View style={styles.container}>
@@ -290,25 +301,23 @@ export default function Home() {
             </Svg>
           </Animated.View>
           <View style={{ alignItems: 'center' }}>
-            <Text style={styles.bonjour}>Bienvenue</Text>
-            <Text style={styles.prenom}>{userName || 'toi'}</Text>
+            <Text style={styles.bonjour}>{t.home.bienvenue}</Text>
+            <Text style={styles.prenom}>{userName || t.home.defautPrenom}</Text>
           </View>
         </View>
 
         {/* Phrase violette */}
         <View style={styles.quoteBlock}>
-          <Text style={styles.quoteText}>
-            Visualise le succès, crois en toi{'\n'}et manifeste tes rêves
-          </Text>
+          <Text style={styles.quoteText}>{t.home.citation}</Text>
         </View>
 
         {/* 3. JAUGE PROGRESSION */}
         <Animated.View style={[styles.gaugeBlock, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           {/* Ligne 1 : PROGRESSION + badge niveau */}
           <View style={styles.gaugeHeader}>
-            <Text style={styles.gaugeLabel}>Progression · Cycle {cycleNumber}</Text>
+            <Text style={styles.gaugeLabel}>{t.home.gaugeLabel} {cycleNumber}</Text>
             <View style={styles.levelBadge}>
-              <Text style={styles.levelBadgeText}>✦ {level}</Text>
+              <Text style={styles.levelBadgeText}>✦ {LEVELS[levelIndex]}</Text>
             </View>
           </View>
           {/* Thème du cycle */}
@@ -322,7 +331,7 @@ export default function Home() {
 
           {/* Ligne 2 : 365 jours aligné à droite */}
           <View style={styles.gaugeDaysRow}>
-            <Text style={styles.gaugeDays}>365 cycles</Text>
+            <Text style={styles.gaugeDays}>{t.home.gaugeCycles}</Text>
           </View>
           {/* Barre */}
           <View style={styles.gaugeBar}>
@@ -359,7 +368,7 @@ export default function Home() {
         <Animated.View style={[styles.mainBtnWrap, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           {cycleCompleted ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>
-              <Text style={styles.mainBtnText}>✦ Prochain cycle à minuit</Text>
+              <Text style={styles.mainBtnText}>{t.home.nextCycle}</Text>
             </View>
           ) : (
             <Pressable style={styles.mainBtn} onPress={handleMainBtn}>
@@ -367,7 +376,7 @@ export default function Home() {
                 <Path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <Text style={styles.mainBtnText}>
-                {!stepStatus.opening ? 'Commencer mon cycle →' : 'Continuer mon cycle →'}
+                {!stepStatus.opening ? t.home.commencerCycle : t.home.continuerCycle}
               </Text>
             </Pressable>
           )}
@@ -382,7 +391,7 @@ export default function Home() {
                 <Path d="M6 6h8M6 9.5h8M6 13h5" stroke="#6B3FA0" strokeWidth="1.1" strokeLinecap="round" />
               </Svg>
             </View>
-            <Text style={[styles.cardTitle, { color: '#6B3FA0' }]}>Journal</Text>
+            <Text style={[styles.cardTitle, { color: '#6B3FA0' }]}>{t.home.cards.journal}</Text>
             <View style={[styles.cardBadge, { backgroundColor: '#DDD0F8' }]}>
               <Text style={[styles.cardBadgeText, { color: '#6B3FA0' }]}>+15 pts/cycle</Text>
             </View>
@@ -397,7 +406,7 @@ export default function Home() {
                 <Rect x="11" y="11" width="7" height="7" rx="1.5" fill="#9B72C8" opacity="0.8" />
               </Svg>
             </View>
-            <Text style={[styles.cardTitle, { color: '#9A6A00' }]}>Vision Board</Text>
+            <Text style={[styles.cardTitle, { color: '#9A6A00' }]}>{t.home.cards.visionBoard}</Text>
             <View style={[styles.cardBadge, { backgroundColor: '#FDE8B0' }]}>
               <Text style={[styles.cardBadgeText, { color: '#9A6A00' }]}>+5 pts/cycle</Text>
             </View>
@@ -416,7 +425,7 @@ export default function Home() {
                 <Line x1="11" y1="7" x2="13" y2="7" stroke="#C89A10" strokeWidth="1" strokeLinecap="round" />
               </Svg>
             </View>
-            <Text style={[styles.featName, { color: '#9A7A10' }]}>Affirmations</Text>
+            <Text style={[styles.featName, { color: '#9A7A10' }]}>{t.home.feats.affirmations}</Text>
             <View style={[styles.featBadge, { backgroundColor: '#FDE8B0' }]}>
               <Text style={[styles.featBadgeText, { color: '#9A6A00' }]}>+15 pts</Text>
             </View>
@@ -430,7 +439,7 @@ export default function Home() {
                 <Path d="M8 2L4 8h4l-2 4 6-7H8l2-3z" fill="#9B72C8" stroke="#6B3FA0" strokeWidth="0.6" strokeLinejoin="round" />
               </Svg>
             </View>
-            <Text style={[styles.featName, { color: '#6B3FA0' }]}>Actions</Text>
+            <Text style={[styles.featName, { color: '#6B3FA0' }]}>{t.home.feats.actions}</Text>
             <View style={[styles.featBadge, { backgroundColor: '#DDD0F8' }]}>
               <Text style={[styles.featBadgeText, { color: '#6B3FA0' }]}>+15/25 pts</Text>
             </View>
@@ -445,7 +454,7 @@ export default function Home() {
                 <Circle cx="7" cy="7" r="1.8" fill="#1A6A80" opacity="0.8" />
               </Svg>
             </View>
-            <Text style={[styles.featName, { color: '#1A6A80' }]}>Visualisations</Text>
+            <Text style={[styles.featName, { color: '#1A6A80' }]}>{t.home.feats.visualisations}</Text>
             <View style={[styles.featBadge, { backgroundColor: '#C4E8F0' }]}>
               <Text style={[styles.featBadgeText, { color: '#1A6A80' }]}>+15 pts</Text>
             </View>
@@ -460,7 +469,7 @@ export default function Home() {
           <Svg width={24} height={24} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#6B3FA0" />
           </Svg>
-          <Text style={[styles.navLabel, styles.navLabelActive]}>Accueil</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>{t.commun.navbar.accueil}</Text>
           <View style={styles.navDot} />
         </Pressable>
 
@@ -469,7 +478,7 @@ export default function Home() {
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
-          <Text style={styles.navLabel}>Profil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.profil}</Text>
         </Pressable>
 
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
@@ -477,7 +486,7 @@ export default function Home() {
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />
           </Svg>
-          <Text style={styles.navLabel}>Paramètres</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.parametres}</Text>
         </Pressable>
       </View>
     </View>

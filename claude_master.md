@@ -1,15 +1,7 @@
 # ManifestMind — Claude Master Documentation
 
-**Dernière mise à jour :** 14 Avril 2026
-**État :** Session dynamisation complète validée ✅ (haptique + animations + transitions + thème visuel)
-
-### Validé dans cette session
-- `assets/content/content_fr.json` intégré (clé `jour_${n}`, affiché "Cycle")
-- `hooks/useCycleContent.ts` — `getCycleContent(n)` ✅
-- `getFontSize()` adaptatif — deux versions distinctes (voir section dédiée) ✅
-- Animation respiration étoiles or (`#C89A30`) dans visualisation.tsx ✅
-- Notifications parametres.tsx branchées sur `content?.affirmation` réel ✅
-- Bouton debug "⏭ cycle suivant" sur home.tsx (à supprimer avant store) ✅
+**Dernière mise à jour :** 15 Avril 2026
+**État :** i18n FR/EN/ES complète validée ✅ (17 écrans + hooks + content JSON)
 
 ---
 
@@ -180,6 +172,13 @@ app/
     parametres.tsx   ✅          → Notifications, langue, abonnement, compte, légal
     pricing-upgrade.tsx ✅       → Changement abonnement depuis Paramètres (sans init cycle)
 
+src/
+  i18n/
+    translations.ts              → source de vérité FR/EN/ES (toutes les chaînes UI)
+    LanguageContext.tsx          → Provider + useLanguage() hook
+  hooks/
+    useTranslation.ts            → useTranslation() → translations[lang]
+
 services/
   firebase.ts                    → initializeAuth + inMemoryPersistence
 
@@ -309,12 +308,14 @@ progressPercent = (points_total / 36500) * 100
 ```
 
 ### Niveaux
-| Niveau | Seuil |
-|--------|-------|
-| Éveillé | 0–25% |
-| Floraison | 25–50% |
-| Rayonnant | 50–75% |
-| Manifestant | 75–100% |
+| Clé i18n | FR | EN | ES | Seuil |
+|----------|----|----|-----|-------|
+| niveaux.eveil | Éveil | Awakening | Despertar | 0–25% |
+| niveaux.ancrage | Ancrage | Grounding | Arraigo | 25–50% |
+| niveaux.expansion | Expansion | Expansion | Expansión | 50–75% |
+| niveaux.manifestation | Manifestation | Manifestation | Manifestación | 75–100% |
+
+> Level stocké comme `levelIndex: 0–3` (number) — affichage dérivé de `LEVELS[levelIndex]` calculé depuis `t.niveaux.*` à l'intérieur du composant.
 
 ### Initialisation premier cycle (dans auth.tsx)
 ```ts
@@ -507,8 +508,9 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
 
 ### Partage ✅ VALIDÉ
 
-- `hooks/useShare.ts` — `shareProgress()` : lit `current_cycle` + `points_total`, compose un message texte + emojis, partage via `expo-sharing` (fichier `.txt` temporaire dans `FileSystem.cacheDirectory`)
-- Fallback : `expo-clipboard` + `Alert` si partage non disponible
+- `hooks/useShare.ts` — `shareProgress()` : lit `current_cycle` + `points_total` + `user_language`, compose message via `t.share.message(cycle, level, pts)`, partage via `expo-sharing` (fichier `.txt` temporaire dans `FileSystem.cacheDirectory`)
+- Noms de niveaux dans le message = `t.niveaux.*` selon la langue active
+- Fallback : `expo-clipboard` + `Alert` (textes traduits) si partage non disponible
 - Icône SVG cercle blanc semi-transparent, position `absolute top:76 right:28`, label "Partager" dessous en 9px
 - Appliqué sur `celebration.tsx` et `profil.tsx` uniquement
 - Packages : `expo-sharing`, `expo-clipboard`, `expo-file-system/legacy`
@@ -517,8 +519,9 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
 ### Étape 4 — Thème visuel par cycle ✅ VALIDÉE
 
 **Hook `hooks/useCycleContent.ts`**
-- `getCycleColors(n)` → `{ orb1: couleur_principale, orb2: couleur_fond }`, fallback `#C4A8D4` / `#B8D4B0`
-- `getCycleContent(n)` enrichi avec `couleurPrincipale: data.couleur_principale`
+- `getCycleColors(n, lang?)` → `{ orb1: couleur_principale, orb2: couleur_fond }`, fallback `#C4A8D4` / `#B8D4B0`
+- `getCycleContent(n, lang?)` enrichi avec `couleurPrincipale: data.couleur_principale`
+- Importe `content_fr.json`, `content_en.json`, `content_es.json` statiquement — sélection par `lang` (défaut : `'fr'`)
 
 **Orbes colorés** — `colors.orb1` / `colors.orb2` sur les 2 premiers orbes de :
 `home`, `affirmation`, `action`, `visualisation`, `journal`, `celebration`, `vision-board`
@@ -537,6 +540,71 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
 
 ---
 
+## ARCHITECTURE I18N — VALIDÉE ✅
+
+### Fichiers clés
+| Fichier | Rôle |
+|---------|------|
+| `src/i18n/translations.ts` | Source de vérité — toutes les chaînes FR/EN/ES |
+| `src/i18n/LanguageContext.tsx` | Provider React — `lang` + `setLang` + persist AsyncStorage |
+| `src/hooks/useTranslation.ts` | `useTranslation()` → retourne `translations[lang]` |
+| `assets/content/content_fr.json` | Contenu cycles (affirmations, actions, visualisation) en FR |
+| `assets/content/content_en.json` | Contenu cycles en EN |
+| `assets/content/content_es.json` | Contenu cycles en ES |
+
+### Pattern dans chaque écran
+```tsx
+import { useTranslation } from '../../src/hooks/useTranslation';
+// (si besoin de lang pour getCycleContent)
+import { useLanguage } from '../../src/i18n/LanguageContext';
+
+const t = useTranslation();
+const { lang } = useLanguage(); // uniquement si getCycleContent/getCycleColors appelé
+
+// Contenu cycle traduit
+getCycleContent(cycleNumber, lang)
+getCycleColors(cycleNumber, lang)
+```
+
+### LanguageContext — source unique
+- Lit `user_language` depuis AsyncStorage au démarrage (défaut `'fr'`)
+- `setLang(l)` sauvegarde dans AsyncStorage ET met à jour le contexte React
+- **Ne jamais** appeler `AsyncStorage.setItem('user_language', ...)` directement dans les écrans
+- Wrappé dans `app/_layout.tsx` autour de tout l'arbre
+
+### Structure translations.ts
+- Sections miroirs des noms d'écrans : `splash`, `name`, `home`, `affirmation`, `action`, `visualisation`, `journal`, `visionBoard`, `celebration`, `profil`, `parametres`, `features`, `privacy`, `pricing`, `pricingUpgrade`, `auth`, `welcome`
+- `commun.navbar.{accueil|profil|parametres}` — labels navbar (NESTED, pas `commun.accueil`)
+- `legal.{privacyUrl|termsUrl}` — URLs légales par langue
+- `niveaux.{eveil|ancrage|expansion|manifestation}` — noms de niveaux traduits
+- `share.message(cycle, level, pts)` — **fonction** (pas string) — appeler avec `()`
+- Interpolation manuelle : `t.home.toastMilestone.replace('{n}', String(pts))`
+
+### checkMilestones — signature i18n
+Présent dans `home`, `affirmation`, `action`, `visualisation`, `journal`, `vision-board` :
+```ts
+function checkMilestones(
+  oldTotal: number, newTotal: number,
+  setToast: (msg: string) => void,
+  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
+  toastMilestone: string,
+  toastNewLevel: string,
+) { ... }
+
+// Appel depuis le composant :
+checkMilestones(oldPts, newPts, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+```
+
+### visionBoard.cellules — objet (pas tableau)
+```ts
+cellules: {
+  carriere, amour, abondance, reves, voyages, sante, famille
+}
+// Accès : t.visionBoard.cellules.carriere
+```
+
+---
+
 ## SESSIONS À VENIR (dans l'ordre)
 
 1. ~~**Session contenu JSON**~~ ✅
@@ -552,9 +620,10 @@ Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
    - Étape 3 : transitions fade / slide_from_right / slide_from_bottom
    - Étape 4 : getCycleColors() orbes + badge thème coloré · couleurPrincipale dans getCycleContent()
 
-3. **Session traductions EN/ES**
-   - Dupliquer `content_fr.json` → `content_en.json` + `content_es.json`
-   - Lire `user_language` au chargement pour sélectionner le bon fichier
+3. ~~**Session traductions EN/ES**~~ ✅
+   - `src/i18n/translations.ts` — source de vérité FR/EN/ES, 17 écrans migrés
+   - `content_fr.json` + `content_en.json` + `content_es.json` sélectionnés via `lang` dans `useCycleContent.ts`
+   - `LanguageContext` = source unique de la langue (persist AsyncStorage `user_language`)
 
 4. **Session Auth Apple/Google/Magic Link**
    - Remplacer stubs auth.tsx

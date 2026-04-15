@@ -1,6 +1,15 @@
-import content from '../assets/content/content_fr.json';
+import contentFr from '../assets/content/content_fr.json';
+import contentEn from '../assets/content/content_en.json';
+import contentEs from '../assets/content/content_es.json';
 
-export function getCycleColors(cycleNumber: number): { orb1: string; orb2: string } {
+function getContent(lang?: string) {
+  if (lang === 'en') return contentEn;
+  if (lang === 'es') return contentEs;
+  return contentFr;
+}
+
+export function getCycleColors(cycleNumber: number, lang?: string): { orb1: string; orb2: string } {
+  const content = getContent(lang);
   const key = 'jour_' + cycleNumber;
   const data = (content as any)[key];
   if (!data) return { orb1: '#C4A8D4', orb2: '#B8D4B0' };
@@ -10,7 +19,8 @@ export function getCycleColors(cycleNumber: number): { orb1: string; orb2: strin
   };
 }
 
-export function getCycleContent(cycleNumber: number) {
+export function getCycleContent(cycleNumber: number, lang?: string) {
+  const content = getContent(lang);
   const key = 'jour_' + cycleNumber;
   const data = (content as any)[key];
   if (!data) return null;

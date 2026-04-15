@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { translations } from '../src/i18n/translations';
 
 export async function shareProgress() {
   try {
@@ -12,21 +13,17 @@ export async function shareProgress() {
     const pointsTotal = parseInt(
       await AsyncStorage.getItem('points_total') || '0'
     );
+    const langRaw = await AsyncStorage.getItem('user_language');
+    const lang = (langRaw === 'en' || langRaw === 'es') ? langRaw : 'fr';
+    const t = translations[lang];
 
     const pct = (pointsTotal / 36500) * 100;
-    let level = 'Éveillé·e';
-    if (pct >= 75) level = 'Manifestant·e';
-    else if (pct >= 50) level = 'Rayonnant·e';
-    else if (pct >= 25) level = 'Floraison';
+    let level = t.niveaux.eveil;
+    if (pct >= 75) level = t.niveaux.manifestation;
+    else if (pct >= 50) level = t.niveaux.expansion;
+    else if (pct >= 25) level = t.niveaux.ancrage;
 
-    const message =
-      `👁✨ ManifestMind\n\n` +
-      `🔮 Cycle ${cycleNumber} / 365 complété\n` +
-      `🌸 Niveau ${level}\n` +
-      `⭐ ${pointsTotal} pts / 36 500\n\n` +
-      `Je transforme ma vie\n` +
-      `un cycle à la fois ✦\n\n` +
-      `🔗 manifest-mind.app`;
+    const message = t.share.message(cycleNumber, level, pointsTotal);
 
     const isAvailable = await Sharing.isAvailableAsync();
 
@@ -35,15 +32,12 @@ export async function shareProgress() {
       await FileSystem.writeAsStringAsync(fileUri, message);
       await Sharing.shareAsync(fileUri, {
         mimeType: 'text/plain',
-        dialogTitle: 'Partager ma progression',
+        dialogTitle: t.share.dialogTitle,
         UTI: 'public.plain-text',
       });
     } else {
       await Clipboard.setStringAsync(message);
-      Alert.alert(
-        'Copié !',
-        'Ton message a été copié dans le presse-papier.'
-      );
+      Alert.alert(t.share.copieeTitre, t.share.copieCorps);
     }
   } catch (error) {
     console.error('Erreur partage:', error);

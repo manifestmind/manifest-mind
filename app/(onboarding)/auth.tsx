@@ -5,18 +5,20 @@ import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path, Rect } from 'react-native-svg';
 import { auth } from '../../services/firebase';
+import { useTranslation } from '../../src/hooks/useTranslation';
 
 
 export default function Auth() {
+  const t = useTranslation();
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [email, setEmail] = useState('');
 
   const handleAppleSignIn = () => {
-    Alert.alert('Disponible prochainement', 'La connexion Apple sera disponible dans une prochaine version.');
+    Alert.alert(t.auth.alertApple.titre, t.auth.alertApple.corps);
   };
 
   const handleGoogleSignIn = () => {
-    Alert.alert('Disponible prochainement', 'La connexion Google sera disponible dans une prochaine version.');
+    Alert.alert(t.auth.alertGoogle.titre, t.auth.alertGoogle.corps);
   };
 
   const handleEmailSignIn = () => {
@@ -33,16 +35,13 @@ export default function Auth() {
       await sendSignInLinkToEmail(auth, emailAddress, actionCodeSettings);
       await AsyncStorage.setItem('emailForSignIn', emailAddress);
 
-      Alert.alert(
-        'Lien envoyé !',
-        'Vérifie ta boîte mail ✉️\nUn lien de connexion t\'a été envoyé.'
-      );
+      Alert.alert(t.auth.alertEmailSent.titre, t.auth.alertEmailSent.corps);
 
       setShowEmailInput(false);
       setEmail('');
     } catch (error) {
       console.error('Error sending magic link:', error);
-      Alert.alert('Erreur', 'Impossible d\'envoyer le lien. Vérifie ton adresse e-mail.');
+      Alert.alert(t.auth.alertEmailError.titre, t.auth.alertEmailError.corps);
     }
   };
 
@@ -150,10 +149,8 @@ export default function Auth() {
             <Circle cx="48" cy="22" r="1"
               fill="#C4A8D4" opacity="0.6" />
           </Svg>
-          <Text style={styles.title}>Rejoins-nous</Text>
-          <Text style={styles.subtitle}>
-            Crée ton compte pour sauvegarder{'\n'}ta progression
-          </Text>
+          <Text style={styles.title}>{t.auth.titre}</Text>
+          <Text style={styles.subtitle}>{t.auth.sousTitre}</Text>
         </View>
 
         <View style={styles.buttonsContainer}>
@@ -161,7 +158,7 @@ export default function Auth() {
             <Svg width="14" height="14" viewBox="0 0 18 18">
               <Path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4z" fill="white"/>
             </Svg>
-            <Text style={styles.appleButtonText}>Continuer avec Apple</Text>
+            <Text style={styles.appleButtonText}>{t.auth.apple}</Text>
           </Pressable>
 
           <Pressable style={styles.googleButton} onPress={handleGoogleSignIn}>
@@ -171,12 +168,12 @@ export default function Auth() {
               <Path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
               <Path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
             </Svg>
-            <Text style={styles.googleButtonText}>Continuer avec Google</Text>
+            <Text style={styles.googleButtonText}>{t.auth.google}</Text>
           </Pressable>
 
           <View style={styles.separator}>
             <View style={styles.separatorLine} />
-            <Text style={styles.separatorText}>ou</Text>
+            <Text style={styles.separatorText}>{t.commun.ou}</Text>
             <View style={styles.separatorLine} />
           </View>
 
@@ -188,13 +185,13 @@ export default function Auth() {
                 <Path d="M1 5l7 5 7-5" stroke="#6B3FA0"
                   strokeWidth="1.2" strokeLinecap="round"/>
               </Svg>
-              <Text style={styles.emailButtonText}>Continuer avec e-mail</Text>
+              <Text style={styles.emailButtonText}>{t.auth.email}</Text>
             </Pressable>
           ) : (
             <View style={styles.emailContainer}>
               <TextInput
                 style={styles.emailInput}
-                placeholder="Ton adresse e-mail"
+                placeholder={t.auth.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -206,7 +203,7 @@ export default function Auth() {
                 onPress={() => sendMagicLink(email)}
                 disabled={!email.trim()}
               >
-                <Text style={styles.sendButtonText}>Envoyer le lien →</Text>
+                <Text style={styles.sendButtonText}>{t.auth.envoyer}</Text>
               </Pressable>
             </View>
           )}
@@ -215,7 +212,7 @@ export default function Auth() {
 
       <View style={styles.bottomBlock}>
         <Pressable onPress={handleSkipAccount}>
-          <Text style={styles.skipText}>Continuer sans compte →</Text>
+          <Text style={styles.skipText}>{t.auth.sansCompte}</Text>
         </Pressable>
 
         <View style={styles.dotsNav}>

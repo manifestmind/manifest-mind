@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
@@ -28,31 +30,40 @@ function goNext(route: string) {
   }
 }
 
-function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+function checkMilestones(
+  oldTotal: number,
+  newTotal: number,
+  setToast: (msg: string) => void,
+  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
+  toastMilestone: string,
+  toastNewLevel: string,
+) {
   const getLevel = (pts: number) => {
     const pct = (pts / 36500) * 100;
-    if (pct < 25) return 'Éveillé';
-    if (pct < 50) return 'Floraison';
-    if (pct < 75) return 'Rayonnant';
-    return 'Manifestant';
+    if (pct < 25) return niveaux.eveil;
+    if (pct < 50) return niveaux.ancrage;
+    if (pct < 75) return niveaux.expansion;
+    return niveaux.manifestation;
   };
   const oldK = Math.floor(oldTotal / 1000);
   const newK = Math.floor(newTotal / 1000);
   if (newK > oldK && newTotal > 0) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    setToast(toastMilestone.replace('{n}', String(newK * 1000)));
     return;
   }
   const oldLevel = getLevel(oldTotal);
   const newLevel = getLevel(newTotal);
   if (oldLevel !== newLevel) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+    setToast(toastNewLevel.replace('{level}', newLevel));
   }
 }
 
 export default function Action() {
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
+  const { lang } = useLanguage();
   const [cycleNumber, setCycleNumber] = useState(1);
   const eyeAnim = useRef(new Animated.Value(0)).current;
   const fadeUp1 = useRef(new Animated.Value(0)).current;
@@ -96,8 +107,8 @@ export default function Action() {
     async function load() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
-      setContent(getCycleContent(cycle));
-      setCycleColors(getCycleColors(cycle));
+      setContent(getCycleContent(cycle, lang));
+      setCycleColors(getCycleColors(cycle, lang));
 
       const statusRaw = await AsyncStorage.getItem('cycle_step_status');
       if (statusRaw) {
@@ -129,9 +140,9 @@ export default function Action() {
     earned1.action_easy = 15;
     await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned1));
 
-    checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast);
+    checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
     setEasyValidated(true);
-    setToast('✦ +15 pts · Action facile validée');
+    setToast(t.action.toastFacile);
 
     if (hardValidated) {
       setTimeout(() => {
@@ -176,9 +187,9 @@ export default function Action() {
     earned2.action_hard = 25;
     await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned2));
 
-    checkMilestones(pointsTotal, pointsTotal + 25, setCongratToast);
+    checkMilestones(pointsTotal, pointsTotal + 25, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
     setHardValidated(true);
-    setToast('✦ +25 pts · Action difficile validée');
+    setToast(t.action.toastDifficile);
 
     if (easyValidated) {
       setTimeout(() => {
@@ -236,14 +247,14 @@ export default function Action() {
                 <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
               </Svg>
             </Animated.View>
-            <Text style={styles.title}>Actions du cycle</Text>
+            <Text style={styles.title}>{t.action.titre}</Text>
           </View>
 
           <View style={styles.progressBlock}>
             <View style={styles.progressRow}>
-              <Text style={styles.progressLabel}>Étape 3 & 4 · Cycle {cycleNumber}</Text>
+              <Text style={styles.progressLabel}>{t.action.etape.replace('{n}', String(cycleNumber))}</Text>
               <View style={styles.validatedBadge}>
-                <Text style={styles.validatedBadgeText}>✓ Affirmation validée</Text>
+                <Text style={styles.validatedBadgeText}>{t.action.affirmationValidee}</Text>
               </View>
             </View>
             <View style={styles.progressBar}>
@@ -262,7 +273,7 @@ export default function Action() {
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <View style={[styles.cardDot, { backgroundColor: '#6AAA60' }]} />
-              <Text style={styles.cardTitleEasy}>Action facile</Text>
+              <Text style={styles.cardTitleEasy}>{t.action.facile}</Text>
             </View>
             <View style={styles.badgeGreen}>
               <Text style={styles.badgeGreenText}>+15 pts</Text>
@@ -289,11 +300,11 @@ export default function Action() {
               <Svg width={8} height={8} viewBox="0 0 12 12" fill="none">
                 <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
-              <Text style={styles.btnEasyText}>Valider · +15 pts</Text>
+              <Text style={styles.btnEasyText}>{t.action.validerFacile}</Text>
             </Pressable>
             {!easyValidated && (
               <Pressable onPress={handleSkipEasy}>
-                <Text style={styles.skipText}>Passer cette étape sans points</Text>
+                <Text style={styles.skipText}>{t.action.passer}</Text>
               </Pressable>
             )}
           </View>
@@ -304,7 +315,7 @@ export default function Action() {
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
               <View style={[styles.cardDot, { backgroundColor: '#C89A10' }]} />
-              <Text style={styles.cardTitleHard}>Action difficile</Text>
+              <Text style={styles.cardTitleHard}>{t.action.difficile}</Text>
             </View>
             <View style={styles.badgeGold}>
               <Text style={styles.badgeGoldText}>+25 pts</Text>
@@ -331,11 +342,11 @@ export default function Action() {
               <Svg width={8} height={8} viewBox="0 0 12 12" fill="none">
                 <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
-              <Text style={styles.btnHardText}>Valider · +25 pts</Text>
+              <Text style={styles.btnHardText}>{t.action.validerDifficile}</Text>
             </Pressable>
             {!hardValidated && (
               <Pressable onPress={handleSkipHard}>
-                <Text style={styles.skipText}>Passer cette étape sans points</Text>
+                <Text style={styles.skipText}>{t.action.passer}</Text>
               </Pressable>
             )}
           </View>
@@ -349,7 +360,7 @@ export default function Action() {
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#6B3FA0" />
           </Svg>
-          <Text style={[styles.navLabel, styles.navLabelActive]}>Accueil</Text>
+          <Text style={[styles.navLabel, styles.navLabelActive]}>{t.commun.navbar.accueil}</Text>
           <View style={styles.navDot} />
         </Pressable>
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/profil' as any); }}>
@@ -357,14 +368,14 @@ export default function Action() {
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
-          <Text style={styles.navLabel}>Profil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.profil}</Text>
         </Pressable>
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace('/(app)/parametres' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />
           </Svg>
-          <Text style={styles.navLabel}>Paramètres</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.parametres}</Text>
         </Pressable>
       </View>
     </View>

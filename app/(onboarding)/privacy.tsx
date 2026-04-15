@@ -4,32 +4,12 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useTranslation } from '../../src/hooks/useTranslation';
 
-
-// Retourne les URLs légales selon la langue
-function getLegalUrls(language: string) {
-  switch (language) {
-    case 'en':
-      return {
-        terms: 'https://manifestmind.github.io/manifest-mind/terms_of_use_en.html',
-        privacy: 'https://manifestmind.github.io/manifest-mind/privacy_policy_en.html',
-      };
-    case 'es':
-      return {
-        terms: 'https://manifestmind.github.io/manifest-mind/terminos_uso_es.html',
-        privacy: 'https://manifestmind.github.io/manifest-mind/politica_privacidad_es.html',
-      };
-    case 'fr':
-    default:
-      return {
-        terms: 'https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html',
-        privacy: 'https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html',
-      };
-  }
-}
 
 export default function Privacy() {
   const router = useRouter();
+  const t = useTranslation();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   async function handleContinue() {
@@ -37,7 +17,6 @@ export default function Privacy() {
       const now = new Date().toISOString();
       await AsyncStorage.setItem('legal_accepted', 'true');
       await AsyncStorage.setItem('legal_accepted_date', now);
-      await AsyncStorage.setItem('user_language', 'fr');
       router.push('/(onboarding)/pricing');
     }
   }
@@ -47,13 +26,11 @@ export default function Privacy() {
   }
 
   async function openTerms() {
-    const urls = getLegalUrls('fr');
-    await WebBrowser.openBrowserAsync(urls.terms);
+    await WebBrowser.openBrowserAsync(t.legal.termsUrl);
   }
 
   async function openPrivacy() {
-    const urls = getLegalUrls('fr');
-    await WebBrowser.openBrowserAsync(urls.privacy);
+    await WebBrowser.openBrowserAsync(t.legal.privacyUrl);
   }
 
   return (
@@ -135,11 +112,11 @@ export default function Privacy() {
             <Circle cx="48" cy="22" r="1"
               fill="#C4A8D4" opacity="0.6" />
           </Svg>
-          <Text style={styles.title}>Confidentialité</Text>
+          <Text style={styles.title}>{t.privacy.titre}</Text>
         </View>
 
         <View style={styles.progressBlock}>
-          <Text style={styles.progressLabel}>Étape 2 / 3</Text>
+          <Text style={styles.progressLabel}>{t.privacy.etape}</Text>
           <View style={styles.progressBar}>
             <View style={styles.progressFill} />
           </View>
@@ -149,32 +126,32 @@ export default function Privacy() {
           <View style={styles.privacyItem}>
             <View style={[styles.itemIcon, { backgroundColor: '#DDD0F8' }]} />
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>Données chiffrées</Text>
-              <Text style={styles.itemText}>Progression et journal sécurisés</Text>
+              <Text style={styles.itemTitle}>{t.privacy.items.chiffrement.titre}</Text>
+              <Text style={styles.itemText}>{t.privacy.items.chiffrement.texte}</Text>
             </View>
           </View>
 
           <View style={styles.privacyItem}>
             <View style={[styles.itemIcon, { backgroundColor: '#C8E8C0' }]} />
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>Jamais vendues</Text>
-              <Text style={styles.itemText}>Aucun partage tiers, jamais</Text>
+              <Text style={styles.itemTitle}>{t.privacy.items.vente.titre}</Text>
+              <Text style={styles.itemText}>{t.privacy.items.vente.texte}</Text>
             </View>
           </View>
 
           <View style={styles.privacyItem}>
             <View style={[styles.itemIcon, { backgroundColor: '#FDE8B0' }]} />
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>Suppression à tout moment</Text>
-              <Text style={styles.itemText}>Depuis les Paramètres de l'app</Text>
+              <Text style={styles.itemTitle}>{t.privacy.items.suppression.titre}</Text>
+              <Text style={styles.itemText}>{t.privacy.items.suppression.texte}</Text>
             </View>
           </View>
 
           <View style={styles.privacyItem}>
             <View style={[styles.itemIcon, { backgroundColor: '#F8D0D8' }]} />
             <View style={styles.itemContent}>
-              <Text style={styles.itemTitle}>Aucune publicité</Text>
-              <Text style={styles.itemText}>Jamais de ciblage marketing</Text>
+              <Text style={styles.itemTitle}>{t.privacy.items.pub.titre}</Text>
+              <Text style={styles.itemText}>{t.privacy.items.pub.texte}</Text>
             </View>
           </View>
         </View>
@@ -195,13 +172,13 @@ export default function Privacy() {
             )}
           </View>
           <Text style={styles.checkboxText}>
-            J'accepte les{' '}
+            {t.privacy.checkboxAvant}
             <Text style={styles.linkText} onPress={openTerms}>
-              Conditions d'utilisation
+              {t.privacy.checkboxTerms}
             </Text>
-            {' '}et la{' '}
+            {t.privacy.checkboxMilieu}
             <Text style={styles.linkText} onPress={openPrivacy}>
-              Politique de confidentialité
+              {t.privacy.checkboxPrivacy}
             </Text>
           </Text>
         </Pressable>
@@ -213,7 +190,7 @@ export default function Privacy() {
           onPress={handleContinue}
           disabled={!acceptedTerms}
         >
-          <Text style={styles.btnPrimaryText}>Continuer →</Text>
+          <Text style={styles.btnPrimaryText}>{t.privacy.continuer}</Text>
         </Pressable>
         <View style={styles.dotsNav}>
           <View style={styles.dotNav} />

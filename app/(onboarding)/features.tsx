@@ -1,5 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import {
     Pressable,
     ScrollView,
@@ -12,9 +12,9 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 
 export default function Features() {
   const router = useRouter();
+  const t = useTranslation();
 
-  async function handleStart() {
-    await AsyncStorage.setItem('user_language', 'fr');
+  function handleStart() {
     router.push('/(onboarding)/privacy');
   }
 
@@ -65,13 +65,13 @@ export default function Features() {
             <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
           </Svg>
 
-          <Text style={styles.title}>Un programme complet</Text>
-          <Text style={styles.subtitle}>365 cycles · 2555 étapes · 4 phases · 7 thèmes</Text>
-          <Text style={styles.purpleText}>365 cycles pour transformer ta vie étape par étape</Text>
+          <Text style={styles.title}>{t.features.titre}</Text>
+          <Text style={styles.subtitle}>{t.features.sousTitre}</Text>
+          <Text style={styles.purpleText}>{t.features.texteViolet}</Text>
         </View>
 
         <View style={styles.progressBlock}>
-          <Text style={styles.progressLabel}>Étape 1 / 3</Text>
+          <Text style={styles.progressLabel}>{t.features.etape}</Text>
           <View style={styles.progressBar}>
             <View style={styles.progressFill} />
           </View>
@@ -80,104 +80,104 @@ export default function Features() {
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#E8D4F8' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Ouverture quotidienne</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.ouverture.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Récompense ta constance chaque cycle.</Text>
+              <Text style={styles.cardText}>{t.features.cartes.ouverture.texte}</Text>
               <View style={styles.badgePurple}>
                 <Text style={styles.badgePurpleText}>+10 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>Chaque connexion renforce{'\n'}ton énergie intérieure.</Text>
+            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>{t.features.cartes.ouverture.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#DDD0F8' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Affirmations quotidiennes</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.affirmation.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Un message puissant à chaque cycle.</Text>
+              <Text style={styles.cardText}>{t.features.cartes.affirmation.texte}</Text>
               <View style={styles.badgeGold}>
                 <Text style={styles.badgeGoldText}>+15 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>Reprogramme ton esprit dès le début du cycle.</Text>
+            <Text style={[styles.cardNote, { color: '#6B3FA0' }]}>{t.features.cartes.affirmation.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#C8E8C0' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Actions concrètes</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.actions.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Facile</Text>
+              <Text style={styles.cardText}>{t.features.cartes.actions.facile}</Text>
               <View style={styles.badgeGreen}>
                 <Text style={styles.badgeGreenText}>+15 pts</Text>
               </View>
-              <Text style={styles.cardText}>ou difficile</Text>
+              <Text style={styles.cardText}>{t.features.cartes.actions.difficile}</Text>
               <View style={styles.badgeGold}>
                 <Text style={styles.badgeGoldText}>+25 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#3A6A20' }]}>Chaque petite action te rapproche de ton objectif.</Text>
+            <Text style={[styles.cardNote, { color: '#3A6A20' }]}>{t.features.cartes.actions.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#C4E8F0' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Visualisation guidée</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.visualisation.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Méditation et respiration chaque cycle.</Text>
+              <Text style={styles.cardText}>{t.features.cartes.visualisation.texte}</Text>
               <View style={styles.badgeGold}>
                 <Text style={styles.badgeGoldText}>+15 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#1A6A80' }]}>Visualise ta future vie comme si tu y étais déjà.</Text>
+            <Text style={[styles.cardNote, { color: '#1A6A80' }]}>{t.features.cartes.visualisation.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#C4E8F0' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Vision Board</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.visionBoard.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Visualise tes rêves et objectifs.</Text>
+              <Text style={styles.cardText}>{t.features.cartes.visionBoard.texte}</Text>
               <View style={styles.badgeBlue}>
                 <Text style={styles.badgeBlueText}>+5 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#1A6A80' }]}>Crée une vision claire et laisse{'\n'}ton esprit le manifester.</Text>
+            <Text style={[styles.cardNote, { color: '#1A6A80' }]}>{t.features.cartes.visionBoard.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#C8E8C0' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Journal personnel</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.journal.titre}</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardText}>Clarifie tes pensées et tes émotions.</Text>
+              <Text style={styles.cardText}>{t.features.cartes.journal.texte}</Text>
               <View style={styles.badgeGreen}>
                 <Text style={styles.badgeGreenText}>+15 pts</Text>
               </View>
             </View>
-            <Text style={[styles.cardNote, { color: '#3A6A20' }]}>Écrire c'est concrétiser{'\n'}ce que tu veux vraiment.</Text>
+            <Text style={[styles.cardNote, { color: '#3A6A20' }]}>{t.features.cartes.journal.note}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
           <View style={[styles.cardIcon, { backgroundColor: '#FDE8B0' }]} />
           <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>Points & Badges</Text>
-            <Text style={styles.cardText}>100 pts/cycle max · 4 niveaux · récompenses</Text>
-            <Text style={[styles.cardNote, { color: '#9A6A00' }]}>Transforme ta progression en victoire visible.</Text>
+            <Text style={styles.cardTitle}>{t.features.cartes.badges.titre}</Text>
+            <Text style={styles.cardText}>{t.features.cartes.badges.texte}</Text>
+            <Text style={[styles.cardNote, { color: '#9A6A00' }]}>{t.features.cartes.badges.note}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.bottomBlock}>
         <Pressable style={styles.btnPrimary} onPress={handleStart}>
-          <Text style={styles.btnPrimaryText}>Suivant →</Text>
+          <Text style={styles.btnPrimaryText}>{t.features.suivant}</Text>
         </Pressable>
         <View style={styles.dotsNav}>
           <View style={styles.dotNav} />

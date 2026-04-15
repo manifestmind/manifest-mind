@@ -3,6 +3,7 @@ import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import {
   Animated,
   Image,
@@ -17,31 +18,39 @@ import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors } from '../../hooks/useCycleContent';
 
-function checkMilestones(oldTotal: number, newTotal: number, setToast: (msg: string) => void) {
+function checkMilestones(
+  oldTotal: number,
+  newTotal: number,
+  setToast: (msg: string) => void,
+  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
+  toastMilestone: string,
+  toastNewLevel: string,
+) {
   const getLevel = (pts: number) => {
     const pct = (pts / 36500) * 100;
-    if (pct < 25) return 'Éveillé';
-    if (pct < 50) return 'Floraison';
-    if (pct < 75) return 'Rayonnant';
-    return 'Manifestant';
+    if (pct < 25) return niveaux.eveil;
+    if (pct < 50) return niveaux.ancrage;
+    if (pct < 75) return niveaux.expansion;
+    return niveaux.manifestation;
   };
   const oldK = Math.floor(oldTotal / 1000);
   const newK = Math.floor(newTotal / 1000);
   if (newK > oldK && newTotal > 0) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(`✦ ${newK * 1000} pts sur 36 500 — Félicitations !`);
+    setToast(toastMilestone.replace('{n}', String(newK * 1000)));
     return;
   }
   const oldLevel = getLevel(oldTotal);
   const newLevel = getLevel(newTotal);
   if (oldLevel !== newLevel) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(`✦ Nouveau niveau — ${newLevel} !`);
+    setToast(toastNewLevel.replace('{level}', newLevel));
   }
 }
 
 export default function VisionBoard() {
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
   const { fromCycle } = useLocalSearchParams();
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
@@ -80,7 +89,7 @@ export default function VisionBoard() {
         if (statusRaw) {
           status = JSON.parse(statusRaw);
           if (!status.vision_board) {
-            setToast('✦ +5 pts · Vision Board ouvert');
+            setToast(t.visionBoard.toast);
 
             status.vision_board = true;
             await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
@@ -90,7 +99,7 @@ export default function VisionBoard() {
 
             const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
             await AsyncStorage.setItem('points_total', String(pointsTotal + 5));
-            checkMilestones(pointsTotal, pointsTotal + 5, setCongratToast);
+            checkMilestones(pointsTotal, pointsTotal + 5, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
 
             const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
             const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
@@ -185,7 +194,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#4A2080' }]}>Carrière</Text>
+                <Text style={[styles.cellLabel, { color: '#4A2080' }]}>{t.visionBoard.cellules.carriere}</Text>
                 {!photos['carriere'] && <Text style={[styles.cellSub, { color: '#8B70B8' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -204,7 +213,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#8A2840' }]}>Amour</Text>
+                <Text style={[styles.cellLabel, { color: '#8A2840' }]}>{t.visionBoard.cellules.amour}</Text>
                 {!photos['amour'] && <Text style={[styles.cellSub, { color: '#C08090' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -227,7 +236,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#7A5000' }]}>Abondance</Text>
+                <Text style={[styles.cellLabel, { color: '#7A5000' }]}>{t.visionBoard.cellules.abondance}</Text>
                 {!photos['abondance'] && <Text style={[styles.cellSub, { color: '#B09050' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -247,7 +256,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#0A4858' }]}>Rêves</Text>
+                <Text style={[styles.cellLabel, { color: '#0A4858' }]}>{t.visionBoard.cellules.reves}</Text>
                 {!photos['reves'] && <Text style={[styles.cellSub, { color: '#508090' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -270,7 +279,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#1A4A18' }]}>Voyages</Text>
+                <Text style={[styles.cellLabel, { color: '#1A4A18' }]}>{t.visionBoard.cellules.voyages}</Text>
                 {!photos['voyages'] && <Text style={[styles.cellSub, { color: '#4A8A40' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -290,7 +299,7 @@ export default function VisionBoard() {
                 </View>
               </View>
               <View>
-                <Text style={[styles.cellLabel, { color: '#904810' }]}>Santé</Text>
+                <Text style={[styles.cellLabel, { color: '#904810' }]}>{t.visionBoard.cellules.sante}</Text>
                 {!photos['sante'] && <Text style={[styles.cellSub, { color: '#C08858' }]}>+ photo</Text>}
               </View>
             </Pressable>
@@ -307,8 +316,8 @@ export default function VisionBoard() {
                 <Path d="M16 14c2 0 4 1.3 4 3.5" stroke="#3A6A10" strokeWidth="1.2" strokeLinecap="round" fill="none" />
               </Svg>
               <View style={styles.cellFamilleText}>
-                <Text style={[styles.cellLabel, { color: '#2A5008' }]}>Famille & Proches</Text>
-                <Text style={[styles.cellSub, { color: '#6A9040' }]}>Appuie pour ajouter ta photo</Text>
+                <Text style={[styles.cellLabel, { color: '#2A5008' }]}>{t.visionBoard.cellules.famille}</Text>
+                <Text style={[styles.cellSub, { color: '#6A9040' }]}>{t.visionBoard.ajouterPhoto}</Text>
               </View>
               <View style={styles.cellFamilleAddBtn}>
                 <Svg width={12} height={12} viewBox="0 0 12 12" fill="none">
@@ -322,13 +331,13 @@ export default function VisionBoard() {
 
         {/* Texte bas + bouton contextuel */}
         <Animated.View style={[styles.bottomBlock, { opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
-          <Text style={styles.hintText}>Appuie sur une case pour ajouter ta photo</Text>
+          <Text style={styles.hintText}>{t.visionBoard.ajouterPhoto}</Text>
           {showFinishBtn && (
             <Pressable style={styles.finishBtn} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleFinishCycle(); }}>
               <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
                 <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
-              <Text style={styles.finishBtnText}>Terminer mon cycle ✦</Text>
+              <Text style={styles.finishBtnText}>{t.visionBoard.terminerCycle}</Text>
             </Pressable>
           )}
         </Animated.View>
@@ -341,21 +350,21 @@ export default function VisionBoard() {
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Path d="M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1H14v-5h-4v5H4a1 1 0 01-1-1V9.5z" fill="#A09088" />
           </Svg>
-          <Text style={styles.navLabel}>Accueil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.accueil}</Text>
         </Pressable>
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/profil' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="8" r="4" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M3 19c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" fill="none" />
           </Svg>
-          <Text style={styles.navLabel}>Profil</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.profil}</Text>
         </Pressable>
         <Pressable style={styles.navItem} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/(app)/parametres' as any); }}>
           <Svg width={22} height={22} viewBox="0 0 22 22" fill="none">
             <Circle cx="11" cy="11" r="3" stroke="#A09088" strokeWidth="1.2" fill="none" />
             <Path d="M11 2v2M11 18v2M2 11h2M18 11h2M4.9 4.9l1.4 1.4M15.7 15.7l1.4 1.4M4.9 17.1l1.4-1.4M15.7 6.3l1.4-1.4" stroke="#A09088" strokeWidth="1.2" strokeLinecap="round" />
           </Svg>
-          <Text style={styles.navLabel}>Paramètres</Text>
+          <Text style={styles.navLabel}>{t.commun.navbar.parametres}</Text>
         </Pressable>
       </View>
     </View>

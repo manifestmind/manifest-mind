@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { getCycleColors } from '../../hooks/useCycleContent';
 import { shareProgress } from '../../hooks/useShare';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '../../src/hooks/useTranslation';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -15,18 +16,20 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const STEPS_CONFIG = [
-  { key: 'opening',       label: 'Ouverture',        pts: 10 },
-  { key: 'affirmation',   label: 'Affirmation',      pts: 15 },
-  { key: 'action_easy',   label: 'Action facile',    pts: 15 },
-  { key: 'action_hard',   label: 'Action difficile', pts: 25 },
-  { key: 'visualisation', label: 'Visualisation',    pts: 15 },
-  { key: 'journal',       label: 'Journal',          pts: 15 },
-  { key: 'vision_board',  label: 'Vision Board',     pts: 5  },
-];
 
 export default function Celebration() {
   const insets = useSafeAreaInsets();
+  const t = useTranslation();
+
+  const STEPS_CONFIG = [
+    { key: 'opening',       label: t.celebration.etapes.ouverture,      pts: 10 },
+    { key: 'affirmation',   label: t.celebration.etapes.affirmation,    pts: 15 },
+    { key: 'action_easy',   label: t.celebration.etapes.actionFacile,   pts: 15 },
+    { key: 'action_hard',   label: t.celebration.etapes.actionDifficile, pts: 25 },
+    { key: 'visualisation', label: t.celebration.etapes.visualisation,  pts: 15 },
+    { key: 'journal',       label: t.celebration.etapes.journal,        pts: 15 },
+    { key: 'vision_board',  label: t.celebration.etapes.visionBoard,    pts: 5  },
+  ];
 
   const [cyclePoints, setCyclePoints] = useState(0);
   const [displayPoints, setDisplayPoints] = useState(0);
@@ -241,7 +244,7 @@ export default function Celebration() {
             <Path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" stroke="#6B3FA0" strokeWidth={1.4} strokeLinecap="round" />
           </Svg>
         </Pressable>
-        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>Partager</Text>
+        <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>{t.commun.partager}</Text>
       </View>
 
       {/* Contenu */}
@@ -291,8 +294,8 @@ export default function Celebration() {
             </Animated.View>
           </View>
 
-          <Text style={styles.cycleTitle}>Cycle {cycleNumber} compl&#233;t&#233; &#10086;</Text>
-          <Text style={styles.congrats}>F&#233;licitations</Text>
+          <Text style={styles.cycleTitle}>{t.celebration.cycleComplete.replace('{n}', String(cycleNumber))}</Text>
+          <Text style={styles.congrats}>{t.celebration.felicitations}</Text>
         </Animated.View>
 
         {/* Section 2 : Carte points */}
@@ -300,11 +303,11 @@ export default function Celebration() {
           <View style={styles.card}>
             {/* Total */}
             <View style={{ alignItems: 'center' }}>
-              <Text style={styles.cardLabel}>Points gagn&#233;s ce cycle</Text>
+              <Text style={styles.cardLabel}>{t.celebration.pointsGagnes}</Text>
               <Animated.View style={{ opacity: shimmerOpacity }}>
                 <Text style={styles.totalPts}>{displayPoints}</Text>
               </Animated.View>
-              <Text style={styles.totalSub}>sur 100 possibles</Text>
+              <Text style={styles.totalSub}>{t.celebration.surCentPossibles}</Text>
             </View>
 
             <View style={styles.cardSep} />
@@ -326,7 +329,7 @@ export default function Celebration() {
                       </View>
                     ) : (
                       <View style={styles.badgeGrey}>
-                        <Text style={styles.badgeGreyText}>pass&#233;e</Text>
+                        <Text style={styles.badgeGreyText}>{t.celebration.passee}</Text>
                       </View>
                     )}
                   </Animated.View>
@@ -339,13 +342,13 @@ export default function Celebration() {
         {/* Section 3 : Bas de page */}
         <Animated.View style={[styles.bottom, fadeStyle(fade3)]}>
           <View style={styles.nextCycleBadge}>
-            <Text style={styles.nextCycleText}>Prochain cycle disponible &#224; minuit</Text>
+            <Text style={styles.nextCycleText}>{t.celebration.prochainCycle}</Text>
           </View>
           <Pressable style={styles.homeBtn} onPress={() => router.replace('/(app)/home' as any)}>
             <Svg width={11} height={11} viewBox="0 0 16 16">
               <Path d="M3 8h10M9 4l4 4-4 4" stroke="#F0EAE0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
-            <Text style={styles.homeBtnText}>Retour &#224; l&#39;accueil</Text>
+            <Text style={styles.homeBtnText}>{t.celebration.retourAccueil}</Text>
           </Pressable>
         </Animated.View>
 

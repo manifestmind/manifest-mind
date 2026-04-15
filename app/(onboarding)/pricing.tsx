@@ -3,10 +3,12 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useTranslation } from '../../src/hooks/useTranslation';
 
 
 export default function Pricing() {
   const router = useRouter();
+  const t = useTranslation();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
 
   function selectPlan(plan: string) {
@@ -15,7 +17,6 @@ export default function Pricing() {
 
   async function handlePurchase() {
     await AsyncStorage.setItem('selected_plan', selectedPlan);
-    await AsyncStorage.setItem('user_language', 'fr');
     router.push('/(onboarding)/auth');
   }
 
@@ -101,11 +102,11 @@ export default function Pricing() {
             <Circle cx="48" cy="22" r="1"
               fill="#C4A8D4" opacity="0.6" />
           </Svg>
-          <Text style={styles.title}>Transforme ta vie en 365 cycles</Text>
+          <Text style={styles.title}>{t.pricing.titre}</Text>
         </View>
 
         <View style={styles.progressBlock}>
-          <Text style={styles.progressLabel}>Étape 3 / 3</Text>
+          <Text style={styles.progressLabel}>{t.pricing.etape}</Text>
           <View style={styles.progressBar}>
             <View style={styles.progressFill} />
           </View>
@@ -122,19 +123,19 @@ export default function Pricing() {
             onPress={() => selectPlan('lifetime')}
           >
             <View style={[styles.planBadge, { backgroundColor: '#3A3530' }]}>
-              <Text style={styles.planBadgeText}>⭐ Meilleure offre · Accès à vie</Text>
+              <Text style={styles.planBadgeText}>{t.pricing.plans.lifetime.badge}</Text>
             </View>
             <View style={styles.planBody}>
               <View style={[styles.radio, selectedPlan === 'lifetime' && styles.radioSelected]}>
                 {selectedPlan === 'lifetime' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Lifetime</Text>
-                <Text style={styles.planSubtitle}>Paiement unique · Transformation permanente</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.lifetime.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={styles.priceAmount}>149€</Text>
-                <Text style={styles.priceUnit}>une fois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -149,19 +150,19 @@ export default function Pricing() {
             onPress={() => selectPlan('annuel')}
           >
             <View style={[styles.planBadge, { backgroundColor: '#FDE8B0' }]}>
-              <Text style={[styles.planBadgeText, { color: '#7A5000' }]}>⭐ Recommandé · Économise 50%</Text>
+              <Text style={[styles.planBadgeText, { color: '#7A5000' }]}>{t.pricing.plans.annuel.badge}</Text>
             </View>
             <View style={styles.planBody}>
               <View style={[styles.radio, selectedPlan === 'annuel' && styles.radioSelected]}>
                 {selectedPlan === 'annuel' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Annuel</Text>
-                <Text style={styles.planSubtitle}>79€/an · soit 0,21€/cycle</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.annuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>6,58€</Text>
-                <Text style={styles.priceUnit}>/mois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -181,95 +182,45 @@ export default function Pricing() {
                 {selectedPlan === 'mensuel' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Mensuel</Text>
-                <Text style={styles.planSubtitle}>Résiliable à tout moment</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.mensuel.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={styles.priceAmount}>12,99€</Text>
-                <Text style={styles.priceUnit}>/mois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.benefitsContainer}>
-          <View style={styles.benefit}>
-            <Svg width={12} height={12} viewBox="0 0 24 24">
-              <Path
-                d="M20 6L9 17L4 12"
-                stroke="#6B3FA0"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.benefitText}>365 cycles de transformation guidée</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Svg width={12} height={12} viewBox="0 0 24 24">
-              <Path
-                d="M20 6L9 17L4 12"
-                stroke="#6B3FA0"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.benefitText}>Affirmations + actions quotidiennes</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Svg width={12} height={12} viewBox="0 0 24 24">
-              <Path
-                d="M20 6L9 17L4 12"
-                stroke="#6B3FA0"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.benefitText}>Journal et vision board intégrés</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Svg width={12} height={12} viewBox="0 0 24 24">
-              <Path
-                d="M20 6L9 17L4 12"
-                stroke="#6B3FA0"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.benefitText}>Suivi de progression et discipline</Text>
-          </View>
-          <View style={styles.benefit}>
-            <Svg width={12} height={12} viewBox="0 0 24 24">
-              <Path
-                d="M20 6L9 17L4 12"
-                stroke="#6B3FA0"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </Svg>
-            <Text style={styles.benefitText}>Disponible en FR, EN & ES</Text>
-          </View>
+          {t.pricing.avantages.map((b) => (
+            <View style={styles.benefit} key={b}>
+              <Svg width={12} height={12} viewBox="0 0 24 24">
+                <Path
+                  d="M20 6L9 17L4 12"
+                  stroke="#6B3FA0"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </Svg>
+              <Text style={styles.benefitText}>{b}</Text>
+            </View>
+          ))}
         </View>
       </View>
 
       <View style={styles.bottomBlock}>
         <Pressable style={styles.btnPrimary} onPress={handlePurchase}>
-          <Text style={styles.btnPrimaryText}>Je transforme ma vie maintenant →</Text>
+          <Text style={styles.btnPrimaryText}>{t.pricing.cta}</Text>
         </Pressable>
 
-        <Text style={styles.bottomText}>Moins de 0,50€ pour changer ta vie</Text>
+        <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
         <Pressable onPress={handleRestore}>
-          <Text style={styles.restoreText}>Restaurer un achat</Text>
+          <Text style={styles.restoreText}>{t.pricing.restaurer}</Text>
         </Pressable>
 
         <View style={styles.dotsNav}>

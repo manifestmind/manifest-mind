@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import {
@@ -10,10 +9,14 @@ import {
 } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming, withDelay } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 
 
 export default function OnboardingWelcome() {
   const router = useRouter();
+  const t = useTranslation();
+  const { lang, setLang } = useLanguage();
   const openEye = useSharedValue(0);
 
   useEffect(() => {
@@ -30,13 +33,12 @@ export default function OnboardingWelcome() {
     opacity: withTiming(openEye.value > 0.1 ? 1 : 0, { duration: 300 }),
   }));
 
-  async function handleStart() {
-    await AsyncStorage.setItem('user_language', 'fr');
+  function handleStart() {
     router.push('/(onboarding)/features');
   }
 
-  async function handleLang(lang: string) {
-    await AsyncStorage.setItem('user_language', lang);
+  function handleLang(l: 'fr' | 'en' | 'es') {
+    setLang(l);
   }
 
   return (
@@ -128,7 +130,7 @@ export default function OnboardingWelcome() {
 
         {/* Titre juste sous l'œil */}
         <Text style={styles.appName}>ManifestMind</Text>
-        <Text style={styles.tagline}>Bien-être & Intentions</Text>
+        <Text style={styles.tagline}>{t.welcome.tagline}</Text>
       </View>
 
       {/* Citation */}
@@ -136,7 +138,7 @@ export default function OnboardingWelcome() {
         <View style={styles.divider} />
         <View style={{ flexShrink: 1, width: '100%', alignItems: 'center' }}>
           <Text style={styles.quote} numberOfLines={0} adjustsFontSizeToFit={false}>
-            Chaque pensée{'\n'}façonne ton futur
+            {t.welcome.quote}
           </Text>
         </View>
         <View style={styles.dots3}>
@@ -149,23 +151,23 @@ export default function OnboardingWelcome() {
       {/* Langue + bouton */}
       <View style={styles.bottomBlock}>
         <View style={styles.langRow}>
-          <Pressable style={[styles.langChip, styles.langChipOn]} onPress={() => handleLang('fr')}>
-            <Text style={styles.langChipTextOn}>🇫🇷 Français</Text>
+          <Pressable style={[styles.langChip, lang === 'fr' && styles.langChipOn]} onPress={() => handleLang('fr')}>
+            <Text style={lang === 'fr' ? styles.langChipTextOn : styles.langChipText}>🇫🇷 Français</Text>
           </Pressable>
-          <Pressable style={styles.langChip} onPress={() => handleLang('en')}>
-            <Text style={styles.langChipText}>🇬🇧 English</Text>
+          <Pressable style={[styles.langChip, lang === 'en' && styles.langChipOn]} onPress={() => handleLang('en')}>
+            <Text style={lang === 'en' ? styles.langChipTextOn : styles.langChipText}>🇬🇧 English</Text>
           </Pressable>
-          <Pressable style={styles.langChip} onPress={() => handleLang('es')}>
-            <Text style={styles.langChipText}>🇪🇸 Español</Text>
+          <Pressable style={[styles.langChip, lang === 'es' && styles.langChipOn]} onPress={() => handleLang('es')}>
+            <Text style={lang === 'es' ? styles.langChipTextOn : styles.langChipText}>🇪🇸 Español</Text>
           </Pressable>
         </View>
 
         <Pressable style={styles.btnPrimary} onPress={handleStart}>
-          <Text style={styles.btnPrimaryText}>Commencer →</Text>
+          <Text style={styles.btnPrimaryText}>{t.welcome.commencer}</Text>
         </Pressable>
 
         <Text style={styles.hint}>
-          Ton espace de croissance personnelle
+          {t.welcome.hint}
         </Text>
 
         {/* Dots navigation */}

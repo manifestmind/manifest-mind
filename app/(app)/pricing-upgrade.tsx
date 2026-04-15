@@ -3,8 +3,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useTranslation } from '../../src/hooks/useTranslation';
 
 export default function PricingUpgrade() {
+  const t = useTranslation();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
 
   async function handlePurchase() {
@@ -58,7 +60,7 @@ export default function PricingUpgrade() {
             <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
             <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
           </Svg>
-          <Text style={styles.title}>Changer d{'\u2019'}abonnement</Text>
+          <Text style={styles.title}>{t.pricingUpgrade.titre}</Text>
         </View>
 
         <View style={styles.plansContainer}>
@@ -72,19 +74,19 @@ export default function PricingUpgrade() {
             onPress={() => setSelectedPlan('lifetime')}
           >
             <View style={[styles.planBadge, { backgroundColor: '#3A3530' }]}>
-              <Text style={styles.planBadgeText}>⭐ Meilleure offre · Accès à vie</Text>
+              <Text style={styles.planBadgeText}>{t.pricing.plans.lifetime.badge}</Text>
             </View>
             <View style={styles.planBody}>
               <View style={[styles.radio, selectedPlan === 'lifetime' && styles.radioSelected]}>
                 {selectedPlan === 'lifetime' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Lifetime</Text>
-                <Text style={styles.planSubtitle}>Paiement unique · Transformation permanente</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.lifetime.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={styles.priceAmount}>149€</Text>
-                <Text style={styles.priceUnit}>une fois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -99,19 +101,19 @@ export default function PricingUpgrade() {
             onPress={() => setSelectedPlan('annuel')}
           >
             <View style={[styles.planBadge, { backgroundColor: '#FDE8B0' }]}>
-              <Text style={[styles.planBadgeText, { color: '#7A5000' }]}>⭐ Recommandé · Économise 50%</Text>
+              <Text style={[styles.planBadgeText, { color: '#7A5000' }]}>{t.pricing.plans.annuel.badge}</Text>
             </View>
             <View style={styles.planBody}>
               <View style={[styles.radio, selectedPlan === 'annuel' && styles.radioSelected]}>
                 {selectedPlan === 'annuel' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Annuel</Text>
-                <Text style={styles.planSubtitle}>79€/an · soit 0,21€/cycle</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.annuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>6,58€</Text>
-                <Text style={styles.priceUnit}>/mois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -131,24 +133,19 @@ export default function PricingUpgrade() {
                 {selectedPlan === 'mensuel' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>Mensuel</Text>
-                <Text style={styles.planSubtitle}>Résiliable à tout moment</Text>
+                <Text style={styles.planTitle}>{t.pricing.plans.mensuel.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
                 <Text style={styles.priceAmount}>12,99€</Text>
-                <Text style={styles.priceUnit}>/mois</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.benefitsContainer}>
-          {[
-            '365 cycles de transformation guidée',
-            'Affirmations + actions quotidiennes',
-            'Journal et vision board intégrés',
-            'Suivi de progression et discipline',
-          ].map((b) => (
+          {t.pricing.avantages.map((b) => (
             <View style={styles.benefit} key={b}>
               <Svg width={12} height={12} viewBox="0 0 24 24">
                 <Path d="M20 6L9 17L4 12" stroke="#6B3FA0" strokeWidth={2}
@@ -162,13 +159,13 @@ export default function PricingUpgrade() {
 
       <View style={styles.bottomBlock}>
         <Pressable style={styles.btnPrimary} onPress={handlePurchase}>
-          <Text style={styles.btnPrimaryText}>Confirmer mon abonnement →</Text>
+          <Text style={styles.btnPrimaryText}>{t.pricingUpgrade.confirmer}</Text>
         </Pressable>
 
-        <Text style={styles.bottomText}>Moins de 0,50€ pour changer ta vie</Text>
+        <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
         <Pressable onPress={handleRestore}>
-          <Text style={styles.restoreText}>Restaurer un achat</Text>
+          <Text style={styles.restoreText}>{t.pricingUpgrade.restaurer}</Text>
         </Pressable>
       </View>
     </ScrollView>
