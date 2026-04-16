@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
+import { deleteUser, sendSignInLinkToEmail, signOut } from 'firebase/auth';
+import { auth } from '../../services/firebase';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { getCycleContent } from '../../hooks/useCycleContent';
@@ -209,7 +211,38 @@ export default function Parametres() {
           text: t.parametres.alertDeconnecter.confirmer,
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.removeItem('onboarding_completed');
+            // 1. Firebase sign out (silencieux si pas de compte connecté)
+            try {
+              if (auth.currentUser) await signOut(auth);
+            } catch {}
+
+            // 2. Supprimer toutes les clés nommées (user_language conservée)
+            await AsyncStorage.multiRemove([
+              'onboarding_completed',
+              'user_name',
+              'current_cycle',
+              'current_theme',
+              'cycle_completed',
+              'cycle_points',
+              'points_total',
+              'next_cycle_time',
+              'cycle_step_status',
+              'cycle_earned_points',
+              'vision_board_photos',
+              'notif_affirmation',
+              'notif_rappel',
+              'reminder_time',
+              'selected_plan',
+              'emailForSignIn',
+            ]);
+
+            // 3. Supprimer les entrées journal (journal_cycle_N)
+            try {
+              const allKeys = await AsyncStorage.getAllKeys();
+              const journalKeys = allKeys.filter(k => k.startsWith('journal_cycle_'));
+              if (journalKeys.length > 0) await AsyncStorage.multiRemove(journalKeys);
+            } catch {}
+
             router.replace('/(onboarding)/welcome' as any);
           },
         },
@@ -227,6 +260,43 @@ export default function Parametres() {
           text: t.parametres.alertSupprimer.confirmer,
           style: 'destructive',
           onPress: async () => {
+            const user = auth.currentUser;
+            if (user) {
+              try {
+                await deleteUser(user);
+              } catch (error: any) {
+                if (error?.code === 'auth/requires-recent-login') {
+                  // Ré-authentification nécessaire → proposer un nouveau magic link
+                  const email = user.email ?? '';
+                  Alert.alert(
+                    t.parametres.alertSupprimerReauth.titre,
+                    t.parametres.alertSupprimerReauth.corps,
+                    [
+                      { text: t.parametres.alertSupprimerReauth.annuler, style: 'cancel' },
+                      {
+                        text: t.parametres.alertSupprimerReauth.envoyer,
+                        onPress: async () => {
+                          try {
+                            await sendSignInLinkToEmail(auth, email, {
+                              url: 'https://manifest-mind.app',
+                              handleCodeInApp: true,
+                            });
+                            await AsyncStorage.setItem('emailForSignIn', email);
+                            Alert.alert(t.auth.alertEmailSent.titre, t.auth.alertEmailSent.corps);
+                          } catch {
+                            Alert.alert(t.auth.alertEmailError.titre, t.auth.alertEmailError.corps);
+                          }
+                        },
+                      },
+                    ]
+                  );
+                  return; // Attendre la ré-auth — ne pas effacer les données
+                }
+                // Autre erreur Firebase → continuer quand même le nettoyage local
+              }
+            }
+
+            // Effacer toutes les données locales et rediriger
             await AsyncStorage.clear();
             router.replace('/(onboarding)/welcome' as any);
           },

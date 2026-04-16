@@ -184,6 +184,30 @@ export const translations = {
         titre: 'Erreur',
         corps: 'Impossible d\'envoyer le lien. Vérifie ton adresse e-mail.',
       },
+      alertLienInvalide: {
+        titre: 'Lien invalide',
+        corps: 'Ce lien de connexion est invalide ou a déjà été utilisé. Demande un nouveau lien.',
+      },
+      alertLienExpire: {
+        titre: 'Lien expiré',
+        corps: 'Ce lien a expiré. Retourne à l\'écran de connexion et demande un nouveau lien.',
+      },
+      alertLienEmailManquant: {
+        titre: 'Ouvre sur ton appareil',
+        corps: 'Pour finaliser la connexion, ouvre ce lien sur l\'appareil où tu as saisi ton adresse e-mail.',
+      },
+      alertErreurReseau: {
+        titre: 'Erreur réseau',
+        corps: 'Vérifie ta connexion internet et réessaie.',
+      },
+      alertUtilisateurIntrouvable: {
+        titre: 'Compte introuvable',
+        corps: 'Aucun compte n\'est associé à cette adresse e-mail. Crée un compte ou utilise une autre adresse.',
+      },
+      alertNonConnecte: {
+        titre: 'Non connecté',
+        corps: 'Tu n\'as pas de compte Firebase actif. Continue sans compte ou crée-en un.',
+      },
     },
 
     // ── App : splash ──────────────────────────────────────────────────────────
@@ -405,6 +429,12 @@ export const translations = {
         annuler: 'Annuler',
         confirmer: 'Supprimer',
       },
+      alertSupprimerReauth: {
+        titre: 'Reconnexion requise',
+        corps: 'Pour supprimer ton compte, nous devons vérifier ton identité. Souhaites-tu recevoir un nouveau lien de connexion ?',
+        annuler: 'Annuler',
+        envoyer: 'Envoyer un lien',
+      },
       alertRestaurer: {
         titre: 'Restaurer les achats',
         corps: 'Aucun achat à restaurer pour le moment.',
@@ -607,6 +637,30 @@ export const translations = {
       alertEmailError: {
         titre: 'Error',
         corps: 'Unable to send the link. Check your email address.',
+      },
+      alertLienInvalide: {
+        titre: 'Invalid link',
+        corps: 'This sign-in link is invalid or has already been used. Please request a new link.',
+      },
+      alertLienExpire: {
+        titre: 'Link expired',
+        corps: 'This link has expired. Go back to the sign-in screen and request a new link.',
+      },
+      alertLienEmailManquant: {
+        titre: 'Open on your device',
+        corps: 'To complete sign-in, open this link on the device where you entered your email address.',
+      },
+      alertErreurReseau: {
+        titre: 'Network error',
+        corps: 'Check your internet connection and try again.',
+      },
+      alertUtilisateurIntrouvable: {
+        titre: 'Account not found',
+        corps: 'No account is associated with this email address. Create an account or use a different address.',
+      },
+      alertNonConnecte: {
+        titre: 'Not signed in',
+        corps: 'You don\'t have an active Firebase account. Continue without an account or create one.',
       },
     },
 
@@ -818,6 +872,12 @@ export const translations = {
         annuler: 'Cancel',
         confirmer: 'Delete',
       },
+      alertSupprimerReauth: {
+        titre: 'Re-authentication required',
+        corps: 'To delete your account, we need to verify your identity. Would you like to receive a new sign-in link?',
+        annuler: 'Cancel',
+        envoyer: 'Send a link',
+      },
       alertRestaurer: {
         titre: 'Restore purchases',
         corps: 'No purchases to restore at this time.',
@@ -1017,6 +1077,30 @@ export const translations = {
       alertEmailError: {
         titre: 'Error',
         corps: 'No se pudo enviar el enlace. Verifica tu dirección de e-mail.',
+      },
+      alertLienInvalide: {
+        titre: 'Enlace inválido',
+        corps: 'Este enlace de acceso es inválido o ya fue usado. Solicita un nuevo enlace.',
+      },
+      alertLienExpire: {
+        titre: 'Enlace expirado',
+        corps: 'Este enlace ha expirado. Vuelve a la pantalla de inicio de sesión y solicita uno nuevo.',
+      },
+      alertLienEmailManquant: {
+        titre: 'Abre en tu dispositivo',
+        corps: 'Para completar el inicio de sesión, abre este enlace en el dispositivo donde introdujiste tu e-mail.',
+      },
+      alertErreurReseau: {
+        titre: 'Error de red',
+        corps: 'Verifica tu conexión a internet e inténtalo de nuevo.',
+      },
+      alertUtilisateurIntrouvable: {
+        titre: 'Cuenta no encontrada',
+        corps: 'Ninguna cuenta está asociada a esta dirección de e-mail. Crea una cuenta o usa una dirección diferente.',
+      },
+      alertNonConnecte: {
+        titre: 'No conectado',
+        corps: 'No tienes una cuenta Firebase activa. Continúa sin cuenta o crea una.',
       },
     },
 
@@ -1227,6 +1311,12 @@ export const translations = {
         corps: 'Todos tus datos serán eliminados permanentemente. Esta acción es irreversible.',
         annuler: 'Cancelar',
         confirmer: 'Eliminar',
+      },
+      alertSupprimerReauth: {
+        titre: 'Reautenticación requerida',
+        corps: 'Para eliminar tu cuenta, necesitamos verificar tu identidad. ¿Deseas recibir un nuevo enlace de inicio de sesión?',
+        annuler: 'Cancelar',
+        envoyer: 'Enviar enlace',
       },
       alertRestaurer: {
         titre: 'Restaurar compras',

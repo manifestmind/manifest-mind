@@ -9,9 +9,22 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.manifestmind.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "associatedDomains": ["applinks:manifestmind.firebaseapp.com"]
     },
     "android": {
+      "package": "com.manifestmind.app",
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "manifestmind.firebaseapp.com" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -1,7 +1,7 @@
 # CLAUDE_MASTER.md — ManifestMind
 
 > Référence technique complète pour les sessions Claude Code.
-> Mise à jour : 2026-04-15
+> Mise à jour : 2026-04-16
 
 ---
 
@@ -21,7 +21,7 @@
 ```
 app/
   index.tsx                  # Router initial (AsyncStorage → welcome ou splash)
-  _layout.tsx                # Root layout : LanguageProvider wrapping Stack
+  _layout.tsx                # Root layout : LanguageProvider + DeepLinkHandler (magic link) + Stack
   (onboarding)/
     welcome.tsx              # Page 1 — œil animé + sélection langue
     features.tsx             # Page 2 — présentation fonctionnalités
@@ -178,9 +178,27 @@ Niveaux : Éveil (0–25%) · Ancrage (25–50%) · Expansion (50–75%) · Mani
 ## Firebase
 
 - **Config** : variables d'env `EXPO_PUBLIC_FIREBASE_*` dans `.env` (jamais hardcodées, `.env` dans `.gitignore`)
+- **Fichiers natifs** : `google-services.json` (Android) + `GoogleService-Info.plist` (iOS) à la racine — dans `.gitignore`
 - **Auth** : `getReactNativePersistence(AsyncStorage)` via `@firebase/auth` (Metro résout vers build RN)
-- **Auth flows actifs** : magic link email uniquement (Apple/Google = stubs)
+- **Auth flows actifs** :
+  - Magic link email — envoi (`auth.tsx`) + réception deep link (`_layout.tsx` → `DeepLinkHandler`)
+  - Sign Out — `signOut(auth)` + `AsyncStorage.multiRemove` (conserve `user_language`) → `parametres.tsx`
+  - Delete Account — `deleteUser(auth.currentUser)` + `AsyncStorage.clear()` → `parametres.tsx`
+  - `auth/requires-recent-login` → renvoi magic link automatique avant suppression
+- **Auth stubs** : Apple Sign-In, Google Sign-In (boutons présents, `// TODO: activer quand compte Developer actif`)
+- **Deep link** : `app.json` → `ios.associatedDomains: ["applinks:manifestmind.firebaseapp.com"]` + `android.intentFilters` (autoVerify). Requiert EAS build (pas Expo Go).
 - **Sécurité** : AsyncStorage non chiffré sur Android rooté — prévoir `expo-secure-store` pour données sensibles en V2
+
+### Erreurs Firebase câblées (FR/EN/ES via `t()`)
+| Code | Clé i18n |
+|------|----------|
+| `auth/expired-action-code` | `t.auth.alertLienExpire` |
+| `auth/invalid-action-code` | `t.auth.alertLienInvalide` |
+| `auth/network-request-failed` | `t.auth.alertErreurReseau` |
+| `auth/user-not-found` | `t.auth.alertUtilisateurIntrouvable` |
+| `auth/requires-recent-login` | `t.parametres.alertSupprimerReauth` |
+| email manquant (autre appareil) | `t.auth.alertLienEmailManquant` |
+| état non connecté | `t.auth.alertNonConnecte` |
 
 ---
 
@@ -228,8 +246,10 @@ Niveaux : Éveil (0–25%) · Ancrage (25–50%) · Expansion (50–75%) · Mani
 ## À faire avant publication App Store
 
 1. Intégration RevenueCat (`pricing-upgrade.tsx` `handlePurchase` + `handleRestore`)
-2. Apple Sign-In + Google Sign-In (stubs dans `auth.tsx`)
-3. Remplacer AsyncStorage par `expo-secure-store` pour les données auth sensibles
-4. Retirer les boutons debug de `home.tsx` (`reset` + `⏭ cycle suivant`)
-5. Vérifier que `SafeAreaProvider` est présent dans le root layout
-6. Vérifier `.env` non commité (dans `.gitignore` ✓)
+2. Apple Sign-In + Google Sign-In (stubs dans `auth.tsx`) — nécessite comptes Developer actifs
+3. Ajouter SHA-256 Android dans Firebase Console (pour autoVerify App Links deep link)
+4. Remplacer AsyncStorage par `expo-secure-store` pour les données auth sensibles
+5. Retirer les boutons debug de `home.tsx` (`reset` + `⏭ cycle suivant`)
+6. Vérifier que `SafeAreaProvider` est présent dans le root layout
+7. Vérifier `.env` non commité (dans `.gitignore` ✓)
+8. Tester le flux magic link complet sur EAS build (deep link non fonctionnel en Expo Go)
