@@ -212,6 +212,7 @@ export const translations = {
       gaugeLabel: 'Progression · Cycle',
       gaugeCycles: '365 cycles',
       nextCycle: '✦ Prochain cycle à minuit',
+      programmeTermine: '✦ 365 cycles accomplis',
       commencerCycle: 'Commencer mon cycle →',
       continuerCycle: 'Continuer mon cycle →',
       toastMilestone: '✦ {n} pts sur 36 500 — Félicitations !',
@@ -293,6 +294,9 @@ export const translations = {
       toast: '✦ +15 pts · Journal validé',
       mots: 'mots',
       entreesPrecedentes: 'Entrées précédentes',
+      aujourdhui: "Aujourd'hui",
+      passe: 'Passé',
+      etapePassee: 'Étape passée sans points',
     },
 
     // ── App : vision-board ────────────────────────────────────────────────────
@@ -313,6 +317,8 @@ export const translations = {
       passer: 'Passer cette étape sans points',
       toast: '✦ +5 pts · Vision Board validé',
       terminerCycle: 'Terminer mon cycle ✦',
+      permissionTitre: 'Accès aux photos requis',
+      permissionMessage: 'Pour ajouter une photo, autorise l\'accès à ta galerie dans les Réglages de ton téléphone.',
     },
 
     // ── App : profil ──────────────────────────────────────────────────────────
@@ -425,6 +431,8 @@ export const translations = {
       dialogTitle: 'Partager ma progression',
       copieeTitre: 'Copié !',
       copieCorps: 'Ton message a été copié dans le presse-papier.',
+      erreurTitre: 'Partage impossible',
+      erreurCorps: 'Une erreur est survenue. Réessaie.',
     },
   },
 
@@ -625,6 +633,7 @@ export const translations = {
       gaugeLabel: 'Progress · Cycle',
       gaugeCycles: '365 cycles',
       nextCycle: '✦ Next cycle at midnight',
+      programmeTermine: '✦ 365 cycles achieved',
       commencerCycle: 'Start my cycle →',
       continuerCycle: 'Continue my cycle →',
       toastMilestone: '✦ {n} pts out of 36,500 — Congrats!',
@@ -701,6 +710,9 @@ export const translations = {
       toast: '✦ +15 pts · Journal saved',
       mots: 'words',
       entreesPrecedentes: 'Previous entries',
+      aujourdhui: 'Today',
+      passe: 'Skipped',
+      etapePassee: 'Step skipped without points',
     },
 
     visionBoard: {
@@ -720,6 +732,8 @@ export const translations = {
       passer: 'Skip this step without points',
       toast: '✦ +5 pts · Vision Board saved',
       terminerCycle: 'Complete my cycle ✦',
+      permissionTitre: 'Photo access required',
+      permissionMessage: 'To add a photo, allow access to your gallery in your phone Settings.',
     },
 
     profil: {
@@ -827,6 +841,8 @@ export const translations = {
       dialogTitle: 'Share my progress',
       copieeTitre: 'Copied!',
       copieCorps: 'Your message has been copied to the clipboard.',
+      erreurTitre: 'Share failed',
+      erreurCorps: 'An error occurred. Please try again.',
     },
   },
 
@@ -1027,6 +1043,7 @@ export const translations = {
       gaugeLabel: 'Progreso · Ciclo',
       gaugeCycles: '365 ciclos',
       nextCycle: '✦ Próximo ciclo a medianoche',
+      programmeTermine: '✦ 365 ciclos logrados',
       commencerCycle: 'Iniciar mi ciclo →',
       continuerCycle: 'Continuar mi ciclo →',
       toastMilestone: '✦ {n} pts de 36.500 — ¡Felicidades!',
@@ -1103,6 +1120,9 @@ export const translations = {
       toast: '✦ +15 pts · Diario guardado',
       mots: 'palabras',
       entreesPrecedentes: 'Entradas anteriores',
+      aujourdhui: 'Hoy',
+      passe: 'Omitido',
+      etapePassee: 'Paso omitido sin puntos',
     },
 
     visionBoard: {
@@ -1122,6 +1142,8 @@ export const translations = {
       passer: 'Saltar este paso sin puntos',
       toast: '✦ +5 pts · Vision Board guardado',
       terminerCycle: 'Completar mi ciclo ✦',
+      permissionTitre: 'Acceso a fotos requerido',
+      permissionMessage: 'Para añadir una foto, permite el acceso a tu galería en los Ajustes de tu teléfono.',
     },
 
     profil: {
@@ -1229,6 +1251,8 @@ export const translations = {
       dialogTitle: 'Compartir mi progreso',
       copieeTitre: '¡Copiado!',
       copieCorps: 'Tu mensaje ha sido copiado al portapapeles.',
+      erreurTitre: 'Error al compartir',
+      erreurCorps: 'Ha ocurrido un error. Inténtalo de nuevo.',
     },
   },
 } as const;

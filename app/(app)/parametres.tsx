@@ -78,20 +78,24 @@ export default function Parametres() {
   // ── Load persisted settings ──────────────────────────────────────────────
   useEffect(() => {
     (async () => {
-      const [storedNotifAff, storedNotifRappel, storedTime] =
-        await AsyncStorage.multiGet([
-          'notif_affirmation',
-          'notif_rappel',
-          'reminder_time',
-        ]);
+      try {
+        const [storedNotifAff, storedNotifRappel, storedTime] =
+          await AsyncStorage.multiGet([
+            'notif_affirmation',
+            'notif_rappel',
+            'reminder_time',
+          ]);
 
-      if (storedNotifAff[1] !== null) setNotifAffirmation(storedNotifAff[1] === 'true');
-      if (storedNotifRappel[1] !== null) setNotifRappel(storedNotifRappel[1] === 'true');
-      if (storedTime[1]) {
-        const [h, m] = storedTime[1].split(':').map(Number);
-        const d = new Date();
-        d.setHours(h, m, 0, 0);
-        setReminderTime(d);
+        if (storedNotifAff[1] !== null) setNotifAffirmation(storedNotifAff[1] === 'true');
+        if (storedNotifRappel[1] !== null) setNotifRappel(storedNotifRappel[1] === 'true');
+        if (storedTime[1]) {
+          const [h, m] = storedTime[1].split(':').map(Number);
+          const d = new Date();
+          d.setHours(h, m, 0, 0);
+          setReminderTime(d);
+        }
+      } catch {
+        // Storage indisponible — conserver les valeurs par défaut
       }
     })();
   }, []);
@@ -189,7 +193,10 @@ export default function Parametres() {
     const hh = String(date.getHours()).padStart(2, '0');
     const mm = String(date.getMinutes()).padStart(2, '0');
     await AsyncStorage.setItem('reminder_time', `${hh}:${mm}`);
-    if (notifAffirmation) await scheduleAffirmationNotif(date);
+    if (notifAffirmation) {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status === 'granted') await scheduleAffirmationNotif(date);
+    }
   }
 
   function handleSignOut() {
@@ -246,7 +253,7 @@ export default function Parametres() {
       {/* ScrollView */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top + 12, 24) }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -419,7 +426,7 @@ export default function Parametres() {
           {/* Ligne 1 — Politique de confidentialité */}
           <Pressable
             style={[styles.rowBase, styles.rowFirst]}
-            onPress={() => Linking.openURL(t.legal.privacyUrl)}
+            onPress={async () => { try { await Linking.openURL(t.legal.privacyUrl); } catch {} }}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Rect x="4" y="2" width="12" height="16" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
@@ -432,7 +439,7 @@ export default function Parametres() {
           {/* Ligne 2 — Conditions d'utilisation */}
           <Pressable
             style={[styles.rowBase, styles.rowLast]}
-            onPress={() => Linking.openURL(t.legal.termsUrl)}
+            onPress={async () => { try { await Linking.openURL(t.legal.termsUrl); } catch {} }}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2l7 4v5c0 4-3 7-7 8-4-1-7-4-7-8V6l7-4z" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
@@ -508,7 +515,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 14,
-    paddingTop: 12,
     paddingBottom: 24,
     gap: 8,
   },

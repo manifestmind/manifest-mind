@@ -104,15 +104,19 @@ export default function Affirmation() {
 
   useEffect(() => {
     async function load() {
-      const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-      setCycleNumber(cycle);
-      setContent(getCycleContent(cycle, lang));
-      setCycleColors(getCycleColors(cycle, lang));
+      try {
+        const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+        setCycleNumber(cycle);
+        setContent(getCycleContent(cycle, lang));
+        setCycleColors(getCycleColors(cycle, lang));
 
-      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      if (statusRaw) {
-        const status = JSON.parse(statusRaw);
-        if (status.affirmation) setValidated(true);
+        const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+        if (statusRaw) {
+          const status = JSON.parse(statusRaw);
+          if (status.affirmation) setValidated(true);
+        }
+      } catch {
+        // Storage indisponible — continuer avec valeurs par défaut
       }
     }
     load();
@@ -122,42 +126,53 @@ export default function Affirmation() {
     if (validated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.affirmation = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.affirmation = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-    await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
+      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
 
-    const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-    await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
+      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
 
-    const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
-    const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
-    earned.affirmation = 15;
-    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+      earned.affirmation = 15;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
 
-    checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
-    setValidated(true);
-    setToast(t.affirmation.toast);
+      checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+      setValidated(true);
+      setToast(t.affirmation.toast);
 
-    setTimeout(() => {
-      goNext(getNextStepRoute(status));
-    }, 1500);
+      setTimeout(() => {
+        goNext(getNextStepRoute(status));
+      }, 1500);
+    } catch {
+      setValidated(true);
+      setToast(t.affirmation.toast);
+      setTimeout(() => goNext('/(app)/action'), 1500);
+    }
   }
 
   async function handleSkip() {
     if (validated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.affirmation = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.affirmation = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    setValidated(true);
-    goNext(getNextStepRoute(status));
+      setValidated(true);
+      goNext(getNextStepRoute(status));
+    } catch {
+      setValidated(true);
+      goNext('/(app)/action');
+    }
   }
 
   return (
@@ -167,7 +182,7 @@ export default function Affirmation() {
       <View style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
       <View style={[styles.orb, { width: 80, height: 80, backgroundColor: cycleColors.orb2, bottom: 55, left: -20 }]} />
 
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
 
         {/* Œil + Titre */}
         <View style={styles.header}>
@@ -298,7 +313,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingTop: 16,
     paddingBottom: 8,
     gap: 8,
     zIndex: 1,

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming, withDelay } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 
@@ -17,6 +18,7 @@ export default function OnboardingWelcome() {
   const router = useRouter();
   const t = useTranslation();
   const { lang, setLang } = useLanguage();
+  const insets = useSafeAreaInsets();
   const openEye = useSharedValue(0);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function OnboardingWelcome() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 24, 80), paddingBottom: Math.max(insets.bottom, 40) }]}
       showsVerticalScrollIndicator={false}
     >
       {/* Orbes décoratives */}
@@ -188,8 +190,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#F0EAE0',
     paddingHorizontal: 24,
-    paddingTop: 80,
-    paddingBottom: 40,
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 24,

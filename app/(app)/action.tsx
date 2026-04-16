@@ -105,16 +105,20 @@ export default function Action() {
 
   useEffect(() => {
     async function load() {
-      const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-      setCycleNumber(cycle);
-      setContent(getCycleContent(cycle, lang));
-      setCycleColors(getCycleColors(cycle, lang));
+      try {
+        const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+        setCycleNumber(cycle);
+        setContent(getCycleContent(cycle, lang));
+        setCycleColors(getCycleColors(cycle, lang));
 
-      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      if (statusRaw) {
-        const status = JSON.parse(statusRaw);
-        if (status.action_easy) setEasyValidated(true);
-        if (status.action_hard) setHardValidated(true);
+        const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+        if (statusRaw) {
+          const status = JSON.parse(statusRaw);
+          if (status.action_easy) setEasyValidated(true);
+          if (status.action_hard) setHardValidated(true);
+        }
+      } catch {
+        // Storage indisponible — continuer avec valeurs par défaut
       }
     }
     load();
@@ -124,30 +128,34 @@ export default function Action() {
     if (easyValidated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.action_easy = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.action_easy = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-    await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
+      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
 
-    const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-    await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
+      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
 
-    const earnedRaw1 = await AsyncStorage.getItem('cycle_earned_points');
-    const earned1 = earnedRaw1 ? JSON.parse(earnedRaw1) : {};
-    earned1.action_easy = 15;
-    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned1));
+      const earnedRaw1 = await AsyncStorage.getItem('cycle_earned_points');
+      const earned1 = earnedRaw1 ? JSON.parse(earnedRaw1) : {};
+      earned1.action_easy = 15;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned1));
 
-    checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
-    setEasyValidated(true);
-    setToast(t.action.toastFacile);
+      checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+      setEasyValidated(true);
+      setToast(t.action.toastFacile);
 
-    if (hardValidated) {
-      setTimeout(() => {
-        goNext(getNextStepRoute(status));
-      }, 1500);
+      if (hardValidated) {
+        setTimeout(() => {
+          goNext(getNextStepRoute(status));
+        }, 1500);
+      }
+    } catch {
+      setEasyValidated(true);
     }
   }
 
@@ -155,15 +163,19 @@ export default function Action() {
     if (easyValidated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.action_easy = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.action_easy = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    setEasyValidated(true);
+      setEasyValidated(true);
 
-    if (hardValidated) {
-      goNext(getNextStepRoute(status));
+      if (hardValidated) {
+        goNext(getNextStepRoute(status));
+      }
+    } catch {
+      setEasyValidated(true);
     }
   }
 
@@ -171,30 +183,34 @@ export default function Action() {
     if (hardValidated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.action_hard = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.action_hard = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-    await AsyncStorage.setItem('cycle_points', String(cyclePoints + 25));
+      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 25));
 
-    const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-    await AsyncStorage.setItem('points_total', String(pointsTotal + 25));
+      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      await AsyncStorage.setItem('points_total', String(pointsTotal + 25));
 
-    const earnedRaw2 = await AsyncStorage.getItem('cycle_earned_points');
-    const earned2 = earnedRaw2 ? JSON.parse(earnedRaw2) : {};
-    earned2.action_hard = 25;
-    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned2));
+      const earnedRaw2 = await AsyncStorage.getItem('cycle_earned_points');
+      const earned2 = earnedRaw2 ? JSON.parse(earnedRaw2) : {};
+      earned2.action_hard = 25;
+      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned2));
 
-    checkMilestones(pointsTotal, pointsTotal + 25, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
-    setHardValidated(true);
-    setToast(t.action.toastDifficile);
+      checkMilestones(pointsTotal, pointsTotal + 25, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+      setHardValidated(true);
+      setToast(t.action.toastDifficile);
 
-    if (easyValidated) {
-      setTimeout(() => {
-        goNext(getNextStepRoute(status));
-      }, 1500);
+      if (easyValidated) {
+        setTimeout(() => {
+          goNext(getNextStepRoute(status));
+        }, 1500);
+      }
+    } catch {
+      setHardValidated(true);
     }
   }
 
@@ -202,15 +218,19 @@ export default function Action() {
     if (hardValidated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.action_hard = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+    try {
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.action_hard = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    setHardValidated(true);
+      setHardValidated(true);
 
-    if (easyValidated) {
-      goNext(getNextStepRoute(status));
+      if (easyValidated) {
+        goNext(getNextStepRoute(status));
+      }
+    } catch {
+      setHardValidated(true);
     }
   }
 
@@ -221,7 +241,7 @@ export default function Action() {
       <View style={[styles.orb, { width: 130, height: 130, backgroundColor: cycleColors.orb1, top: -32, left: -32 }]} />
       <View style={[styles.orb, { width: 75, height: 75, backgroundColor: cycleColors.orb2, bottom: 55, right: -18 }]} />
 
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 14) }]}>
 
         {/* Bloc haut : œil + barre + badge */}
         <View style={styles.topBlock}>
@@ -397,7 +417,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     paddingHorizontal: 14,
-    paddingTop: 14,
     paddingBottom: 6,
     zIndex: 1,
   },
@@ -613,7 +632,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontFamily: 'Jost',
-    fontSize: 8,
+    fontSize: 11,
     fontWeight: '300',
     color: '#A09088',
   },

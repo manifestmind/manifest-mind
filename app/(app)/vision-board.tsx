@@ -4,10 +4,13 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import {
+  Alert,
   Animated,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -51,6 +54,7 @@ function checkMilestones(
 export default function VisionBoard() {
   const insets = useSafeAreaInsets();
   const t = useTranslation();
+  const { lang } = useLanguage();
   const { fromCycle } = useLocalSearchParams();
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
@@ -78,41 +82,45 @@ export default function VisionBoard() {
   useFocusEffect(
     useCallback(() => {
       async function load() {
-        const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-        setCycleColors(getCycleColors(cycle));
+        try {
+          const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+          setCycleColors(getCycleColors(cycle, lang));
 
-        const savedPhotos = await AsyncStorage.getItem('vision_board_photos');
-        if (savedPhotos) setPhotos(JSON.parse(savedPhotos));
+          const savedPhotos = await AsyncStorage.getItem('vision_board_photos');
+          if (savedPhotos) setPhotos(JSON.parse(savedPhotos));
 
-        const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-        let status: Record<string, boolean> = {};
-        if (statusRaw) {
-          status = JSON.parse(statusRaw);
-          if (!status.vision_board) {
-            setToast(t.visionBoard.toast);
+          const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+          let status: Record<string, boolean> = {};
+          if (statusRaw) {
+            status = JSON.parse(statusRaw);
+            if (!status.vision_board) {
+              setToast(t.visionBoard.toast);
 
-            status.vision_board = true;
-            await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+              status.vision_board = true;
+              await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-            const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-            await AsyncStorage.setItem('cycle_points', String(cyclePoints + 5));
+              const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+              await AsyncStorage.setItem('cycle_points', String(cyclePoints + 5));
 
-            const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-            await AsyncStorage.setItem('points_total', String(pointsTotal + 5));
-            checkMilestones(pointsTotal, pointsTotal + 5, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+              const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+              await AsyncStorage.setItem('points_total', String(pointsTotal + 5));
+              checkMilestones(pointsTotal, pointsTotal + 5, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
 
-            const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
-            const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
-            earned.vision_board = 5;
-            await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+              const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+              const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+              earned.vision_board = 5;
+              await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+            }
           }
-        }
 
-        const route = getNextStepRoute(status);
-        if (route === 'completed') {
-          setShowFinishBtn(true);
-        } else if (fromCycle === 'true') {
-          router.push(route as any);
+          const route = getNextStepRoute(status);
+          if (route === 'completed') {
+            setShowFinishBtn(true);
+          } else if (fromCycle === 'true') {
+            setTimeout(() => router.push(route as any), 2500);
+          }
+        } catch {
+          // Storage indisponible — afficher le board avec valeurs par défaut
         }
       }
       load();
@@ -130,7 +138,14 @@ export default function VisionBoard() {
 
   async function handlePickPhoto(category: string) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    if (!permission.granted) {
+      Alert.alert(
+        t.visionBoard.permissionTitre,
+        t.visionBoard.permissionMessage,
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -160,7 +175,11 @@ export default function VisionBoard() {
       <View style={[styles.orb, { width: 85, height: 85, backgroundColor: cycleColors.orb2, bottom: 55, left: -22 }]} />
 
       {/* Contenu */}
-      <View style={styles.content}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { minHeight: '100%' }]}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Titre + Badge */}
         <Animated.View style={[styles.header, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
@@ -342,7 +361,7 @@ export default function VisionBoard() {
           )}
         </Animated.View>
 
-      </View>
+      </ScrollView>
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>

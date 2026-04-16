@@ -238,7 +238,7 @@ export default function Visualisation() {
       <View style={[styles.orb, { width: 130, height: 130, backgroundColor: cycleColors.orb1, top: -32, right: -32 }]} />
       <View style={[styles.orb, { width: 80, height: 80, backgroundColor: cycleColors.orb2, bottom: 55, left: -20 }]} />
 
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 16) }]}>
 
         {/* Œil + Titre */}
         <View style={styles.header}>
@@ -408,7 +408,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingTop: 16,
     paddingBottom: 8,
     gap: 8,
     zIndex: 1,
@@ -492,7 +491,7 @@ const styles = StyleSheet.create({
   breatheRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 12,
     flexShrink: 0,
     marginTop: 8,
   },

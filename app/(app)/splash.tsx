@@ -11,10 +11,12 @@ import {
   View,
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Splash() {
   const router = useRouter();
   const t = useTranslation();
+  const insets = useSafeAreaInsets();
   const [toast, setToast] = useState('');
   const eyeAnim = useRef(new Animated.Value(0)).current;
 
@@ -31,28 +33,34 @@ export default function Splash() {
 
   useEffect(() => {
     async function initSplash() {
-      // opening = false si cycle_step_status absent (premier lancement) ou si opening non encore fait
-      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      const opening: boolean = statusRaw ? JSON.parse(statusRaw).opening : false;
+      try {
+        const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+        const opening: boolean = statusRaw ? JSON.parse(statusRaw).opening : false;
 
-      // Nouveau cycle démarrant : cycle terminé + minuit passé → home.tsx va reset, toast pertinent
-      const cycleCompleted = await AsyncStorage.getItem('cycle_completed');
-      const nextCycleTime = parseInt(await AsyncStorage.getItem('next_cycle_time') || '0');
-      const newCycleStarting = cycleCompleted === 'true' && nextCycleTime > 0 && Date.now() >= nextCycleTime;
+        const cycleCompleted = await AsyncStorage.getItem('cycle_completed');
+        const nextCycleTime = parseInt(await AsyncStorage.getItem('next_cycle_time') || '0');
+        const newCycleStarting = cycleCompleted === 'true' && nextCycleTime > 0 && Date.now() >= nextCycleTime;
 
-      if (!opening || newCycleStarting) {
-        setToast(t.splash.toast);
-        setTimeout(() => setToast(''), 2500);
+        if (!opening || newCycleStarting) {
+          setToast(t.splash.toast);
+          setTimeout(() => setToast(''), 2500);
+        }
+      } catch {
+        // Storage indisponible — continuer sans toast
       }
     }
     initSplash();
   }, []);
 
   async function handleStart() {
-    const userName = await AsyncStorage.getItem('user_name');
-    if (!userName) {
-      router.replace('/(app)/name' as any);
-    } else {
+    try {
+      const userName = await AsyncStorage.getItem('user_name');
+      if (!userName) {
+        router.replace('/(app)/name' as any);
+      } else {
+        router.replace('/(app)/home' as any);
+      }
+    } catch {
       router.replace('/(app)/home' as any);
     }
   }
@@ -61,14 +69,14 @@ export default function Splash() {
     <View style={styles.wrapper}>
       {/* Toast points */}
       {toast ? (
-        <View style={styles.toast}>
+        <View style={[styles.toast, { top: Math.max(insets.top + 8, 40) }]}>
           <Text style={styles.toastIcon}>✦</Text>
           <Text style={styles.toastText}>{toast}</Text>
         </View>
       ) : null}
 
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 40, 80) }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Orbes */}
@@ -146,7 +154,6 @@ const styles = StyleSheet.create({
   },
   toast: {
     position: 'absolute',
-    top: 40,
     left: 16,
     right: 16,
     backgroundColor: '#3A2850',
@@ -171,7 +178,6 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 80,
     paddingBottom: 40,
     alignItems: 'center',
     justifyContent: 'flex-start',

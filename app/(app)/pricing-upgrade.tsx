@@ -3,14 +3,20 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
 export default function PricingUpgrade() {
   const t = useTranslation();
+  const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
 
   async function handlePurchase() {
-    await AsyncStorage.setItem('selected_plan', selectedPlan);
+    try {
+      await AsyncStorage.setItem('selected_plan', selectedPlan);
+    } catch {
+      // Écriture impossible — continuer quand même
+    }
     router.back();
   }
 
@@ -20,7 +26,7 @@ export default function PricingUpgrade() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 12, 20), paddingBottom: Math.max(insets.bottom, 12) }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.orb, {
@@ -177,8 +183,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#F0EAE0',
     paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 12,
     alignItems: 'center',
     justifyContent: 'space-between',
   },

@@ -6,13 +6,17 @@ import { View } from 'react-native';
 export default function Index() {
   useEffect(() => {
     const timer = setTimeout(async () => {
-      const done = await AsyncStorage.getItem('onboarding_completed');
-      if (!done) {
+      try {
+        const done = await AsyncStorage.getItem('onboarding_completed');
+        if (!done) {
+          router.replace('/(onboarding)/welcome' as any);
+        } else {
+          router.replace('/(app)/splash' as any);
+        }
+      } catch {
         router.replace('/(onboarding)/welcome' as any);
-      } else {
-        router.replace('/(app)/splash' as any);
       }
-    }, 500);
+    }, 0);
     return () => clearTimeout(timer);
   }, []);
 

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -57,6 +58,7 @@ type PreviousEntry = {
 export default function Journal() {
   const insets = useSafeAreaInsets();
   const t = useTranslation();
+  const { lang } = useLanguage();
   const eyeAnim = useRef(new Animated.Value(0)).current;
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
@@ -91,25 +93,33 @@ export default function Journal() {
 
   useEffect(() => {
     async function load() {
-      const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-      setCycleNumber(cycle);
-      setCycleColors(getCycleColors(cycle));
+      try {
+        const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
+        setCycleNumber(cycle);
+        setCycleColors(getCycleColors(cycle, lang));
 
-      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-      if (statusRaw) {
-        const status = JSON.parse(statusRaw);
-        if (status.journal) setValidated(true);
-      }
-
-      const entries: PreviousEntry[] = [];
-      for (let i = cycle - 1; i >= 1; i--) {
-        const entry = await AsyncStorage.getItem('journal_cycle_' + i);
-        if (entry) {
-          const data = JSON.parse(entry);
-          entries.push({ cycle: i, text: data.text, skipped: data.skipped || false });
+        const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+        if (statusRaw) {
+          const status = JSON.parse(statusRaw);
+          if (status.journal) setValidated(true);
         }
+
+        const entries: PreviousEntry[] = [];
+        if (cycle > 1) {
+          const keys = Array.from({ length: cycle - 1 }, (_, i) => 'journal_cycle_' + (cycle - 1 - i));
+          const results = await AsyncStorage.multiGet(keys);
+          for (const [key, value] of results) {
+            if (value) {
+              const data = JSON.parse(value);
+              const cycleNum = parseInt(key.replace('journal_cycle_', ''));
+              entries.push({ cycle: cycleNum, text: data.text, skipped: data.skipped || false });
+            }
+          }
+        }
+        setPreviousEntries(entries);
+      } catch {
+        // Storage indisponible — continuer avec valeurs par défaut
       }
-      setPreviousEntries(entries);
     }
     load();
   }, []);
@@ -140,41 +150,43 @@ export default function Journal() {
     if (journalText.trim() === '') return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // 1. Sauvegarder le texte
-    await AsyncStorage.setItem(
-      'journal_cycle_' + cycleNumber,
-      JSON.stringify({ text: journalText.trim(), skipped: false, cycle: cycleNumber })
-    );
+    try {
+      await AsyncStorage.setItem(
+        'journal_cycle_' + cycleNumber,
+        JSON.stringify({ text: journalText.trim(), skipped: false, cycle: cycleNumber })
+      );
 
-    // 2. Lire le statut actuel
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
 
-    // 3. Crediter +15 pts et marquer journal=true seulement si pas encore fait ce cycle
-    if (!status.journal) {
-      const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
-      await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
-      const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
-      await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
-      status.journal = true;
-      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
-      const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
-      const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
-      earned.journal = 15;
-      await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
-      checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
-    }
+      if (!status.journal) {
+        const cyclePoints = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
+        await AsyncStorage.setItem('cycle_points', String(cyclePoints + 15));
+        const pointsTotal = parseInt(await AsyncStorage.getItem('points_total') || '0');
+        await AsyncStorage.setItem('points_total', String(pointsTotal + 15));
+        status.journal = true;
+        await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+        const earnedRaw = await AsyncStorage.getItem('cycle_earned_points');
+        const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
+        earned.journal = 15;
+        await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
+        checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+      }
 
-    setValidated(true);
-    setToast(t.journal.toast);
+      setValidated(true);
+      setToast(t.journal.toast);
 
-    const route = getNextStepRoute(status);
-    if (route === 'completed') {
-      setTimeout(() => { router.replace('/(app)/celebration' as any); }, 1500);
-    } else if (fromCycle !== 'true') {
-      setTimeout(() => { router.back(); }, 1500);
-    } else {
-      setNextRoute(route);
+      const route = getNextStepRoute(status);
+      if (route === 'completed') {
+        setTimeout(() => { router.replace('/(app)/celebration' as any); }, 1500);
+      } else if (fromCycle !== 'true') {
+        setTimeout(() => { router.back(); }, 1500);
+      } else {
+        setNextRoute(route);
+      }
+    } catch {
+      setValidated(true);
+      setToast(t.journal.toast);
     }
   }
 
@@ -182,24 +194,28 @@ export default function Journal() {
     if (validated) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    await AsyncStorage.setItem(
-      'journal_cycle_' + cycleNumber,
-      JSON.stringify({ text: '', skipped: true, cycle: cycleNumber })
-    );
+    try {
+      await AsyncStorage.setItem(
+        'journal_cycle_' + cycleNumber,
+        JSON.stringify({ text: '', skipped: true, cycle: cycleNumber })
+      );
 
-    const statusRaw = await AsyncStorage.getItem('cycle_step_status');
-    const status = statusRaw ? JSON.parse(statusRaw) : {};
-    status.journal = true;
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
+      const statusRaw = await AsyncStorage.getItem('cycle_step_status');
+      const status = statusRaw ? JSON.parse(statusRaw) : {};
+      status.journal = true;
+      await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
-    setValidated(true);
-    const route = getNextStepRoute(status);
-    if (route === 'completed') {
-      router.replace('/(app)/celebration' as any);
-    } else if (fromCycle !== 'true') {
-      router.back();
-    } else {
-      setNextRoute(route);
+      setValidated(true);
+      const route = getNextStepRoute(status);
+      if (route === 'completed') {
+        router.replace('/(app)/celebration' as any);
+      } else if (fromCycle !== 'true') {
+        router.back();
+      } else {
+        setNextRoute(route);
+      }
+    } catch {
+      setValidated(true);
     }
   }
 
@@ -261,7 +277,7 @@ export default function Journal() {
         <Animated.View style={[styles.entryBlock, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           <View style={styles.entryHeader}>
             <Text style={styles.entryLabel}>{t.journal.etape.replace('{n}', String(cycleNumber))}</Text>
-            <Text style={styles.entryDate}>Aujourd'hui</Text>
+            <Text style={styles.entryDate}>{t.journal.aujourdhui}</Text>
           </View>
 
           <View style={[styles.textAreaWrapper, validated && { opacity: 0.6 }]}>
@@ -322,7 +338,7 @@ export default function Journal() {
                   <Text style={styles.entryCardCycle}>{t.commun.cycle} {entry.cycle}</Text>
                   {entry.skipped ? (
                     <View style={styles.badgeGrey}>
-                      <Text style={styles.badgeGreyText}>Passé</Text>
+                      <Text style={styles.badgeGreyText}>{t.journal.passe}</Text>
                     </View>
                   ) : (
                     <View style={styles.badgeGreen}>
@@ -332,7 +348,7 @@ export default function Journal() {
                 </View>
                 <Text style={styles.entryCardText}>
                   {entry.skipped
-                    ? 'Étape passée sans points'
+                    ? t.journal.etapePassee
                     : '« ' + (entry.text.length > 100 ? entry.text.slice(0, 100) + '...' : entry.text) + ' »'}
                 </Text>
               </View>

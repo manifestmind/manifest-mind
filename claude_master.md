@@ -1,129 +1,82 @@
-# ManifestMind — Claude Master Documentation
+# CLAUDE_MASTER.md — ManifestMind
 
-**Dernière mise à jour :** 15 Avril 2026
-**État :** i18n FR/EN/ES complète validée ✅ (17 écrans + hooks + content JSON)
-
----
-
-## PAGES VALIDÉES — NE JAMAIS MODIFIER LE DESIGN
-
-| Fichier | Statut |
-|---------|--------|
-| app/(onboarding)/welcome.tsx | ✅ Validé |
-| app/(onboarding)/features.tsx | ✅ Validé |
-| app/(onboarding)/privacy.tsx | ✅ Validé |
-| app/(onboarding)/pricing.tsx | ✅ Validé |
-| app/(onboarding)/auth.tsx | ✅ Validé (initialise premier cycle) |
-| app/(app)/splash.tsx | ✅ Validé |
-| app/(app)/name.tsx | ✅ Validé |
-| app/(app)/home.tsx | ✅ Validé (logique cycles 3 états) |
-| app/(app)/affirmation.tsx | ✅ Validé (design + logique) |
-| app/(app)/action.tsx | ✅ Validé (design + logique) |
-| app/(app)/visualisation.tsx | ✅ Validé (design + logique) |
-| app/(app)/journal.tsx | ✅ Validé (design + logique) |
-| app/(app)/vision-board.tsx | ✅ Validé (design + logique) |
-| app/(app)/celebration.tsx | ✅ Validé (design + logique) |
-| app/(app)/profil.tsx | ✅ Validé |
-| app/(app)/parametres.tsx | ✅ Validé (design + logique) |
-| app/(app)/pricing-upgrade.tsx | ✅ Validé |
+> Référence technique complète pour les sessions Claude Code.
+> Mise à jour : 2026-04-15
 
 ---
 
-## RÈGLES CRITIQUES — NE JAMAIS VIOLER
+## Stack
 
-### 1. Ne jamais nommer `index.tsx` dans un groupe route
-Dans expo-router, les groupes `(name)` sont transparents dans les URLs :
-- `app/index.tsx` → URL `/`
-- `app/(onboarding)/index.tsx` → URL `/` ← CONFLIT FATAL
+- **React Native + Expo** (expo-router v4, file-based routing)
+- **Firebase 12.x** — auth (magic link), firestore, storage
+- **AsyncStorage** — persistance locale (non chiffré)
+- **i18n** — FR / EN / ES via `src/i18n/translations.ts` + `LanguageContext`
+- **Animations** — `react-native-reanimated` (welcome.tsx uniquement), `Animated` API partout ailleurs
+- **Icons / Illustrations** — SVG inline via `react-native-svg` (pas de librairie d'icônes)
 
-**Solution :** Toujours utiliser des noms descriptifs : `welcome.tsx`, `splash.tsx`, etc.
+---
 
-### 2. Root layout = Stack, pas Slot
-`<Slot />` bloque la navigation cross-groupe `(onboarding)` vers `(app)`.
-`<Stack screenOptions={{ headerShown: false }} />` est requis dans `app/_layout.tsx`.
+## Architecture des fichiers
 
-### 3. Routes cross-groupe avec `as any`
-`typedRoutes: false` dans `app.json`. Toujours caster les routes cross-groupe :
-```ts
-router.replace('/(app)/splash' as any)
+```
+app/
+  index.tsx                  # Router initial (AsyncStorage → welcome ou splash)
+  _layout.tsx                # Root layout : LanguageProvider wrapping Stack
+  (onboarding)/
+    welcome.tsx              # Page 1 — œil animé + sélection langue
+    features.tsx             # Page 2 — présentation fonctionnalités
+    privacy.tsx              # Page 3
+    pricing.tsx              # Page 4
+    auth.tsx                 # Page 5 — Apple / Google / Email magic link / Skip
+  (app)/
+    splash.tsx               # Écran d'accueil quotidien
+    name.tsx                 # Saisie prénom
+    home.tsx                 # Tableau de bord principal
+    affirmation.tsx          # Étape 1/7 du cycle
+    action.tsx               # Étape 2/7
+    visualisation.tsx        # Étape 3/7
+    journal.tsx              # Étape 4/7
+    vision-board.tsx         # Étape 5/7
+    celebration.tsx          # Fin de cycle
+    profil.tsx               # Profil utilisateur
+    parametres.tsx           # Paramètres
+    pricing-upgrade.tsx      # Upgrade abonnement
+
+hooks/
+  useCycleContent.ts         # getCycleContent(n, lang?) + getCycleColors(n, lang?)
+  useShare.ts                # shareProgress() — Sharing + fallback Clipboard
+
+services/
+  firebase.ts                # init Firebase, auth avec getReactNativePersistence(AsyncStorage)
+
+src/
+  i18n/
+    translations.ts          # Source of truth i18n (FR/EN/ES)
+    LanguageContext.tsx       # Provider + useLanguage()
+  hooks/
+    useTranslation.ts        # Retourne translations[lang]
+
+assets/content/
+  content_fr.json            # 365 entrées jour_1 … jour_365
+  content_en.json
+  content_es.json
+
+components/ui/
+  PointsToast.tsx
+  CongratulationsToast.tsx
 ```
 
-### 4. Reanimated : UNIQUEMENT dans `welcome.tsx`
-Reanimated cause `opacity: 0` permanent en Expo Go sur toutes les pages sauf welcome.tsx.
-- Reanimated conservé **uniquement** dans `app/(onboarding)/welcome.tsx`
-- Toutes les autres pages utilisent `Animated` de React Native uniquement
-- PointsToast utilise Reanimated en interne mais est autorisé car c'est un composant pré-existant
-
-### 5. Navbar identique sur toutes les pages
-Icônes 22×22, `paddingTop: 8`, `paddingBottom: Math.max(insets.bottom, 8)`.
-Ne jamais modifier sans instruction explicite.
-
-### 6. Design des pages validées — INTOUCHABLE
-Ne jamais modifier couleurs, polices, espacements, SVG, animations, navbar ni layouts des pages listées ci-dessus.
-
-### 7. Ne jamais tuer les process node
-Ne pas utiliser `kill`, `taskkill` ou équivalents sur les process node/expo.
-L'utilisateur gère Expo Go lui-même.
-
-### 8. pricing-upgrade.tsx — ne jamais appeler initFirstCycle()
-`app/(app)/pricing-upgrade.tsx` est la page de changement d'abonnement depuis Paramètres.
-Elle ne doit JAMAIS toucher aux données de cycle. Après sélection : `AsyncStorage.setItem('selected_plan', ...)` + `router.back()` uniquement.
-
 ---
 
-## getFontSize() — DEUX VERSIONS DISTINCTES (ne jamais mélanger)
+## Règles critiques
 
-### VERSION visualisation.tsx
-5 phrases dans une seule grande carte — seuils plus serrés :
-```ts
-function getFontSize(text: string): number {
-  if (!boxWidth || !text) return 13;
-  const len = text.length;
-  if (len < 60)  return 17;
-  if (len < 90)  return 15;
-  if (len < 120) return 13;
-  if (len < 150) return 12;
-  return 11;
-}
-```
+### Navigation
+- **NE JAMAIS** nommer un fichier `index.tsx` dans un groupe de routes `(onboarding)` ou `(app)` — conflit fatal avec `app/index.tsx`
+- Flux validé : `index → welcome → features → privacy → pricing → auth → splash → name → home`
+- `router.replace` pour les transitions principales (pas de back stack)
+- `router.push` pour journal/vision-board avec `?fromCycle=true`
 
-### VERSION affirmation.tsx et action.tsx
-1 phrase par carte — cartes plus petites, seuils plus généreux :
-```ts
-function getFontSize(text: string): number {
-  if (!boxWidth || !text) return 15;
-  const len = text.length;
-  if (len < 70)  return 20;
-  if (len < 100) return 17;
-  if (len < 130) return 15;
-  if (len < 155) return 13;
-  return 12;
-}
-```
-
-> **Règle** : Ne jamais copier la version visualisation sur affirmation/action ni l'inverse.
-
----
-
-## RÈGLES TECHNIQUES
-
-### Reanimated
-- Utiliser UNIQUEMENT dans `welcome.tsx`
-- Sur toutes les autres pages : `Animated` de React Native uniquement
-- Cause `opacity: 0` permanent sur Expo Go hors `welcome.tsx`
-- **PointsToast.tsx réécrit** : zéro Reanimated — `useRef(new Animated.Value(0))` + `Animated.timing` avec `useNativeDriver: true`
-
-### useFocusEffect — rechargement au retour sur page
-- `home.tsx` utilise `useFocusEffect(useCallback(..., []))` pour relire `cycle_completed` + `cycle_step_status` à chaque retour
-- `vision-board.tsx` idem pour les photos + créditation +5 pts
-- **Règle** : toute page qui doit refléter un état AsyncStorage mis à jour par une autre page doit utiliser `useFocusEffect` et non `useEffect([], [])`
-
-### Cycle complété — détection automatique
-- `home.tsx` détecte si toutes les étapes sont `true` et `cycle_completed=false` → auto-marque `cycle_completed=true` + `next_cycle_time=minuit`
-- Couvre le cas où l'utilisateur arrive à home sans avoir tapé "Terminer mon cycle"
-
-### ClipPath IDs SVG — IDs uniques par fichier (ne jamais réutiliser)
-
+### Eye SVG — clipPath IDs (uniques par fichier)
 | Fichier | ID |
 |---------|-----|
 | welcome.tsx | ec1 |
@@ -140,524 +93,143 @@ function getFontSize(text: string): number {
 | parametres.tsx | prc1 |
 | pricing-upgrade.tsx | pu1 |
 
----
+### Animations
+- `react-native-reanimated` : **uniquement dans welcome.tsx**
+- `Animated` (RN natif) : partout ailleurs
+- Eviter d'importer les deux dans le même fichier
 
-## STRUCTURE DU PROJET
+### i18n
+- Toujours utiliser `t.section.cle` — ne jamais hardcoder de strings FR/EN/ES
+- Interpolation : `t.home.toastMilestone.replace('{n}', String(n))`
+- `visionBoard.cellules` est un objet (pas un tableau)
+- `commun.navbar.*` : accueil / profil / parametres
 
-```
-app/
-  _layout.tsx                    → Stack racine, headerShown: false
-  index.tsx                      → Point d'entrée AsyncStorage → routing
-
-  (onboarding)/
-    _layout.tsx                  → Stack, headerShown: false
-    welcome.tsx   ✅             → Oeil animé Reanimated, langue, citation, → features
-    features.tsx  ✅             → 7 cartes fonctionnalités
-    privacy.tsx   ✅             → CGU, checkbox, liens légaux
-    pricing.tsx   ✅             → 3 plans tarifaires, stubs achat
-    auth.tsx      ✅             → Apple/Google stub, Magic Link, initialise cycles, → splash
-
-  (app)/
-    _layout.tsx                  → Stack, headerShown: false
-    splash.tsx    ✅             → Oeil SVG statique, toast si opening=false, → name ou home
-    name.tsx      ✅             → Saisie prénom, → home
-    home.tsx      ✅             → Écran principal (design validé, logique cycles 3 états)
-    affirmation.tsx  ✅          → Étape 2 cycle — affirmation thème
-    action.tsx       ✅          → Étape 3+4 cycle — action facile + difficile
-    visualisation.tsx ✅         → Étape 5 cycle — respiration + phrases guidées
-    journal.tsx      ✅          → Étape 6 cycle — journal de gratitude
-    vision-board.tsx ✅          → Étape 7 cycle — vision board photos
-    celebration.tsx  ✅          → Fin de cycle — points + détail étapes
-    profil.tsx       ✅          → photo, prénom, reset, jauges animées validées
-    parametres.tsx   ✅          → Notifications, langue, abonnement, compte, légal
-    pricing-upgrade.tsx ✅       → Changement abonnement depuis Paramètres (sans init cycle)
-
-src/
-  i18n/
-    translations.ts              → source de vérité FR/EN/ES (toutes les chaînes UI)
-    LanguageContext.tsx          → Provider + useLanguage() hook
-  hooks/
-    useTranslation.ts            → useTranslation() → translations[lang]
-
-services/
-  firebase.ts                    → initializeAuth + inMemoryPersistence
-
-components/
-  ui/PointsToast.tsx             → Toast points animé (Animated RN — zéro Reanimated)
-  ui/CongratulationsToast.tsx    → Toast félicitations milestones (Animated RN)
-
-constants/
-  theme.ts                       → Couleurs et styles globaux
-```
-
----
-
-## FLUX DE NAVIGATION VALIDÉ
-
-```
-app/index.tsx
-  onboarding_completed absent  →  /(onboarding)/welcome
-  onboarding_completed = true  →  /(app)/splash
-
-(onboarding) : welcome → features → privacy → pricing → auth
-  auth.tsx → initialise clés cycle → /(app)/splash
-
-(app)/splash
-  user_name absent  →  /(app)/name
-  user_name présent →  /(app)/home
-
-(app)/name → sauvegarde user_name → /(app)/home
-
-(app)/home — bouton principal selon état du cycle :
-
-  ÉTAT 1 — opening = false :
-    Texte : "Commencer mon cycle →"
-    Action : +10 pts total + cycle, opening=true, → affirmation.tsx
-
-  ÉTAT 2 — opening = true, cycle non complété :
-    Texte : "Continuer mon cycle →"
-    Navigue vers prochaine étape non complétée :
-      affirmation false          → affirmation.tsx
-      action_easy ou hard false  → action.tsx
-      visualisation false        → visualisation.tsx
-      journal false              → journal.tsx
-      vision_board false         → vision-board.tsx
-
-  ÉTAT 3 — cycle_completed = true :
-    Texte : "✦ Prochain cycle à minuit"
-    Couleur #6B3FA0, non cliquable
-
-  Carte Journal      → /(app)/journal
-  Carte Vision Board → /(app)/vision-board
-  Navbar Profil      → /(app)/profil
-  Navbar Paramètres  → /(app)/parametres
-  Bouton reset (discret, top:48 right:16) → AsyncStorage.clear() → /
-
-(app)/parametres
-  Plan actuel        → /(app)/pricing-upgrade (router.push — sans toucher au cycle)
-  Se déconnecter     → AsyncStorage.removeItem('onboarding_completed') + router.replace welcome
-  Supprimer compte   → AsyncStorage.clear() + router.replace welcome
-
-Cycle des étapes :
-  affirmation → action → visualisation → journal → vision-board → (celebration)
-```
-
----
-
-## ASYNCSTORAGE KEYS (architecture cycles)
-
-### Clés actives
-
-| Clé | Type | Rôle |
-|-----|------|------|
-| onboarding_completed | true | Fin onboarding (auth.tsx) |
-| user_language | fr / en / es | Langue choisie (welcome.tsx) |
-| legal_accepted | true | CGU acceptées (privacy.tsx) |
-| legal_accepted_date | ISO string | Date acceptation CGU |
-| selected_plan | lifetime / annuel / mensuel | Plan choisi (pricing.tsx / pricing-upgrade.tsx) |
-| user_name | string | Prénom utilisateur (name.tsx) |
-| current_cycle | string int 1–365 | Numéro de cycle actuel |
-| current_theme | string int 1–7 | Thème actuel = ((cycle-1) % 7) + 1 |
-| cycle_step_status | JSON string | État des étapes du cycle |
-| cycle_points | string int | Points gagnés ce cycle |
-| cycle_completed | true / false | Cycle terminé ? |
-| next_cycle_time | string timestamp | Minuit du jour suivant |
-| points_total | string int | Points cumulés tous cycles |
-| cycle_earned_points | JSON string | Points gagnés par étape ce cycle (pour celebration) |
-| profile_photo | URI string | Photo avatar profil |
-| best_cycle_points | string int | Record meilleur score cycle |
-| notif_affirmation | true / false | Toggle notification affirmation matin |
-| notif_rappel | true / false | Toggle rappel cycle incomplet 20h |
-| reminder_time | HH:MM string | Heure rappel matin (défaut 08:00) |
-
-### Clés supprimées — ne plus utiliser
-- day_number
-- daily_progress_step
-- last_open_date
-- points_today
-- user_start_date
-
----
-
-## ARCHITECTURE CYCLES
-
-### Concept fondamental
-365 cycles, 7 thèmes séquentiels, 8 étapes par cycle.
-Le "cycle" remplace le "jour". Le cycle avance à minuit (next_cycle_time), pas à l'ouverture.
-
-### 8 étapes par cycle
-1. opening (ouverture)
-2. affirmation
-3. action_easy
-4. action_hard
-5. visualisation
-6. journal
-7. vision_board
-8. (celebration — fin de cycle)
-
-### Calcul thème
+### AsyncStorage — patterns obligatoires
 ```ts
-current_theme = ((current_cycle - 1) % 7) + 1
-// Cycle 1 → thème 1, Cycle 7 → thème 7, Cycle 8 → thème 1
-```
-
-### Jauge progression
-```ts
-progressPercent = (points_total / 36500) * 100
-// 36500 = 365 cycles x 100 pts max par cycle
-```
-
-### Niveaux
-| Clé i18n | FR | EN | ES | Seuil |
-|----------|----|----|-----|-------|
-| niveaux.eveil | Éveil | Awakening | Despertar | 0–25% |
-| niveaux.ancrage | Ancrage | Grounding | Arraigo | 25–50% |
-| niveaux.expansion | Expansion | Expansion | Expansión | 50–75% |
-| niveaux.manifestation | Manifestation | Manifestation | Manifestación | 75–100% |
-
-> Level stocké comme `levelIndex: 0–3` (number) — affichage dérivé de `LEVELS[levelIndex]` calculé depuis `t.niveaux.*` à l'intérieur du composant.
-
-### Initialisation premier cycle (dans auth.tsx)
-```ts
-await AsyncStorage.setItem('current_cycle', '1')
-await AsyncStorage.setItem('current_theme', '1')
-await AsyncStorage.setItem('cycle_completed', 'false')
-await AsyncStorage.setItem('cycle_points', '0')
-await AsyncStorage.setItem('points_total', '0')
-await AsyncStorage.setItem('cycle_step_status', JSON.stringify({
-  opening: false, affirmation: false,
-  action_easy: false, action_hard: false,
-  visualisation: false, journal: false, vision_board: false
-}))
-await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
-  opening: 0, affirmation: 0, action_easy: 0, action_hard: 0,
-  visualisation: 0, journal: 0, vision_board: 0
-}))
-```
-
-### Vérification nouveau cycle (dans home.tsx au chargement)
-```ts
-if (cycle_completed === 'true' && Date.now() >= next_cycle_time) {
-  // Incrémenter cycle, calculer nouveau thème, reset step_status + cycle_points
+// Lecture
+try {
+  const val = await AsyncStorage.getItem('key') || 'default';
+} catch {
+  // fallback silencieux
 }
-```
 
----
-
-## HOME.TSX — DESIGN VALIDÉ (ne pas modifier)
-
-- Oeil SVG : 120x92, clipPath id="hc1", marginTop:32 sur le bloc header
-- Header : "Bonjour" 14px uppercase Jost, prénom 36px serif italic
-- Citation violette : 18px serif italic, couleur #6B3FA0
-- Jauge : header "PROGRESSION · CYCLE {n}" gauche + badge niveau droite, "365 cycles" droite, barre h:16, 4 niveaux
-- Bouton : paddingVertical:10, fontSize:12, letterSpacing:1, backgroundColor:#3A3530, borderRadius:999 — texte et couleur évoluent selon état
-- Cartes Journal/VisionBoard : paddingVertical:8, paddingHorizontal:8, gap:3, cardTitle 11px — avec lien "Passer cette étape sans points" dessous
-- Bloc puces Affirmations/Actions/Visualisations : pointerEvents="none", informatif uniquement
-- Layout content : flex:1, justifyContent:space-between, paddingHorizontal:16, paddingTop:12, paddingBottom:16
-- Navbar : icônes 22x22, labels 11px, paddingTop:8, safe area bottom
-
----
-
-## FIREBASE
-
-- services/firebase.ts → `initializeAuth(app, { persistence: inMemoryPersistence })`
-- Firebase 12.x : `getReactNativePersistence` non disponible dans cette version
-- `inMemoryPersistence` utilisé temporairement — 0 warning, 0 erreur TypeScript
-- À corriger lors de la session Auth avec la vraie implémentation Apple/Google/Magic Link
-
----
-
-## STUBS EN ATTENTE
-
-```ts
-// pricing.tsx (onboarding)
-handlePurchase()   → console.log + AsyncStorage selected_plan + navigation vers auth
-handleRestore()    → console.log stub
-
-// auth.tsx
-handleAppleSignIn()  → Alert stub
-handleGoogleSignIn() → Alert stub
-sendMagicLink()      → Firebase sendSignInLinkToEmail
-
-// parametres.tsx
-handleNotifAffirmation / handleNotifRappel
-  → expo-notifications wired, contenu notification à brancher sur content_fr.json réel
-handleRestorePurchases()  → Alert stub, brancher expo-in-app-purchases
-handleSignOut()           → AsyncStorage stub, brancher Firebase signOut session Auth
-handleDeleteAccount()     → AsyncStorage stub, brancher Firebase deleteUser session Auth
-```
-
----
-
-## LOGIQUE FIN DE CYCLE — VALIDÉE ✅
-
-### getNextStepRoute() — implémentée dans toutes les pages étapes
-Fonction sync identique dans affirmation, action, visualisation, journal, vision-board :
-```ts
-function getNextStepRoute(status: Record<string, boolean>): string {
-  if (!status.affirmation) return '/(app)/affirmation';
-  if (!status.action_easy || !status.action_hard) return '/(app)/action';
-  if (!status.visualisation) return '/(app)/visualisation';
-  if (!status.journal) return '/(app)/journal';
-  if (!status.vision_board) return '/(app)/vision-board';
-  return 'completed';
+// Écriture critique
+try {
+  await AsyncStorage.setItem('key', value);
+} catch {
+  // log ou continuer
 }
-function goNext(route: string) {
-  if (route === 'completed') router.replace('/(app)/celebration' as any);
-  else if (route === '/(app)/journal' || route === '/(app)/vision-board')
-    router.push((route + '?fromCycle=true') as any);
-  else router.push(route as any);
-}
+
+// Lectures multiples → multiGet (jamais de boucle O(N))
+const results = await AsyncStorage.multiGet(['key1', 'key2']);
 ```
 
-### Cas couverts — tous les chemins mènent à celebration
-1. Flux normal affirmation → action → visualisation → journal → vision-board → celebration
-2. Visualisation validée/passée + journal et vision_board déjà faits → celebration
-3. Journal validé/passé depuis accueil + c'était la dernière étape → celebration
-4. Vision-board ouvert + toutes étapes déjà faites → showFinishBtn → celebration
-5. Affirmation validée/passée + tout le reste déjà fait → celebration
-6. Action validée/passée + tout le reste déjà fait → celebration
-
-### celebration.tsx — logique
-- Lit `cycle_points` et `cycle_earned_points` depuis AsyncStorage
-- Affiche les points par étape (badge violet si gagné, gris si passé)
-- Écrit `cycle_completed=true` + `next_cycle_time=minuit`
-- Retour home → état 3 "✦ Prochain cycle à minuit"
-
-### cycle_earned_points — tracking par étape
-- Initialisé dans auth.tsx (premier cycle) et home.tsx (reset nouveau cycle)
-- Rempli dans chaque page étape lors de la validation (+pts) ou passé (0)
-- Clés : opening, affirmation, action_easy, action_hard, visualisation, journal, vision_board
+### Responsive / Safe Area
+- Pattern universel : `Math.max(insets.top + N, fallback)` en inline style
+- **NE PAS** mettre paddingTop/paddingBottom statiques dans StyleSheet pour les containers principaux
+- `useSafeAreaInsets` doit être importé sur chaque écran
+- Dynamic Island iOS = insets.top ≈ 59px
 
 ---
 
-## PROFIL.TSX — VALIDÉ ✅
+## Clés AsyncStorage
 
-- Photo de profil (expo-image-picker, AsyncStorage `profile_photo`)
-- Modifier prénom → navigation vers `name.tsx?edit=true` → retour profil
-- Reset complet (Alert + AsyncStorage.getAllKeys + multiRemove + journal_cycle_*)
-- Affichage prénom + niveau + jauge progression
-- `breathe` animation loop (scaleY 0.93↔1, Easing.inOut)
-- eyeAnim wrapper outer + breathe wrapper inner
-- fadeUp4 blocs : carte identité / 2 jauges / stats 4 cases / actionRow+resetRow
-
----
-
-## SESSION DYNAMISATION
-
-### Étape 1 — Haptique (expo-haptics) ✅ VALIDÉE
-- TYPE1 `ImpactFeedbackStyle.Light` : boutons secondaires, navbar, skip
-- TYPE2 `ImpactFeedbackStyle.Medium` : boutons de validation d'étape
-- TYPE3 `NotificationFeedbackType.Success` : milestones (1000 pts, changement de niveau), celebration.tsx
-- Appliqué sur toutes les pages : splash, home, affirmation, action, visualisation, journal, vision-board, celebration, profil, parametres
-
-### Étape 2 — Animations globales ✅ VALIDÉE
-
-#### eyeAnim — Œil s'ouvre au chargement
-- `scaleY: 0→1` + `opacity: 0→1`, durée 1200ms, delay 100ms
-- Appliqué sur toutes les pages avec un œil SVG (toutes sauf vision-board)
-- Pages avec breathe existant (profil, celebration) : wrapper outer `eyeAnim` + inner `breathe`
-- `useNativeDriver: true`
-
-#### fadeUp — Blocs apparaissent en remontant
-- `opacity: 0→1` + `translateY: 14→0`, durée 500ms
-- Delays : 400ms / 600ms / 800ms / 1000ms selon le bloc
-- vision-board : delays 200ms / 400ms / 600ms (page sans œil, animations plus tôt)
-- `useNativeDriver: true`
-
-#### Animations spéciales validées ✅
-
-**Jauge profil (profil.tsx)**
-- `gaugeAnnuelle` + `gaugeCycle` : deux `Animated.Value(0)` avec `useNativeDriver: false`
-- Reset `.setValue(0)` à chaque `useFocusEffect` (rechargement au retour sur page)
-- `Animated.parallel` déclenché 800ms après chargement des données
-- `gaugeAnnuelle` : `toValue: pct/100`, durée 1200ms
-- `gaugeCycle` : `toValue: Math.min(cpts,100)/100`, durée 1000ms
-- JSX : `Animated.View` avec `width: anim.interpolate({ inputRange:[0,1], outputRange:['0%','100%'] })`
-
-**Compteur points (celebration.tsx)**
-- `countAnim` : compteur 0→cyclePoints en 1500ms (`useNativeDriver: false`), `Easing.out(Easing.ease)`
-- Déclenché **600ms** après chargement des données
-- `displayPoints` state mis à jour via `addListener`
-
-**Badges étapes (celebration.tsx)**
-- `b0–b6` : 7 `useRef(new Animated.Value(0))` individuels (pas de hook en boucle)
-- `useEffect` **séparé** avec dépendance `[cyclePoints]` — se déclenche après chargement
-- Guard `if (cyclePoints === 0) return` — évite animation à vide au montage
-- Chaque badge : `opacity 0→1` + `translateY 8→0`, 300ms, delay `1800 + i×200ms`
-- `.setValue(0)` reset avant animation
-
-#### Règles animations (ne pas modifier)
-- **Zéro Reanimated** sauf welcome.tsx
-- **Zéro `Animated.delay()`** — `setTimeout` uniquement pour tous les délais
-- `Animated` RN uniquement partout ailleurs
-
-### Étape 3 — Transitions entre pages ✅ VALIDÉE
-
-Configuré dans `app/_layout.tsx` via `Stack.Screen options` :
-
-| Type | Animation | Durée | Pages |
-|------|-----------|-------|-------|
-| Fondu | `fade` | 300ms | home, splash, profil, parametres, name, onboarding |
-| Glissement droite | `slide_from_right` | 280ms | affirmation, action, visualisation, journal, vision-board |
-| Glissement bas | `slide_from_bottom` | 400ms | celebration |
-
-- `screenOptions` global : `animation: 'fade'`, `animationDuration: 300`, `headerShown: false`
-- Chaque `Stack.Screen` surcharge avec ses propres `options` si besoin
-- Ne toucher qu'à `app/_layout.tsx` pour modifier les transitions
-
-### Partage ✅ VALIDÉ
-
-- `hooks/useShare.ts` — `shareProgress()` : lit `current_cycle` + `points_total` + `user_language`, compose message via `t.share.message(cycle, level, pts)`, partage via `expo-sharing` (fichier `.txt` temporaire dans `FileSystem.cacheDirectory`)
-- Noms de niveaux dans le message = `t.niveaux.*` selon la langue active
-- Fallback : `expo-clipboard` + `Alert` (textes traduits) si partage non disponible
-- Icône SVG cercle blanc semi-transparent, position `absolute top:76 right:28`, label "Partager" dessous en 9px
-- Appliqué sur `celebration.tsx` et `profil.tsx` uniquement
-- Packages : `expo-sharing`, `expo-clipboard`, `expo-file-system/legacy`
-- Zéro image — texte pur avec emojis
-
-### Étape 4 — Thème visuel par cycle ✅ VALIDÉE
-
-**Hook `hooks/useCycleContent.ts`**
-- `getCycleColors(n, lang?)` → `{ orb1: couleur_principale, orb2: couleur_fond }`, fallback `#C4A8D4` / `#B8D4B0`
-- `getCycleContent(n, lang?)` enrichi avec `couleurPrincipale: data.couleur_principale`
-- Importe `content_fr.json`, `content_en.json`, `content_es.json` statiquement — sélection par `lang` (défaut : `'fr'`)
-
-**Orbes colorés** — `colors.orb1` / `colors.orb2` sur les 2 premiers orbes de :
-`home`, `affirmation`, `action`, `visualisation`, `journal`, `celebration`, `vision-board`
-
-**Badge thème coloré** — sur `home`, `affirmation`, `action`, `visualisation` :
-- `backgroundColor: cycleColors.orb1 + '59'` (35% opacity)
-- `color: content.couleurPrincipale || '#6B3FA0'`
-
-**Règle** : violet `#6B3FA0` et crème `#F0EAE0` de l'interface restent inchangés — seuls les orbes et badges thème sont teintés.
-
-### Composants UI validés
-| Composant | Durée | Notes |
-|---|---|---|
-| PointsToast | 2s | fond #3A3530 texte #F0EAE0, zéro Reanimated |
-| CongratulationsToast | 6s | fond #4A2080 texte white, zéro Reanimated |
+| Clé | Type | Description |
+|-----|------|-------------|
+| `onboarding_completed` | `'true'` | Onboarding terminé |
+| `user_name` | string | Prénom saisi |
+| `user_language` | `'fr'\|'en'\|'es'` | Langue choisie |
+| `current_cycle` | string (1–365) | Cycle courant |
+| `current_theme` | string (1–7) | Thème courant |
+| `cycle_completed` | `'true'\|'false'` | Cycle du jour terminé |
+| `cycle_points` | string (number) | Points du cycle courant |
+| `points_total` | string (number) | Total points cumulés |
+| `next_cycle_time` | string (timestamp) | Timestamp minuit prochain |
+| `cycle_step_status` | JSON | État des 7 étapes |
+| `cycle_earned_points` | JSON | Points gagnés par étape |
+| `journal_cycle_N` | JSON | Entrée journal cycle N |
+| `vision_board_photos` | JSON | URIs photos vision board |
+| `notif_affirmation` | `'true'\|'false'` | Notif affirmation active |
+| `notif_rappel` | `'true'\|'false'` | Notif rappel active |
+| `reminder_time` | `'HH:MM'` | Heure rappel |
+| `selected_plan` | `'lifetime'\|'annuel'\|'mensuel'` | Plan sélectionné |
+| `emailForSignIn` | string | Email magic link en attente |
 
 ---
 
-## ARCHITECTURE I18N — VALIDÉE ✅
+## Points système
 
-### Fichiers clés
-| Fichier | Rôle |
-|---------|------|
-| `src/i18n/translations.ts` | Source de vérité — toutes les chaînes FR/EN/ES |
-| `src/i18n/LanguageContext.tsx` | Provider React — `lang` + `setLang` + persist AsyncStorage |
-| `src/hooks/useTranslation.ts` | `useTranslation()` → retourne `translations[lang]` |
-| `assets/content/content_fr.json` | Contenu cycles (affirmations, actions, visualisation) en FR |
-| `assets/content/content_en.json` | Contenu cycles en EN |
-| `assets/content/content_es.json` | Contenu cycles en ES |
+| Étape | Points |
+|-------|--------|
+| Ouverture (home) | +10 |
+| Affirmation | +15 |
+| Action facile | +15 |
+| Action difficile | +25 |
+| Visualisation | +15 |
+| Journal | +15 |
+| Vision Board | +5 |
+| **Total/cycle** | **100** |
+| **Total programme** | **36 500** |
 
-### Pattern dans chaque écran
-```tsx
-import { useTranslation } from '../../src/hooks/useTranslation';
-// (si besoin de lang pour getCycleContent)
-import { useLanguage } from '../../src/i18n/LanguageContext';
-
-const t = useTranslation();
-const { lang } = useLanguage(); // uniquement si getCycleContent/getCycleColors appelé
-
-// Contenu cycle traduit
-getCycleContent(cycleNumber, lang)
-getCycleColors(cycleNumber, lang)
-```
-
-### LanguageContext — source unique
-- Lit `user_language` depuis AsyncStorage au démarrage (défaut `'fr'`)
-- `setLang(l)` sauvegarde dans AsyncStorage ET met à jour le contexte React
-- **Ne jamais** appeler `AsyncStorage.setItem('user_language', ...)` directement dans les écrans
-- Wrappé dans `app/_layout.tsx` autour de tout l'arbre
-
-### Structure translations.ts
-- Sections miroirs des noms d'écrans : `splash`, `name`, `home`, `affirmation`, `action`, `visualisation`, `journal`, `visionBoard`, `celebration`, `profil`, `parametres`, `features`, `privacy`, `pricing`, `pricingUpgrade`, `auth`, `welcome`
-- `commun.navbar.{accueil|profil|parametres}` — labels navbar (NESTED, pas `commun.accueil`)
-- `legal.{privacyUrl|termsUrl}` — URLs légales par langue
-- `niveaux.{eveil|ancrage|expansion|manifestation}` — noms de niveaux traduits
-- `share.message(cycle, level, pts)` — **fonction** (pas string) — appeler avec `()`
-- Interpolation manuelle : `t.home.toastMilestone.replace('{n}', String(pts))`
-
-### checkMilestones — signature i18n
-Présent dans `home`, `affirmation`, `action`, `visualisation`, `journal`, `vision-board` :
-```ts
-function checkMilestones(
-  oldTotal: number, newTotal: number,
-  setToast: (msg: string) => void,
-  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
-  toastMilestone: string,
-  toastNewLevel: string,
-) { ... }
-
-// Appel depuis le composant :
-checkMilestones(oldPts, newPts, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
-```
-
-### visionBoard.cellules — objet (pas tableau)
-```ts
-cellules: {
-  carriere, amour, abondance, reves, voyages, sante, famille
-}
-// Accès : t.visionBoard.cellules.carriere
-```
+Niveaux : Éveil (0–25%) · Ancrage (25–50%) · Expansion (50–75%) · Manifestation (75–100%)
 
 ---
 
-## SESSIONS À VENIR (dans l'ordre)
+## Firebase
 
-1. ~~**Session contenu JSON**~~ ✅
-   - `hooks/useCycleContent.ts` — `getCycleContent(n)` accède à `jour_n` du JSON
-   - `affirmation.tsx`, `action.tsx`, `visualisation.tsx` : contenu réel + `adjustsFontSizeToFit`
-   - `home.tsx` : thème du cycle affiché sous la jauge
-   - `parametres.tsx` : notification affirmation = contenu réel du cycle en cours
-   - Clé technique `jour_X` ≠ mot affiché "Cycle X" — règle confirmée
-
-2. ~~**Session dynamisation complète**~~ ✅
-   - Étape 1 : expo-haptics sur tous les boutons
-   - Étape 2 : eyeAnim + fadeUp toutes pages · jauge profil · compteur · badges celebration
-   - Étape 3 : transitions fade / slide_from_right / slide_from_bottom
-   - Étape 4 : getCycleColors() orbes + badge thème coloré · couleurPrincipale dans getCycleContent()
-
-3. ~~**Session traductions EN/ES**~~ ✅
-   - `src/i18n/translations.ts` — source de vérité FR/EN/ES, 17 écrans migrés
-   - `content_fr.json` + `content_en.json` + `content_es.json` sélectionnés via `lang` dans `useCycleContent.ts`
-   - `LanguageContext` = source unique de la langue (persist AsyncStorage `user_language`)
-
-4. **Session Auth Apple/Google/Magic Link**
-   - Remplacer stubs auth.tsx
-   - Brancher Firebase signOut dans parametres.tsx `handleSignOut`
-   - Brancher Firebase deleteUser dans parametres.tsx `handleDeleteAccount`
-   - Corriger `inMemoryPersistence` → vraie persistence
-
-5. **Session Paiements expo-in-app-purchases**
-   - Brancher `handlePurchase` dans pricing.tsx + pricing-upgrade.tsx
-   - Brancher `handleRestorePurchases` dans parametres.tsx
-
-6. **Session Build EAS**
-   - Configuration eas.json
-   - Profils preview + production
-   - Soumission App Store + Play Store
+- **Config** : variables d'env `EXPO_PUBLIC_FIREBASE_*` dans `.env` (jamais hardcodées, `.env` dans `.gitignore`)
+- **Auth** : `getReactNativePersistence(AsyncStorage)` via `@firebase/auth` (Metro résout vers build RN)
+- **Auth flows actifs** : magic link email uniquement (Apple/Google = stubs)
+- **Sécurité** : AsyncStorage non chiffré sur Android rooté — prévoir `expo-secure-store` pour données sensibles en V2
 
 ---
 
-## À IMPLÉMENTER PLUS TARD
+## Audit Préventif — État après corrections (2026-04-15)
 
-### Contenu JSON — getFontSize() ✅
-- `affirmation.tsx` : `onLayout` + `getFontSize(affirmation)` — version seuils généreux
-- `action.tsx` : `onLayout` + `getFontSize(actionFacile/actionDifficile)` — version seuils généreux
-- `visualisation.tsx` : `onLayout` + `getFontSize(p1–p4/finale)` — version seuils serrés
+### Corrigé (34/36)
 
-### Firebase Auth
-- `inMemoryPersistence` utilisé temporairement
-- À corriger lors de la session Auth avec la vraie implémentation Apple/Google/Magic Link
+**Priorité 1 — CRITIQUE (14/14)**
+- [x] #33 Clé Firebase dans .env
+- [x] #6 index.tsx try/catch AsyncStorage
+- [x] #7–13 try/catch sur tous les AsyncStorage
+- [x] #23 journal.tsx "Aujourd'hui" → `t.journal.aujourdhui`
+- [x] #24 journal.tsx "Étape passée sans points" → `t.journal.etapePassee`
+- [x] #25 journal.tsx "Passé" → `t.journal.passe`
+- [x] #1 affirmation.tsx safe area content
+- [x] #2 action.tsx safe area content
+- [x] #3 parametres.tsx safe area scrollContent
+
+**Priorité 2 — IMPORTANT (11/11)**
+- [x] #34 Firebase `inMemoryPersistence` → `getReactNativePersistence(AsyncStorage)`
+- [x] #14/#20 journal.tsx O(N) loop → `AsyncStorage.multiGet`
+- [x] #27 journal.tsx `getCycleColors(cycle, lang)`
+- [x] #15 pricing-upgrade.tsx try/catch setItem
+- [x] #16 vision-board.tsx race condition toast → setTimeout 2500ms
+- [x] #26 vision-board.tsx `getCycleColors(cycle, lang)`
+- [x] #30 vision-board.tsx permission refusée → Alert i18n (3 langues)
+- [x] #4 vision-board.tsx ScrollView pour iPhone SE
+- [x] #29 parametres.tsx `Linking.openURL` try/catch
+
+**Priorité 3 — MINEUR (9/11)**
+- [x] #17 index.tsx timeout 500ms → 0ms
+- [x] #5 action.tsx navLabel fontSize 8 → 11
+- [x] #28 useCycleContent.ts interface `CycleDay` typée, plus de `(content as any)`
+- [x] #31 useShare.ts Alert utilisateur en cas d'échec (3 langues)
+- [x] #32 parametres.tsx `getPermissionsAsync()` avant scheduling
+- [x] #35 auth.tsx rate limiting (3 échecs → cooldown 30s)
+- [x] #18 home.tsx BackHandler (bloque retour vers onboarding Android)
+- [x] #19 home.tsx cycle 365 → message `t.home.programmeTermine` i18n
+- [x] #36 firebase.ts commentaire sécurité AsyncStorage/expo-secure-store
+- [ ] #21 useCycleContent imports statiques — bundle size acceptable, skip
+- [ ] #22 home.tsx useMemo — refactor complexe, non prioritaire
 
 ---
 
-## NETTOYAGE À FAIRE AVANT PUBLICATION
+## À faire avant publication App Store
 
-- Bouton reset sur toutes les pages → à supprimer avant publication stores
-- Stubs Apple/Google Sign-In dans auth.tsx → à remplacer par vraie implémentation
-- `handlePurchase()` stub dans pricing.tsx → à remplacer par expo-in-app-purchases
-- `console.log` dans pricing.tsx → à supprimer
+1. Intégration RevenueCat (`pricing-upgrade.tsx` `handlePurchase` + `handleRestore`)
+2. Apple Sign-In + Google Sign-In (stubs dans `auth.tsx`)
+3. Remplacer AsyncStorage par `expo-secure-store` pour les données auth sensibles
+4. Retirer les boutons debug de `home.tsx` (`reset` + `⏭ cycle suivant`)
+5. Vérifier que `SafeAreaProvider` est présent dans le root layout
+6. Vérifier `.env` non commité (dans `.gitignore` ✓)

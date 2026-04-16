@@ -1,23 +1,25 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeApp } from 'firebase/app';
-import { inMemoryPersistence, initializeAuth } from 'firebase/auth';
+import { initializeAuth } from 'firebase/auth';
+import { getReactNativePersistence } from '@firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDqKc6XJz70kMJp1rhhifY7cPmucCgOCSU',
-  authDomain: 'manifestmind.firebaseapp.com',
-  projectId: 'manifestmind',
-  storageBucket: 'manifestmind.firebasestorage.app',
-  messagingSenderId: '481097482104',
-  appId: '1:481097482104:web:89257299c01bd0df51928d',
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 
-// Firebase 12.x : getReactNativePersistence non disponible — inMemoryPersistence utilisé
-// À remplacer lors de l'implémentation auth réelle
+// Note : AsyncStorage n'est pas chiffré sur Android (données lisibles sur appareil rooté).
+// Pour des données auth sensibles en production, envisager expo-secure-store.
 export const auth = initializeAuth(app, {
-  persistence: inMemoryPersistence,
+  persistence: getReactNativePersistence(AsyncStorage),
 });
 export const db = getFirestore(app);
 export const storage = getStorage(app);

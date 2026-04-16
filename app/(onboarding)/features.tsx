@@ -8,11 +8,13 @@ import {
     View,
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function Features() {
   const router = useRouter();
   const t = useTranslation();
+  const insets = useSafeAreaInsets();
 
   function handleStart() {
     router.push('/(onboarding)/privacy');
@@ -20,7 +22,7 @@ export default function Features() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 16, 34), paddingBottom: Math.max(insets.bottom, 16) }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.orb, {
@@ -196,8 +198,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#F0EAE0',
     paddingHorizontal: 20,
-    paddingTop: 34,
-    paddingBottom: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
   },

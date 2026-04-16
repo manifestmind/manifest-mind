@@ -4,12 +4,14 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
 
 export default function Privacy() {
   const router = useRouter();
   const t = useTranslation();
+  const insets = useSafeAreaInsets();
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   async function handleContinue() {
@@ -35,7 +37,7 @@ export default function Privacy() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 16, 31), paddingBottom: Math.max(insets.bottom, 14) }]}
       showsVerticalScrollIndicator={false}
     >
       <View style={[styles.orb, {
@@ -209,8 +211,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#F0EAE0',
     paddingHorizontal: 20,
-    paddingTop: 31,
-    paddingBottom: 14,
     alignItems: 'center',
     justifyContent: 'space-between',
   },

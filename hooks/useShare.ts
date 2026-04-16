@@ -41,5 +41,9 @@ export async function shareProgress() {
     }
   } catch (error) {
     console.error('Erreur partage:', error);
+    const langRaw = await AsyncStorage.getItem('user_language').catch(() => null);
+    const lang = (langRaw === 'en' || langRaw === 'es') ? langRaw : 'fr';
+    const t = translations[lang];
+    Alert.alert(t.share.erreurTitre || 'Erreur', t.share.erreurCorps || 'Le partage a échoué.');
   }
 }

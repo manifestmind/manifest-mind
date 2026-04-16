@@ -2,16 +2,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path, Rect } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '../../services/firebase';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
 
 export default function Auth() {
+  const insets = useSafeAreaInsets();
   const t = useTranslation();
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [email, setEmail] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
 
   const handleAppleSignIn = () => {
     Alert.alert(t.auth.alertApple.titre, t.auth.alertApple.corps);
@@ -26,6 +30,7 @@ export default function Auth() {
   };
 
   const sendMagicLink = async (emailAddress: string) => {
+    if (Date.now() < cooldownUntil) return;
     try {
       const actionCodeSettings = {
         url: 'https://manifest-mind.app',
@@ -35,12 +40,19 @@ export default function Auth() {
       await sendSignInLinkToEmail(auth, emailAddress, actionCodeSettings);
       await AsyncStorage.setItem('emailForSignIn', emailAddress);
 
+      setFailedAttempts(0);
       Alert.alert(t.auth.alertEmailSent.titre, t.auth.alertEmailSent.corps);
 
       setShowEmailInput(false);
       setEmail('');
     } catch (error) {
       console.error('Error sending magic link:', error);
+      const next = failedAttempts + 1;
+      setFailedAttempts(next);
+      if (next >= 3) {
+        setCooldownUntil(Date.now() + 30_000);
+        setFailedAttempts(0);
+      }
       Alert.alert(t.auth.alertEmailError.titre, t.auth.alertEmailError.corps);
     }
   };
@@ -74,7 +86,14 @@ export default function Auth() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1, backgroundColor: '#F0EAE0' }}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 18), paddingBottom: Math.max(insets.bottom, 14) }]}
+        keyboardShouldPersistTaps="handled"
+      >
       <View style={[styles.orb, {
         width: 140,
         height: 140,
@@ -199,9 +218,9 @@ export default function Auth() {
                 onChangeText={setEmail}
               />
               <Pressable
-                style={styles.sendButton}
+                style={[styles.sendButton, (Date.now() < cooldownUntil) && { opacity: 0.4 }]}
                 onPress={() => sendMagicLink(email)}
-                disabled={!email.trim()}
+                disabled={!email.trim() || Date.now() < cooldownUntil}
               >
                 <Text style={styles.sendButtonText}>{t.auth.envoyer}</Text>
               </Pressable>
@@ -223,17 +242,16 @@ export default function Auth() {
           <View style={[styles.dotNav, styles.dotNavOn]} />
         </View>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#F0EAE0',
     paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 14,
     justifyContent: 'flex-start',
   },
   orb: {

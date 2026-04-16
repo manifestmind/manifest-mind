@@ -10,6 +10,7 @@ import {
   Easing,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -217,7 +218,7 @@ export default function Profil() {
       </View>
 
       {/* Contenu */}
-      <View style={[styles.content, { paddingTop: Math.max(insets.top, 12) }]}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingTop: Math.max(insets.top, 12), paddingHorizontal: 14, paddingBottom: 6, gap: 5 }} showsVerticalScrollIndicator={false}>
 
         {/* 1. Œil + titre */}
         <View style={styles.header}>
@@ -410,7 +411,7 @@ export default function Profil() {
         </Pressable>
         </Animated.View>
 
-      </View>
+      </ScrollView>
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -452,11 +453,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingBottom: 6,
-    gap: 5,
     zIndex: 1,
-    justifyContent: 'space-between',
   },
 
   // Header

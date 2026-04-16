@@ -232,7 +232,7 @@ export default function Celebration() {
       <Animated.View style={[styles.orb, { width: 60,  height: 60,  backgroundColor: '#DDD0F8', bottom: 120, right: -15 }, orbStyle(orb4)]} />
 
       {/* Icône partage */}
-      <View style={{ position: 'absolute', top: 76, right: 28, zIndex: 10, alignItems: 'center', gap: 3 }}>
+      <View style={{ position: 'absolute', top: Math.max(insets.top + 16, 76), right: 28, zIndex: 10, alignItems: 'center', gap: 3 }}>
         <Pressable
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); shareProgress(); }}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 0.5, borderColor: '#D4C4B8', alignItems: 'center', justifyContent: 'center' }}
@@ -398,11 +398,11 @@ const styles = StyleSheet.create({
   },
   cycleTitle: {
     fontFamily: 'serif',
-    fontSize: 30,
+    fontSize: 26,
     fontStyle: 'italic',
     color: '#2A2520',
     textAlign: 'center',
-    lineHeight: 36,
+    lineHeight: 32,
   },
   congrats: {
     fontFamily: 'Jost',

@@ -6,6 +6,7 @@ import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  BackHandler,
   Pressable,
   StyleSheet,
   Text,
@@ -100,6 +101,7 @@ export default function Home() {
   const [congratToast, setCongratToast] = useState('');
 
   const loadHome = useCallback(async () => {
+    try {
     // Prénom
     const name = await AsyncStorage.getItem('user_name') || '';
     setUserName(name);
@@ -199,12 +201,22 @@ export default function Home() {
     else if (percent < 50) setLevelIndex(1);
     else if (percent < 75) setLevelIndex(2);
     else setLevelIndex(3);
+    } catch {
+      // Storage indisponible — afficher les valeurs par défaut
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadHome();
     }, [loadHome])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, [])
   );
 
   function handleMainBtn() {
@@ -274,7 +286,7 @@ export default function Home() {
       <View style={[styles.orb, { width: 60, height: 60, backgroundColor: '#E8C890', top: 310, right: -15 }]} />
 
       {/* Contenu principal */}
-      <View style={styles.content}>
+      <View style={[styles.content, { paddingTop: Math.max(insets.top, 12) }]}>
 
         {/* Œil + Bonjour */}
         <View style={styles.headerBlock}>
@@ -302,7 +314,7 @@ export default function Home() {
           </Animated.View>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.bonjour}>{t.home.bienvenue}</Text>
-            <Text style={styles.prenom}>{userName || t.home.defautPrenom}</Text>
+            <Text style={styles.prenom} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{userName || t.home.defautPrenom}</Text>
           </View>
         </View>
 
@@ -366,7 +378,11 @@ export default function Home() {
 
         {/* BOUTON PRINCIPAL — 3 états */}
         <Animated.View style={[styles.mainBtnWrap, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
-          {cycleCompleted ? (
+          {cycleCompleted && cycleNumber >= 365 ? (
+            <View style={[styles.mainBtn, { opacity: 0.5 }]}>
+              <Text style={styles.mainBtnText}>{t.home.programmeTermine || t.home.nextCycle}</Text>
+            </View>
+          ) : cycleCompleted ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>
               <Text style={styles.mainBtnText}>{t.home.nextCycle}</Text>
             </View>
@@ -508,7 +524,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingBottom: 16,
     justifyContent: 'space-between',
     overflow: 'hidden',
