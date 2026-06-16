@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { STORES_ACTIVE } from '../../services/config';
 
 
 export default function Pricing() {
@@ -18,7 +19,35 @@ export default function Pricing() {
   }
 
   async function handlePurchase() {
-    await AsyncStorage.setItem('selected_plan', selectedPlan);
+    // Plan "Free" — accès direct sans paiement, navigation vers l'app sans auth
+    if (selectedPlan === 'free') {
+      try {
+        await AsyncStorage.multiSet([
+          ['selected_plan', 'free'],
+          ['onboarding_completed', 'true'],
+        ]);
+      } catch {
+        // fallback silencieux — on continue la navigation
+      }
+      router.replace('/(app)/splash');
+      return;
+    }
+    // Plan payant (lifetime / annuel / mensuel)
+    // Tant que les stores ne sont pas câblés, on bloque le paiement honnêtement.
+    if (!STORES_ACTIVE) {
+      Alert.alert(t.pricing.disponibleProchainement);
+      return;
+    }
+    // Achat validé (futur : déclenché par RevenueCat success callback)
+    try {
+      await AsyncStorage.multiSet([
+        ['selected_plan', selectedPlan],
+        ['subscription_active', 'true'],
+        ['onboarding_completed', 'true'],
+      ]);
+    } catch {
+      // fallback silencieux — on continue la navigation
+    }
     router.push('/(onboarding)/auth');
   }
 
@@ -115,6 +144,32 @@ export default function Pricing() {
         </View>
 
         <View style={styles.plansContainer}>
+          {/* Plan Free */}
+          <Pressable
+            style={[
+              styles.planCard,
+              selectedPlan === 'free' && styles.planCardSelected,
+              { borderColor: '#B8D4B0' },
+            ]}
+            onPress={() => selectPlan('free')}
+          >
+            <View style={styles.planBody}>
+              <View style={[styles.radio, selectedPlan === 'free' && styles.radioSelected]}>
+                {selectedPlan === 'free' && <View style={styles.radioDot} />}
+              </View>
+              <View style={styles.planInfo}>
+                <Text style={styles.planTitle}>{t.pricing.plans.free.titre}</Text>
+                <Text style={styles.planSubtitle}>{t.pricing.plans.free.sousTitre}</Text>
+                <Text style={styles.planDescription}>{t.pricing.plans.free.description}</Text>
+              </View>
+              <View style={styles.planPrice}>
+                <Text style={[styles.priceAmount, { color: '#5A8050' }]}>
+                  {t.pricing.plans.free.prix}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+
           {/* Plan Lifetime */}
           <Pressable
             style={[
@@ -216,7 +271,9 @@ export default function Pricing() {
 
       <View style={styles.bottomBlock}>
         <Pressable style={styles.btnPrimary} onPress={handlePurchase}>
-          <Text style={styles.btnPrimaryText}>{t.pricing.cta}</Text>
+          <Text style={styles.btnPrimaryText}>
+            {selectedPlan === 'free' ? t.pricing.plans.free.bouton : t.pricing.cta}
+          </Text>
         </Pressable>
 
         <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
@@ -357,6 +414,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '300',
     color: '#7A7068',
+  },
+  planDescription: {
+    fontFamily: 'Jost',
+    fontSize: 9,
+    fontWeight: '300',
+    color: '#9A8878',
+    marginTop: 3,
+    lineHeight: 13,
   },
   planPrice: {
     alignItems: 'center',

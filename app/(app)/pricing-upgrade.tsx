@@ -1,23 +1,44 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { FREE_CYCLES, STORES_ACTIVE } from '../../services/config';
 
 export default function PricingUpgrade() {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
+  const [isFreemiumExpired, setIsFreemiumExpired] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cycle = parseInt((await AsyncStorage.getItem('current_cycle')) || '1');
+        const subActive = (await AsyncStorage.getItem('subscription_active')) === 'true';
+        setIsFreemiumExpired(cycle > FREE_CYCLES && !subActive);
+      } catch {
+        // fallback silencieux — pas de bandeau freemium si lecture impossible
+      }
+    })();
+  }, []);
 
   async function handlePurchase() {
+    if (!STORES_ACTIVE) {
+      Alert.alert(t.pricing.disponibleProchainement);
+      return;
+    }
     try {
-      await AsyncStorage.setItem('selected_plan', selectedPlan);
+      await AsyncStorage.multiSet([
+        ['selected_plan', selectedPlan],
+        ['subscription_active', 'true'],
+      ]);
     } catch {
       // Écriture impossible — continuer quand même
     }
-    router.back();
+    router.replace('/(app)/home' as any);
   }
 
   function handleRestore() {
@@ -66,6 +87,12 @@ export default function PricingUpgrade() {
             <Circle cx="8" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
             <Circle cx="48" cy="22" r="1" fill="#C4A8D4" opacity="0.6" />
           </Svg>
+          {isFreemiumExpired ? (
+            <View style={styles.freemiumBanner}>
+              <Text style={styles.freemiumTitle}>{t.pricingUpgrade.freemiumTitre}</Text>
+              <Text style={styles.freemiumMessage}>{t.pricingUpgrade.freemiumMessage}</Text>
+            </View>
+          ) : null}
           <Text style={styles.title}>{t.pricingUpgrade.titre}</Text>
         </View>
 
@@ -204,6 +231,26 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#2A2520',
     textAlign: 'center',
+  },
+  freemiumBanner: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+  },
+  freemiumTitle: {
+    fontFamily: 'serif',
+    fontSize: 18,
+    fontStyle: 'italic',
+    color: '#6B3FA0',
+    textAlign: 'center',
+  },
+  freemiumMessage: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#3A3530',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   plansContainer: {
     width: '100%',

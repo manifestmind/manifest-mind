@@ -54,7 +54,7 @@ export const translations = {
     // ── Onboarding : welcome ───────────────────────────────────────────────────
     welcome: {
       tagline: 'Bien-être & Intentions',
-      quote: 'Chaque pensée\nfaçonne ton futur',
+      quote: 'Chaque pensée façonne\nton futur',
       commencer: 'Commencer →',
       hint: 'Ton espace de croissance personnelle',
     },
@@ -128,6 +128,13 @@ export const translations = {
       titre: 'Transforme ta vie en 365 cycles',
       etape: 'Étape 3 / 3',
       plans: {
+        free: {
+          titre: '7 cycles offerts',
+          sousTitre: 'Pour découvrir ManifestMind',
+          description: 'Accès complet aux 7 premiers cycles. Le tarif s\'affiche à partir du cycle 8.',
+          prix: 'Gratuit',
+          bouton: 'Commencer gratuitement →',
+        },
         lifetime: {
           badge: '⭐ Meilleure offre · Accès à vie',
           titre: 'Lifetime',
@@ -398,6 +405,7 @@ export const translations = {
         planActuel: 'Plan actuel',
         planSub: 'Annuel · Renouvellement auto',
         actif: 'Actif',
+        passerPremium: 'Passer à Premium',
         restaurer: 'Restaurer les achats',
       },
       compte: {
@@ -446,6 +454,9 @@ export const translations = {
       titre: 'Changer d\'abonnement',
       confirmer: 'Confirmer mon abonnement →',
       restaurer: 'Restaurer un achat',
+      freemiumTitre: 'Tes 7 cycles offerts sont terminés',
+      freemiumMessage: 'Tu as découvert ManifestMind. Continue ta transformation jusqu\'au cycle 365 en passant à Premium.',
+      freemiumBouton: 'Continuer mon parcours',
     },
 
     // ── Notifications ─────────────────────────────────────────────────────────
@@ -583,6 +594,13 @@ export const translations = {
       titre: 'Transform your life in 365 cycles',
       etape: 'Step 3 / 3',
       plans: {
+        free: {
+          titre: '7 free cycles',
+          sousTitre: 'To discover ManifestMind',
+          description: 'Full access to the first 7 cycles. Pricing appears from cycle 8.',
+          prix: 'Free',
+          bouton: 'Start for free →',
+        },
         lifetime: {
           badge: '⭐ Best offer · Lifetime access',
           titre: 'Lifetime',
@@ -608,7 +626,7 @@ export const translations = {
         'Progress tracking and discipline',
         'Available in FR, EN & ES',
       ],
-      cta: 'I transform my life now →',
+      cta: 'Transform my life now →',
       bottomText: 'Less than €0.50 to change your life',
       restaurer: 'Restore a purchase',
     },
@@ -841,6 +859,7 @@ export const translations = {
         planActuel: 'Current plan',
         planSub: 'Annual · Auto-renewal',
         actif: 'Active',
+        passerPremium: 'Go Premium',
         restaurer: 'Restore purchases',
       },
       compte: {
@@ -888,6 +907,9 @@ export const translations = {
       titre: 'Change subscription',
       confirmer: 'Confirm my subscription →',
       restaurer: 'Restore a purchase',
+      freemiumTitre: 'Your 7 free cycles are complete',
+      freemiumMessage: 'You\'ve discovered ManifestMind. Continue your transformation to cycle 365 by going Premium.',
+      freemiumBouton: 'Continue my journey',
     },
 
     notifications: {
@@ -1023,6 +1045,13 @@ export const translations = {
       titre: 'Transforma tu vida en 365 ciclos',
       etape: 'Paso 3 / 3',
       plans: {
+        free: {
+          titre: '7 ciclos gratuitos',
+          sousTitre: 'Para descubrir ManifestMind',
+          description: 'Acceso completo a los primeros 7 ciclos. El precio aparece a partir del ciclo 8.',
+          prix: 'Gratis',
+          bouton: 'Empezar gratis →',
+        },
         lifetime: {
           badge: '⭐ Mejor oferta · Acceso de por vida',
           titre: 'Lifetime',
@@ -1048,7 +1077,7 @@ export const translations = {
         'Seguimiento de progreso y disciplina',
         'Disponible en FR, EN & ES',
       ],
-      cta: 'Transformo mi vida ahora →',
+      cta: 'Transformar mi vida ahora →',
       bottomText: 'Menos de 0,50€ para cambiar tu vida',
       restaurer: 'Restaurar una compra',
     },
@@ -1281,6 +1310,7 @@ export const translations = {
         planActuel: 'Plan actual',
         planSub: 'Anual · Renovación automática',
         actif: 'Activo',
+        passerPremium: 'Pasar a Premium',
         restaurer: 'Restaurar compras',
       },
       compte: {
@@ -1328,6 +1358,9 @@ export const translations = {
       titre: 'Cambiar suscripción',
       confirmer: 'Confirmar mi suscripción →',
       restaurer: 'Restaurar una compra',
+      freemiumTitre: 'Tus 7 ciclos gratuitos han terminado',
+      freemiumMessage: 'Has descubierto ManifestMind. Continúa tu transformación hasta el ciclo 365 pasando a Premium.',
+      freemiumBouton: 'Continuar mi camino',
     },
 
     notifications: {

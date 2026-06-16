@@ -1,7 +1,7 @@
 # CLAUDE_MASTER.md — ManifestMind
 
 > Référence technique complète pour les sessions Claude Code.
-> Mise à jour : 2026-04-16
+> Mise à jour : 2026-06-16
 
 ---
 
@@ -48,6 +48,7 @@ hooks/
 
 services/
   firebase.ts                # init Firebase, auth avec getReactNativePersistence(AsyncStorage)
+  config.ts                  # feature flags : STORES_ACTIVE, FREE_CYCLES
 
 src/
   i18n/
@@ -73,6 +74,7 @@ components/ui/
 ### Navigation
 - **NE JAMAIS** nommer un fichier `index.tsx` dans un groupe de routes `(onboarding)` ou `(app)` — conflit fatal avec `app/index.tsx`
 - Flux validé : `index → welcome → features → privacy → pricing → auth → splash → name → home`
+- **Branche plan "Free"** : depuis `pricing.tsx`, si `selectedPlan === 'free'` → `router.replace('/(app)/splash')` directement (skip `auth`). Écrit `selected_plan='free'` + `onboarding_completed='true'` avant la nav.
 - `router.replace` pour les transitions principales (pas de back stack)
 - `router.push` pour journal/vision-board avec `?fromCycle=true`
 
@@ -152,7 +154,8 @@ const results = await AsyncStorage.multiGet(['key1', 'key2']);
 | `notif_affirmation` | `'true'\|'false'` | Notif affirmation active |
 | `notif_rappel` | `'true'\|'false'` | Notif rappel active |
 | `reminder_time` | `'HH:MM'` | Heure rappel |
-| `selected_plan` | `'lifetime'\|'annuel'\|'mensuel'` | Plan sélectionné |
+| `selected_plan` | `'free'\|'lifetime'\|'annuel'\|'mensuel'` | Plan sélectionné (`'free'` = entrée onboarding sans paiement) |
+| `subscription_active` | `'true'\|null` | Abonnement Premium actif (gate freemium) |
 | `emailForSignIn` | string | Email magic link en attente |
 
 ---
@@ -172,6 +175,71 @@ const results = await AsyncStorage.multiGet(['key1', 'key2']);
 | **Total programme** | **36 500** |
 
 Niveaux : Éveil (0–25%) · Ancrage (25–50%) · Expansion (50–75%) · Manifestation (75–100%)
+
+---
+
+## Freemium
+
+### Branchement onboarding (`pricing.tsx`)
+
+Trois plans gratuits + payants. Le branchement décide qui aura `subscription_active='true'` dès l'entrée dans l'app.
+
+| Choix utilisateur | `selected_plan` | `subscription_active` | `onboarding_completed` | Navigation | Condition |
+|---|---|---|---|---|---|
+| Free | `'free'` | non écrit | `'true'` | `replace → splash` (skip auth) | toujours |
+| Payant (lifetime / annuel / mensuel) | `selectedPlan` | `'true'` | `'true'` | `push → auth` | `STORES_ACTIVE === true` |
+| Payant + `STORES_ACTIVE === false` | non écrit | non écrit | non écrit | Alert "Disponible prochainement", reste sur écran | tant que stores off |
+
+→ Tant que `STORES_ACTIVE=false`, seul le plan **Free** permet d'entrer dans l'app depuis l'onboarding.
+
+### Gate `home.tsx`
+
+Triple condition pour déclencher le paywall :
+
+```
+cycle > FREE_CYCLES  ET  selected_plan === 'free'  ET  subscription_active !== 'true'
+→ router.replace('/(app)/pricing-upgrade')
+```
+
+Conséquences :
+- **Free user, cycle 8+** sans avoir upgradé → paywall.
+- **Free user upgradé** via paywall (`subscription_active='true'`) → ne paywall plus.
+- **Plan payant** (`selected_plan ∈ {lifetime, annuel, mensuel}` avec `subscription_active='true'` posé en onboarding) → jamais paywallé, accès illimité dès le cycle 1.
+
+### Carte "Free" dans `pricing.tsx`
+
+4e carte (la 1ʳᵉ dans l'ordre visuel). Bordure `#B8D4B0` (vert tendre, palette orbes), pas de badge promo, description en 3ᵉ ligne du `planInfo`, prix "Gratuit/Free/Gratis" en serif vert `#5A8050`. Le bouton CTA bas devient `t.pricing.plans.free.bouton` quand "Free" est sélectionné, sinon `t.pricing.cta`.
+
+### Cycles 1 → 7
+
+Accès complet à toutes les modalités, aucune restriction, aucun compte requis pour le plan Free. Progression conservée même si l'utilisateur ne s'abonne jamais — au moment où il upgrade, il reprend au cycle 8.
+
+### Paywall accessible à tout moment depuis `parametres.tsx`
+
+Row "Plan actuel / Passer à Premium" :
+- `subscription_active='true'` → "Plan actuel" + badge "Actif".
+- Sinon + `STORES_ACTIVE=true` → "Passer à Premium" + chevron.
+- Sinon + `STORES_ACTIVE=false` → "Disponible prochainement" + chevron.
+Dans tous les cas la row reste tappable → navigue vers `pricing-upgrade.tsx`.
+
+### Feature flags (`services/config.ts`)
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `STORES_ACTIVE` | `boolean` | `false` tant que RevenueCat / IAP non câblés. Effets : `pricing.tsx` onboarding bloque les plans payants (Alert "Disponible prochainement"), `pricing-upgrade.tsx` Alert au lieu d'achat, `parametres.tsx` label bouton = "Disponible prochainement". Seul le plan Free reste fonctionnel. |
+| `FREE_CYCLES` | `number` | `7` — cycles offerts avant paywall. Utilisé par `home.tsx` (gate) et `pricing-upgrade.tsx` (détection contexte freemium-expiré). |
+| `DEBUG_SKIP_PAYWALL` | `boolean` | **DEBUG**. Quand `true`, le gate freemium dans `home.tsx` est totalement court-circuité — accès illimité cycles 1→365 pour tester sur Expo Go sans payer. `console.warn` au mount de Home pour rappel. **Doit être à `false` avant toute soumission aux stores.** |
+
+### Bandeau freemium dans `pricing-upgrade.tsx`
+
+- Détection au mount : `current_cycle > FREE_CYCLES && !subscription_active` → state `isFreemiumExpired`
+- Si `true` → bandeau `freemiumTitre` + `freemiumMessage` (clés `t.pricingUpgrade.freemium*`) inséré entre l'œil et le titre.
+- Sinon (accès depuis parametres pendant les cycles gratuits) → bandeau caché, UI inchangée.
+
+### Post-achat (in-app via `pricing-upgrade.tsx`)
+
+- `handlePurchase` (quand `STORES_ACTIVE=true`) écrit `selected_plan` + `subscription_active='true'` puis `router.replace('/(app)/home')` (et **non** `back()`, sinon boucle quand on vient du gate).
+- Câblage RevenueCat futur : déplacer l'écriture `subscription_active='true'` du flow synchrone vers le callback success de RevenueCat. Le gate `home.tsx` n'a aucune ligne à toucher — il continue à lire la clé peu importe qui l'a écrite.
 
 ---
 
@@ -245,7 +313,8 @@ Niveaux : Éveil (0–25%) · Ancrage (25–50%) · Expansion (50–75%) · Mani
 
 ## À faire avant publication App Store
 
-1. Intégration RevenueCat (`pricing-upgrade.tsx` `handlePurchase` + `handleRestore`)
+0. **🚨 `services/config.ts` : `DEBUG_SKIP_PAYWALL = false`** — sinon tous les utilisateurs auraient accès illimité gratuit. Vérifier que `console.warn` n'apparaît plus au mount de Home.
+1. Intégration RevenueCat (`pricing-upgrade.tsx` `handlePurchase` + `handleRestore`) — câbler le succès d'achat à `AsyncStorage.setItem('subscription_active', 'true')`, puis basculer `STORES_ACTIVE = true` dans `services/config.ts`
 2. Apple Sign-In + Google Sign-In (stubs dans `auth.tsx`) — nécessite comptes Developer actifs
 3. Ajouter SHA-256 Android dans Firebase Console (pour autoVerify App Links deep link)
 4. Remplacer AsyncStorage par `expo-secure-store` pour les données auth sensibles

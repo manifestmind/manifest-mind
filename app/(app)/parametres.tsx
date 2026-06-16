@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { STORES_ACTIVE } from '../../services/config';
 
 function Chevron({ color = '#C4A8D4' }: { color?: string }) {
   return (
@@ -57,6 +58,7 @@ export default function Parametres() {
     return d;
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
 
   useEffect(() => {
     const t0 = setTimeout(() => {
@@ -81,11 +83,12 @@ export default function Parametres() {
   useEffect(() => {
     (async () => {
       try {
-        const [storedNotifAff, storedNotifRappel, storedTime] =
+        const [storedNotifAff, storedNotifRappel, storedTime, storedSub] =
           await AsyncStorage.multiGet([
             'notif_affirmation',
             'notif_rappel',
             'reminder_time',
+            'subscription_active',
           ]);
 
         if (storedNotifAff[1] !== null) setNotifAffirmation(storedNotifAff[1] === 'true');
@@ -96,6 +99,7 @@ export default function Parametres() {
           d.setHours(h, m, 0, 0);
           setReminderTime(d);
         }
+        setSubscriptionActive(storedSub[1] === 'true');
       } catch {
         // Storage indisponible — conserver les valeurs par défaut
       }
@@ -437,7 +441,7 @@ export default function Parametres() {
         <Animated.View style={{ opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>{t.parametres.sections.abonnement}</Text>
 
-          {/* Ligne 1 — Plan actuel */}
+          {/* Ligne 1 — Plan actuel / Passer à Premium */}
           <Pressable
             style={[styles.rowBase, styles.rowFirst]}
             onPress={() => router.push('/(app)/pricing-upgrade' as any)}
@@ -445,13 +449,24 @@ export default function Parametres() {
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z" fill="#EAC870" stroke="#C89A30" strokeWidth="0.8" />
             </Svg>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>{t.parametres.abonnement.planActuel}</Text>
-              <Text style={styles.rowSub}>{t.parametres.abonnement.planSub}</Text>
-            </View>
-            <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>{t.parametres.abonnement.actif}</Text>
-            </View>
+            {subscriptionActive ? (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{t.parametres.abonnement.planActuel}</Text>
+                  <Text style={styles.rowSub}>{t.parametres.abonnement.planSub}</Text>
+                </View>
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>{t.parametres.abonnement.actif}</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.rowTitle, { flex: 1 }]}>
+                  {STORES_ACTIVE ? t.parametres.abonnement.passerPremium : t.pricing.disponibleProchainement}
+                </Text>
+                <Chevron />
+              </>
+            )}
           </Pressable>
 
           {/* Ligne 2 — Restaurer les achats */}

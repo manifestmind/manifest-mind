@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
+import { DEBUG_SKIP_PAYWALL, FREE_CYCLES } from '../../services/config';
 
 type StepStatus = {
   opening: boolean;
@@ -77,6 +78,12 @@ export default function Home() {
   const fadeUp1 = useRef(new Animated.Value(0)).current;
   const fadeUp2 = useRef(new Animated.Value(0)).current;
   const fadeUp3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (DEBUG_SKIP_PAYWALL) {
+      console.warn('[DEBUG] paywall bypass actif — DEBUG_SKIP_PAYWALL=true dans services/config.ts');
+    }
+  }, []);
 
   useEffect(() => {
     const t0 = setTimeout(() => {
@@ -141,6 +148,23 @@ export default function Home() {
         ['cycle_earned_points', JSON.stringify({ opening: 0, affirmation: 0, action_easy: 0, action_hard: 0, visualisation: 0, journal: 0, vision_board: 0 })],
       ]);
       cycle = newCycle;
+    }
+
+    // Gate freemium : seuls les users 'free' sans abonnement actif sont paywallés.
+    // Les plans payants (lifetime/annuel/mensuel) écrivent subscription_active='true'
+    // à l'achat (pricing.tsx onboarding ou pricing-upgrade.tsx in-app) et passent.
+    // DEBUG_SKIP_PAYWALL court-circuite tout pour les tests Expo Go.
+    if (!DEBUG_SKIP_PAYWALL) {
+      const [selectedPlanRaw, subActiveRaw] = await AsyncStorage.multiGet([
+        'selected_plan',
+        'subscription_active',
+      ]);
+      const isFree = selectedPlanRaw[1] === 'free';
+      const subActive = subActiveRaw[1] === 'true';
+      if (cycle > FREE_CYCLES && isFree && !subActive) {
+        router.replace('/(app)/pricing-upgrade' as any);
+        return;
+      }
     }
 
     setCycleNumber(cycle);
