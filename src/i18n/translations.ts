@@ -59,6 +59,28 @@ export const translations = {
       hint: 'Ton espace de croissance personnelle',
     },
 
+    // ── Onboarding : attraction ───────────────────────────────────────────────
+    attraction: {
+      titre: 'Qu\'est-ce que la loi de l\'attraction ?',
+      citation1: {
+        texte: '❝ Ce que vous ressentez, vous l\'attirez.\nCe que vous imaginez, vous le créez. ❞',
+        auteur: 'Rhonda Byrne',
+      },
+      citation2: {
+        texte: '❝ L\'action est la clé fondamentale\nde tout succès. ❞',
+        auteur: 'Tony Robbins',
+      },
+      citation3: {
+        texte: '❝ Vous n\'attirez pas ce que vous voulez.\nVous attirez ce que vous êtes. ❞',
+        auteur: 'Jim Rohn',
+      },
+      final: {
+        ligne1: '365 cycles · 2 555 étapes',
+        ligne2: 'Une transformation réelle.',
+      },
+      bouton: 'Continuer →',
+    },
+
     // ── Onboarding : features ─────────────────────────────────────────────────
     features: {
       titre: 'Un programme complet',
@@ -528,6 +550,27 @@ export const translations = {
       hint: 'Your personal growth space',
     },
 
+    attraction: {
+      titre: 'What is the law of attraction?',
+      citation1: {
+        texte: '❝ What you feel, you attract.\nWhat you imagine, you create. ❞',
+        auteur: 'Rhonda Byrne',
+      },
+      citation2: {
+        texte: '❝ Action is the fundamental key\nto all success. ❞',
+        auteur: 'Tony Robbins',
+      },
+      citation3: {
+        texte: '❝ You don\'t attract what you want.\nYou attract what you are. ❞',
+        auteur: 'Jim Rohn',
+      },
+      final: {
+        ligne1: '365 cycles · 2,555 steps',
+        ligne2: 'A real transformation.',
+      },
+      bouton: 'Continue →',
+    },
+
     features: {
       titre: 'A complete program',
       sousTitre: '365 cycles · 2555 steps · 4 phases · 7 themes',
@@ -977,6 +1020,27 @@ export const translations = {
       quote: 'Cada pensamiento\ndibuja tu futuro',
       commencer: 'Comenzar →',
       hint: 'Tu espacio de crecimiento personal',
+    },
+
+    attraction: {
+      titre: '¿Qué es la ley de la atracción?',
+      citation1: {
+        texte: '❝ Lo que sientes, lo atraes.\nLo que imaginas, lo creas. ❞',
+        auteur: 'Rhonda Byrne',
+      },
+      citation2: {
+        texte: '❝ La acción es la clave fundamental\nde todo éxito. ❞',
+        auteur: 'Tony Robbins',
+      },
+      citation3: {
+        texte: '❝ No atraes lo que quieres.\nAtraes lo que eres. ❞',
+        auteur: 'Jim Rohn',
+      },
+      final: {
+        ligne1: '365 ciclos · 2 555 pasos',
+        ligne2: 'Una transformación real.',
+      },
+      bouton: 'Continuar →',
     },
 
     features: {

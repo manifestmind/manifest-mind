@@ -101,13 +101,14 @@ export default function Profil() {
         const statusRaw = await AsyncStorage.getItem('cycle_step_status');
         if (statusRaw) setStepStatus(JSON.parse(statusRaw));
 
-        const completed = Math.max(cycle - 1, 0);
+        const cycleCompletedFlag = (await AsyncStorage.getItem('cycle_completed')) === 'true';
+        const completed = Math.max(cycle - 1, 0) + (cycleCompletedFlag ? 1 : 0);
         setCyclesCompleted(completed);
 
         const best = parseInt(await AsyncStorage.getItem('best_cycle_points') || '0');
         setBestCycle(best);
 
-        const avg = completed > 0 ? Math.round(total / completed) : 0;
+        const avg = completed > 0 ? Math.min(Math.round(total / completed), 100) : 0;
         setAvgPoints(avg);
       }
       load();

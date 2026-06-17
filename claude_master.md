@@ -24,10 +24,11 @@ app/
   _layout.tsx                # Root layout : LanguageProvider + DeepLinkHandler (magic link) + Stack
   (onboarding)/
     welcome.tsx              # Page 1 — œil animé + sélection langue
-    features.tsx             # Page 2 — présentation fonctionnalités
-    privacy.tsx              # Page 3
-    pricing.tsx              # Page 4
-    auth.tsx                 # Page 5 — Apple / Google / Email magic link / Skip
+    attraction.tsx           # Page 2 — 3 citations (Byrne / Robbins / Rohn) + phrase finale violette pulsée
+    features.tsx             # Page 3 — présentation fonctionnalités
+    privacy.tsx              # Page 4
+    pricing.tsx              # Page 5
+    auth.tsx                 # Page 6 — Apple / Google / Email magic link / Skip
   (app)/
     splash.tsx               # Écran d'accueil quotidien
     name.tsx                 # Saisie prénom
@@ -48,7 +49,7 @@ hooks/
 
 services/
   firebase.ts                # init Firebase, auth avec getReactNativePersistence(AsyncStorage)
-  config.ts                  # feature flags : STORES_ACTIVE, FREE_CYCLES
+  config.ts                  # feature flags : STORES_ACTIVE, FREE_CYCLES, DEBUG_SKIP_PAYWALL
 
 src/
   i18n/
@@ -73,7 +74,7 @@ components/ui/
 
 ### Navigation
 - **NE JAMAIS** nommer un fichier `index.tsx` dans un groupe de routes `(onboarding)` ou `(app)` — conflit fatal avec `app/index.tsx`
-- Flux validé : `index → welcome → features → privacy → pricing → auth → splash → name → home`
+- Flux validé : `index → welcome → attraction → features → privacy → pricing → auth → splash → name → home`
 - **Branche plan "Free"** : depuis `pricing.tsx`, si `selectedPlan === 'free'` → `router.replace('/(app)/splash')` directement (skip `auth`). Écrit `selected_plan='free'` + `onboarding_completed='true'` avant la nav.
 - `router.replace` pour les transitions principales (pas de back stack)
 - `router.push` pour journal/vision-board avec `?fromCycle=true`
@@ -99,6 +100,7 @@ components/ui/
 - `react-native-reanimated` : **uniquement dans welcome.tsx**
 - `Animated` (RN natif) : partout ailleurs
 - Eviter d'importer les deux dans le même fichier
+- `attraction.tsx` : séquence en `Animated` natif — titre fade 1500ms, 3 citations slide-up+fade (stagger 1200ms, durée 1000ms chacune), phrase finale fade-in 800ms + pulsation couleur `#6B3FA0 ↔ #9B6FD0` en `Animated.loop` (useNativeDriver: false pour color), bouton fade-in. Total ≈ 6.9s avant bouton. Palette violet/sombre uniquement, zéro doré, zéro shimmer. i18n : `attraction.citation1/2/3` avec `{ texte, auteur }` + `final.{ligne1, ligne2}`.
 
 ### i18n
 - Toujours utiliser `t.section.cle` — ne jamais hardcoder de strings FR/EN/ES

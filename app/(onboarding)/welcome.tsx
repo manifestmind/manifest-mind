@@ -36,7 +36,7 @@ export default function OnboardingWelcome() {
   }));
 
   function handleStart() {
-    router.push('/(onboarding)/features');
+    router.push('/(onboarding)/attraction');
   }
 
   function handleLang(l: 'fr' | 'en' | 'es') {
