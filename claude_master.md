@@ -324,3 +324,8 @@ Dans tous les cas la row reste tappable → navigue vers `pricing-upgrade.tsx`.
 6. Vérifier que `SafeAreaProvider` est présent dans le root layout
 7. Vérifier `.env` non commité (dans `.gitignore` ✓)
 8. Tester le flux magic link complet sur EAS build (deep link non fonctionnel en Expo Go)
+9. Vérifier que les 3 URLs légales (FR/EN/ES × privacy/terms/refund) sont **accessibles publiquement** sur `manifestmind.github.io/manifest-mind/` avant soumission stores :
+   - FR : `politique_confidentialite_fr.html`, `conditions_utilisation_fr.html`, `remboursement_fr.html`
+   - EN : `privacy_policy_en.html`, `terms_of_use_en.html`, `refund_policy_en.html`
+   - ES : `politica_privacidad_es.html`, `terminos_uso_es.html`, `politica_reembolso_es.html`
+   URLs lues via `t.legal.{privacyUrl,termsUrl,refundUrl}` depuis `parametres.tsx` (section "Légal").

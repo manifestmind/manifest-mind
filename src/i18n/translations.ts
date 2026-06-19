@@ -30,6 +30,7 @@ export const translations = {
     legal: {
       privacyUrl: 'https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html',
       termsUrl: 'https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html',
+      refundUrl: 'https://manifestmind.github.io/manifest-mind/remboursement_fr.html',
     },
 
     // ── Level names (NEW — replaces Éveillé/Floraison/Rayonnant/Manifestant) ──
@@ -437,6 +438,7 @@ export const translations = {
       legalLinks: {
         confidentialite: 'Politique de confidentialité',
         conditions: 'Conditions d\'utilisation',
+        remboursement: 'Politique de remboursement',
       },
       tagline: 'Fait avec amour pour ton épanouissement personnel',
       alertLangue: {
@@ -524,6 +526,7 @@ export const translations = {
     legal: {
       privacyUrl: 'https://manifestmind.github.io/manifest-mind/privacy_policy_en.html',
       termsUrl: 'https://manifestmind.github.io/manifest-mind/terms_of_use_en.html',
+      refundUrl: 'https://manifestmind.github.io/manifest-mind/refund_policy_en.html',
     },
 
     niveaux: {
@@ -912,6 +915,7 @@ export const translations = {
       legalLinks: {
         confidentialite: 'Privacy Policy',
         conditions: 'Terms of Use',
+        remboursement: 'Refund policy',
       },
       tagline: 'Made with love for your personal growth',
       alertLangue: {
@@ -996,6 +1000,7 @@ export const translations = {
     legal: {
       privacyUrl: 'https://manifestmind.github.io/manifest-mind/politica_privacidad_es.html',
       termsUrl: 'https://manifestmind.github.io/manifest-mind/terminos_uso_es.html',
+      refundUrl: 'https://manifestmind.github.io/manifest-mind/politica_reembolso_es.html',
     },
 
     niveaux: {
@@ -1384,6 +1389,7 @@ export const translations = {
       legalLinks: {
         confidentialite: 'Política de privacidad',
         conditions: 'Términos de uso',
+        remboursement: 'Política de reembolso',
       },
       tagline: 'Hecho con amor para tu crecimiento personal',
       alertLangue: {

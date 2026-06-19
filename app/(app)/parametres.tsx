@@ -523,13 +523,26 @@ export default function Parametres() {
 
           {/* Ligne 2 — Conditions d'utilisation */}
           <Pressable
-            style={[styles.rowBase, styles.rowLast]}
+            style={[styles.rowBase, styles.rowMiddle]}
             onPress={async () => { try { await Linking.openURL(t.legal.termsUrl); } catch {} }}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2l7 4v5c0 4-3 7-7 8-4-1-7-4-7-8V6l7-4z" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
             </Svg>
             <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.conditions}</Text>
+            <Chevron />
+          </Pressable>
+
+          {/* Ligne 3 — Politique de remboursement */}
+          <Pressable
+            style={[styles.rowBase, styles.rowLast]}
+            onPress={async () => { try { await Linking.openURL(t.legal.refundUrl); } catch {} }}
+          >
+            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+              <Rect x="4" y="2" width="12" height="16" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+              <Path d="M7 7h6M7 10h6M7 13h4" stroke="#6B3FA0" strokeWidth="1" strokeLinecap="round" />
+            </Svg>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.remboursement}</Text>
             <Chevron />
           </Pressable>
         </View>
