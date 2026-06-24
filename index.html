@@ -1,1 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ManifestMind — Transforme ta vie en 365 cycles</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Jost',sans-serif;background:#F0EAE0;color:#3A3530;overflow-x:hidden}
 
+    nav{position:sticky;top:0;z-index:100;background:rgba(240,234,224,0.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(107,63,160,0.12);padding:14px 28px;display:flex;justify-content:space-between;align-items:center}
+    .nav-logo{font-family:'Cormorant Garamond',serif;font-size:22px;color:#6B3FA0;font-style:italic;font-weight:600;letter-spacing:1px}
+    .lang-switcher{display:flex;gap:6px}
+    .lang-btn{padding:5px 14px;border-radius:20px;border:1px solid rgba(107,63,160,0.4);background:transparent;color:#6B3FA0;cursor:pointer;font-size:12px;font-family:'Jost',sans-serif;font-weight:500;transition:all 0.2s;letter-spacing:0.5px}
+    .lang-btn.active,.lang-btn:hover{background:#6B3FA0;color:#F0EAE0;border-color:#6B3FA0}
+
+    .hero{position:relative;text-align:center;padding:80px 24px 60px;overflow:hidden}
+    .orb{position:absolute;border-radius:50%;opacity:0.35}
+    .orb1{width:200px;height:200px;background:#9B6FD0;top:-60px;right:-40px}
+    .orb2{width:140px;height:140px;background:#EAC870;bottom:20px;left:-30px}
+    .orb3{width:100px;height:100px;background:#B8D4B0;top:40px;left:60px}
+    .orb4{width:80px;height:80px;background:#C4A8E0;bottom:40px;right:80px}
+
+    .eye-wrap{position:relative;width:160px;height:120px;margin:0 auto 32px}
+    .eye-glow{position:absolute;inset:-20px;border-radius:50%;background:rgba(107,63,160,0.08)}
+
+    .hero h1{font-family:'Cormorant Garamond',serif;font-size:42px;color:#6B3FA0;font-style:italic;font-weight:600;line-height:1.25;margin-bottom:20px;position:relative;z-index:1}
+    .hero-sub{font-size:16px;color:#5A4F4A;line-height:1.8;max-width:500px;margin:0 auto 36px;position:relative;z-index:1;font-weight:300}
+    .gold-divider{width:50px;height:2px;background:#EAC870;margin:20px auto}
+
+    .stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;margin:32px 0;position:relative;z-index:1}
+    .stat{text-align:center}
+    .stat-number{font-family:'Cormorant Garamond',serif;font-size:36px;color:#6B3FA0;font-style:italic;font-weight:600;line-height:1}
+    .stat-label{font-size:11px;color:#9B8E85;letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+
+    .section{padding:60px 28px;max-width:760px;margin:0 auto}
+    .section-title{font-family:'Cormorant Garamond',serif;font-size:30px;color:#6B3FA0;font-style:italic;font-weight:600;text-align:center;margin-bottom:8px}
+    .section-sub{font-size:14px;color:#9B8E85;text-align:center;margin-bottom:40px;font-weight:300}
+
+    .features-wrap{background:rgba(107,63,160,0.04);border:1px solid rgba(107,63,160,0.1);border-radius:24px;padding:44px 36px}
+    .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px}
+    .feature-item{text-align:center;padding:8px}
+    .feature-icon{width:44px;height:44px;border-radius:12px;background:rgba(107,63,160,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:18px}
+    .feature-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:#3A3530;font-style:italic;font-weight:600;margin-bottom:6px}
+    .feature-desc{font-size:12px;color:#9B8E85;line-height:1.6;font-weight:300}
+
+    .phases-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+    .phase-card{text-align:center;padding:24px 16px;border:1px solid rgba(107,63,160,0.15);border-radius:20px;background:white;transition:all 0.2s}
+    .phase-card:hover{border-color:#6B3FA0;transform:translateY(-2px)}
+    .phase-dot{width:10px;height:10px;border-radius:50%;margin:0 auto 12px}
+    .phase-num{font-size:10px;color:#EAC870;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+    .phase-name{font-family:'Cormorant Garamond',serif;font-size:18px;color:#6B3FA0;font-style:italic;font-weight:600}
+
+    .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px}
+    .plan{border:1px solid rgba(107,63,160,0.18);border-radius:22px;padding:28px 22px;background:white;position:relative;transition:all 0.2s}
+    .plan:hover{transform:translateY(-3px);border-color:rgba(107,63,160,0.4)}
+    .plan.featured{border:2px solid #6B3FA0}
+    .plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:#EAC870;color:#3A3530;font-size:10px;padding:4px 18px;border-radius:20px;white-space:nowrap;font-weight:600;letter-spacing:0.5px}
+    .plan-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:16px}
+    .plan-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:#6B3FA0;font-style:italic;font-weight:600;margin-bottom:4px}
+    .plan-tagline{font-size:11px;color:#9B8E85;margin-bottom:18px;font-weight:300}
+    .plan-price{font-size:34px;color:#3A3530;font-weight:600;font-family:'Jost',sans-serif;line-height:1}
+    .plan-price-unit{font-size:13px;color:#9B8E85;font-weight:300}
+    .plan-detail{font-size:11px;color:#9B8E85;margin:4px 0 20px;font-weight:300}
+    .plan-sep{height:1px;background:rgba(107,63,160,0.1);margin:16px 0}
+    .plan-feat{list-style:none;display:flex;flex-direction:column;gap:8px}
+    .plan-feat li{font-size:12px;color:#5A4F4A;display:flex;align-items:flex-start;gap:8px;font-weight:300}
+    .plan-feat li::before{content:"✦";color:#EAC870;font-size:10px;margin-top:2px;flex-shrink:0}
+
+    .cta-wrap{text-align:center;padding:70px 28px;position:relative;overflow:hidden}
+    .cta-bg-orb1{position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(107,63,160,0.06);top:-80px;right:-80px}
+    .cta-bg-orb2{position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(234,200,112,0.08);bottom:-60px;left:-60px}
+    .cta-title{font-family:'Cormorant Garamond',serif;font-size:36px;color:#6B3FA0;font-style:italic;font-weight:600;margin-bottom:14px;position:relative;z-index:1}
+    .cta-sub{font-size:14px;color:#9B8E85;margin-bottom:36px;position:relative;z-index:1;font-weight:300}
+    .cta-btn{display:inline-block;background:#3A3530;color:#F0EAE0;padding:18px 52px;border-radius:50px;font-size:13px;font-family:'Jost',sans-serif;text-decoration:none;letter-spacing:2px;font-weight:500;position:relative;z-index:1;transition:all 0.2s}
+    .cta-btn:hover{background:#6B3FA0}
+    .cta-note{display:block;margin-top:18px;font-size:12px;color:#9B8E85;font-style:italic;position:relative;z-index:1;font-weight:300}
+
+    footer{background:rgba(107,63,160,0.04);border-top:1px solid rgba(107,63,160,0.1);padding:36px 28px;text-align:center}
+    .footer-links{display:flex;justify-content:center;flex-wrap:wrap;gap:20px;margin-bottom:20px}
+    .footer-links a{font-size:12px;color:#6B3FA0;text-decoration:none;font-weight:400}
+    .footer-links a:hover{text-decoration:underline}
+    .footer-copy{font-size:11px;color:#9B8E85;font-weight:300}
+
+    .gold-line{width:1px;height:40px;background:rgba(234,200,112,0.6);margin:0 auto}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">ManifestMind</div>
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('fr')">🇫🇷 FR</button>
+    <button class="lang-btn" onclick="setLang('en')">🇬🇧 EN</button>
+    <button class="lang-btn" onclick="setLang('es')">🇪🇸 ES</button>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="orb orb4"></div>
+
+  <div class="eye-wrap">
+    <div class="eye-glow"></div>
+    <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="80" cy="60" rx="76" ry="44" fill="none" stroke="#6B3FA0" stroke-width="1.5" opacity="0.3"/>
+      <ellipse cx="80" cy="60" rx="60" ry="34" fill="none" stroke="#6B3FA0" stroke-width="1" opacity="0.5"/>
+      <ellipse cx="80" cy="60" rx="44" ry="28" fill="none" stroke="#9B6FD0" stroke-width="1.2"/>
+      <circle cx="80" cy="60" r="24" fill="#6B3FA0"/>
+      <circle cx="80" cy="60" r="15" fill="#4A2A80"/>
+      <circle cx="80" cy="60" r="7" fill="#2A1550"/>
+      <circle cx="88" cy="52" r="5" fill="white" opacity="0.85"/>
+      <circle cx="91" cy="57" r="2.5" fill="#EAC870" opacity="0.95"/>
+      <circle cx="72" cy="66" r="1.5" fill="white" opacity="0.4"/>
+      <line x1="4" y1="60" x2="24" y2="60" stroke="#6B3FA0" stroke-width="0.8" opacity="0.3"/>
+      <line x1="136" y1="60" x2="156" y2="60" stroke="#6B3FA0" stroke-width="0.8" opacity="0.3"/>
+      <path d="M36 60 Q80 20 124 60" fill="none" stroke="#6B3FA0" stroke-width="1.5" opacity="0.6"/>
+      <path d="M36 60 Q80 100 124 60" fill="none" stroke="#6B3FA0" stroke-width="1.5" opacity="0.6"/>
+      <ellipse cx="80" cy="60" rx="26" ry="26" fill="none" stroke="#EAC870" stroke-width="0.5" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <h1 class="t" data-fr="Transforme ta vie<br>en 365 cycles" data-en="Transform your life<br>in 365 cycles" data-es="Transforma tu vida<br>en 365 ciclos">Transforme ta vie<br>en 365 cycles</h1>
+  <div class="gold-divider"></div>
+  <p class="hero-sub t" data-fr="ManifestMind te guide chaque jour vers la meilleure version de toi-même — une affirmation, une action et une visualisation à la fois." data-en="ManifestMind guides you every day toward your best self — one affirmation, one action and one visualization at a time." data-es="ManifestMind te guía cada día hacia tu mejor versión — una afirmación, una acción y una visualización a la vez.">ManifestMind te guide chaque jour vers la meilleure version de toi-même — une affirmation, une action et une visualisation à la fois.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-number">365</div>
+      <div class="stat-label t" data-fr="Cycles" data-en="Cycles" data-es="Ciclos">Cycles</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">2 555</div>
+      <div class="stat-label t" data-fr="Étapes" data-en="Steps" data-es="Pasos">Étapes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">3</div>
+      <div class="stat-label t" data-fr="Langues" data-en="Languages" data-es="Idiomas">Langues</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">4</div>
+      <div class="stat-label t" data-fr="Phases" data-en="Phases" data-es="Fases">Phases</div>
+    </div>
+  </div>
+
+  <div class="gold-line"></div>
+</div>
+
+<div class="section">
+  <div class="features-wrap">
+    <div class="section-title t" data-fr="Tout ce dont tu as besoin" data-en="Everything you need" data-es="Todo lo que necesitas">Tout ce dont tu as besoin</div>
+    <div class="section-sub t" data-fr="6 modalités par cycle pour une transformation complète" data-en="6 modalities per cycle for a complete transformation" data-es="6 modalidades por ciclo para una transformación completa">6 modalités par cycle pour une transformation complète</div>
+    <div class="gold-divider"></div>
+    <br>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon">✦</div>
+        <div class="feature-title t" data-fr="Affirmation" data-en="Affirmation" data-es="Afirmación">Affirmation</div>
+        <div class="feature-desc t" data-fr="Une affirmation puissante pour reprogrammer ton mental chaque jour" data-en="A powerful affirmation to reprogram your mindset every day" data-es="Una afirmación poderosa para reprogramar tu mente cada día">Une affirmation puissante pour reprogrammer ton mental chaque jour</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">◈</div>
+        <div class="feature-title t" data-fr="Actions" data-en="Actions" data-es="Acciones">Actions</div>
+        <div class="feature-desc t" data-fr="Une action facile et une ambitieuse pour passer à l'acte" data-en="One easy and one ambitious action to get moving" data-es="Una fácil y una ambiciosa para pasar a la acción">Une action facile et une ambitieuse pour passer à l'acte</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">◉</div>
+        <div class="feature-title t" data-fr="Visualisation" data-en="Visualization" data-es="Visualización">Visualisation</div>
+        <div class="feature-desc t" data-fr="Une méditation guidée pour ancrer tes intentions profondément" data-en="A guided meditation to deeply anchor your intentions" data-es="Una meditación guiada para anclar tus intenciones">Une méditation guidée pour ancrer tes intentions profondément</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">✎</div>
+        <div class="feature-title t" data-fr="Journal" data-en="Journal" data-es="Diario">Journal</div>
+        <div class="feature-desc t" data-fr="Écris et trace ton évolution au fil des cycles" data-en="Write and track your evolution through cycles" data-es="Escribe y rastrea tu evolución">Écris et trace ton évolution au fil des cycles</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">⊡</div>
+        <div class="feature-title t" data-fr="Vision Board" data-en="Vision Board" data-es="Vision Board">Vision Board</div>
+        <div class="feature-desc t" data-fr="Crée ton tableau pour matérialiser tes rêves" data-en="Create your board to materialize your dreams" data-es="Crea tu tablero para materializar tus sueños">Crée ton tableau pour matérialiser tes rêves</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">◎</div>
+        <div class="feature-title t" data-fr="Progression" data-en="Progress" data-es="Progreso">Progression</div>
+        <div class="feature-desc t" data-fr="Points, niveaux et badges pour rester motivé" data-en="Points, levels and badges to stay motivated" data-es="Puntos, niveles y logros para mantenerte motivado">Points, niveaux et badges pour rester motivé</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title t" data-fr="4 phases de transformation" data-en="4 phases of transformation" data-es="4 fases de transformación">4 phases de transformation</div>
+  <div class="section-sub t" data-fr="Un voyage structuré du premier jour au dernier" data-en="A structured journey from the first day to the last" data-es="Un viaje estructurado del primer día al último">Un voyage structuré du premier jour au dernier</div>
+  <div class="gold-divider" style="margin-bottom:32px"></div>
+  <div class="phases-grid">
+    <div class="phase-card">
+      <div class="phase-dot" style="background:#9B6FD0"></div>
+      <div class="phase-num t" data-fr="Phase 1" data-en="Phase 1" data-es="Fase 1">Phase 1</div>
+      <div class="phase-name t" data-fr="Éveil" data-en="Awakening" data-es="Despertar">Éveil</div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-dot" style="background:#6B3FA0"></div>
+      <div class="phase-num t" data-fr="Phase 2" data-en="Phase 2" data-es="Fase 2">Phase 2</div>
+      <div class="phase-name t" data-fr="Ancrage" data-en="Grounding" data-es="Arraigo">Ancrage</div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-dot" style="background:#4A2A80"></div>
+      <div class="phase-num t" data-fr="Phase 3" data-en="Phase 3" data-es="Fase 3">Phase 3</div>
+      <div class="phase-name t" data-fr="Expansion" data-en="Expansion" data-es="Expansión">Expansion</div>
+    </div>
+    <div class="phase-card">
+      <div class="phase-dot" style="background:#EAC870"></div>
+      <div class="phase-num t" data-fr="Phase 4" data-en="Phase 4" data-es="Fase 4">Phase 4</div>
+      <div class="phase-name t" data-fr="Manifestation" data-en="Manifestation" data-es="Manifestación">Manifestation</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title t" data-fr="Choisis ton parcours" data-en="Choose your journey" data-es="Elige tu camino">Choisis ton parcours</div>
+  <div class="section-sub t" data-fr="Commence gratuitement. Transforme ta vie à ton rythme." data-en="Start for free. Transform your life at your own pace." data-es="Empieza gratis. Transforma tu vida a tu ritmo.">Commence gratuitement. Transforme ta vie à ton rythme.</div>
+  <div class="gold-divider" style="margin-bottom:36px"></div>
+
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-icon" style="background:rgba(184,212,176,0.2)">🌱</div>
+      <div class="plan-name t" data-fr="7 cycles offerts" data-en="7 free cycles" data-es="7 ciclos gratuitos">7 cycles offerts</div>
+      <div class="plan-tagline t" data-fr="Pour découvrir ManifestMind" data-en="To discover ManifestMind" data-es="Para descubrir ManifestMind">Pour découvrir ManifestMind</div>
+      <div class="plan-price t" data-fr="Gratuit" data-en="Free" data-es="Gratis">Gratuit</div>
+      <div class="plan-detail t" data-fr="Aucune carte bancaire requise" data-en="No credit card required" data-es="Sin tarjeta bancaria">Aucune carte bancaire requise</div>
+      <div class="plan-sep"></div>
+      <ul class="plan-feat">
+        <li class="t" data-fr="Accès complet aux 7 premiers cycles" data-en="Full access to first 7 cycles" data-es="Acceso completo a los 7 primeros ciclos">Accès complet aux 7 premiers cycles</li>
+        <li class="t" data-fr="Toutes les fonctionnalités incluses" data-en="All features included" data-es="Todas las funciones incluidas">Toutes les fonctionnalités incluses</li>
+        <li class="t" data-fr="FR · EN · ES disponibles" data-en="FR · EN · ES available" data-es="FR · EN · ES disponibles">FR · EN · ES disponibles</li>
+      </ul>
+    </div>
+
+    <div class="plan featured">
+      <div class="plan-badge t" data-fr="⭐ Recommandé · Économise 50%" data-en="⭐ Recommended · Save 50%" data-es="⭐ Recomendado · Ahorra 50%">⭐ Recommandé · Économise 50%</div>
+      <div class="plan-icon" style="background:rgba(107,63,160,0.1)">✦</div>
+      <div class="plan-name t" data-fr="Annuel" data-en="Annual" data-es="Anual">Annuel</div>
+      <div class="plan-tagline t" data-fr="La transformation complète" data-en="The complete transformation" data-es="La transformación completa">La transformation complète</div>
+      <div class="plan-price">6,58€ <span class="plan-price-unit">/mois</span></div>
+      <div class="plan-detail t" data-fr="79€/an · soit 0,21€/cycle" data-en="€79/year · €0.21/cycle" data-es="79€/año · 0,21€/ciclo">79€/an · soit 0,21€/cycle</div>
+      <div class="plan-sep"></div>
+      <ul class="plan-feat">
+        <li class="t" data-fr="365 cycles complets" data-en="365 complete cycles" data-es="365 ciclos completos">365 cycles complets</li>
+        <li class="t" data-fr="Toutes les fonctionnalités" data-en="All features" data-es="Todas las funciones">Toutes les fonctionnalités</li>
+        <li class="t" data-fr="3 langues FR · EN · ES" data-en="3 languages FR · EN · ES" data-es="3 idiomas FR · EN · ES">3 langues FR · EN · ES</li>
+        <li class="t" data-fr="Résiliable à tout moment" data-en="Cancel anytime" data-es="Cancela cuando quieras">Résiliable à tout moment</li>
+      </ul>
+    </div>
+
+    <div class="plan">
+      <div class="plan-icon" style="background:rgba(234,200,112,0.15)">◎</div>
+      <div class="plan-name t" data-fr="Mensuel" data-en="Monthly" data-es="Mensual">Mensuel</div>
+      <div class="plan-tagline t" data-fr="Résiliable à tout moment" data-en="Cancel anytime" data-es="Cancela en cualquier momento">Résiliable à tout moment</div>
+      <div class="plan-price">12,99€ <span class="plan-price-unit">/mois</span></div>
+      <div class="plan-detail t" data-fr="Facturation mensuelle" data-en="Monthly billing" data-es="Facturación mensual">Facturation mensuelle</div>
+      <div class="plan-sep"></div>
+      <ul class="plan-feat">
+        <li class="t" data-fr="365 cycles complets" data-en="365 complete cycles" data-es="365 ciclos completos">365 cycles complets</li>
+        <li class="t" data-fr="Toutes les fonctionnalités" data-en="All features" data-es="Todas las funciones">Toutes les fonctionnalités</li>
+        <li class="t" data-fr="3 langues FR · EN · ES" data-en="3 languages FR · EN · ES" data-es="3 idiomas FR · EN · ES">3 langues FR · EN · ES</li>
+        <li class="t" data-fr="Résiliable à tout moment" data-en="Cancel anytime" data-es="Cancela cuando quieras">Résiliable à tout moment</li>
+      </ul>
+    </div>
+
+    <div class="plan">
+      <div class="plan-badge t" data-fr="⭐ Accès à vie" data-en="⭐ Lifetime access" data-es="⭐ Acceso de por vida">⭐ Accès à vie</div>
+      <div class="plan-icon" style="background:rgba(74,42,128,0.1)">◉</div>
+      <div class="plan-name">Lifetime</div>
+      <div class="plan-tagline t" data-fr="Paiement unique · Toujours" data-en="One-time payment · Forever" data-es="Pago único · Para siempre">Paiement unique · Toujours</div>
+      <div class="plan-price">149€ <span class="plan-price-unit t" data-fr="une fois" data-en="once" data-es="una vez">une fois</span></div>
+      <div class="plan-detail t" data-fr="Accès illimité pour toujours" data-en="Unlimited access forever" data-es="Acceso ilimitado para siempre">Accès illimité pour toujours</div>
+      <div class="plan-sep"></div>
+      <ul class="plan-feat">
+        <li class="t" data-fr="365 cycles complets" data-en="365 complete cycles" data-es="365 ciclos completos">365 cycles complets</li>
+        <li class="t" data-fr="Mises à jour à vie incluses" data-en="Lifetime updates included" data-es="Actualizaciones incluidas">Mises à jour à vie incluses</li>
+        <li class="t" data-fr="3 langues FR · EN · ES" data-en="3 languages FR · EN · ES" data-es="3 idiomas FR · EN · ES">3 langues FR · EN · ES</li>
+        <li class="t" data-fr="Aucun abonnement" data-en="No subscription" data-es="Sin suscripción">Aucun abonnement</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="cta-wrap">
+  <div class="cta-bg-orb1"></div>
+  <div class="cta-bg-orb2"></div>
+  <div class="gold-divider" style="margin-bottom:32px"></div>
+  <div class="cta-title t" data-fr="Prêt à transformer ta vie ?" data-en="Ready to transform your life?" data-es="¿Listo para transformar tu vida?">Prêt à transformer ta vie ?</div>
+  <div class="cta-sub t" data-fr="Commence avec 7 cycles gratuits. Aucune carte bancaire requise." data-en="Start with 7 free cycles. No credit card required." data-es="Comienza con 7 ciclos gratuitos. Sin tarjeta bancaria requerida.">Commence avec 7 cycles gratuits. Aucune carte bancaire requise.</div>
+  <a href="#" class="cta-btn t" data-fr="COMMENCER GRATUITEMENT →" data-en="START FOR FREE →" data-es="EMPEZAR GRATIS →">COMMENCER GRATUITEMENT →</a>
+  <span class="cta-note t" data-fr="Application disponible prochainement sur App Store et Google Play" data-en="App coming soon on App Store and Google Play" data-es="Aplicación disponible próximamente en App Store y Google Play">Application disponible prochainement sur App Store et Google Play</span>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a class="legal-privacy" href="https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html" data-fr="Politique de confidentialité" data-en="Privacy Policy" data-es="Política de privacidad">Politique de confidentialité</a>
+    <a class="legal-terms" href="https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html" data-fr="Conditions d'utilisation" data-en="Terms of Use" data-es="Condiciones de uso">Conditions d'utilisation</a>
+    <a class="legal-refund" href="https://manifestmind.github.io/manifest-mind/remboursement_fr.html" data-fr="Politique de remboursement" data-en="Refund Policy" data-es="Política de reembolso">Politique de remboursement</a>
+    <a href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a>
+  </div>
+  <p class="footer-copy t"
+     data-fr="© 2025 ManifestMind — Horizonte Digital E.A.S. — Tous droits réservés"
+     data-en="© 2025 ManifestMind — Horizonte Digital E.A.S. — All rights reserved"
+     data-es="© 2025 ManifestMind — Horizonte Digital E.A.S. — Todos los derechos reservados">
+    © 2025 ManifestMind — Horizonte Digital E.A.S. — Tous droits réservés
+  </p>
+</footer>
+
+<script>
+const legalUrls={fr:{privacy:'https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html',terms:'https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html',refund:'https://manifestmind.github.io/manifest-mind/remboursement_fr.html'},en:{privacy:'https://manifestmind.github.io/manifest-mind/privacy_policy_en.html',terms:'https://manifestmind.github.io/manifest-mind/terms_of_use_en.html',refund:'https://manifestmind.github.io/manifest-mind/refund_policy_en.html'},es:{privacy:'https://manifestmind.github.io/manifest-mind/politica_privacidad_es.html',terms:'https://manifestmind.github.io/manifest-mind/terminos_uso_es.html',refund:'https://manifestmind.github.io/manifest-mind/politica_reembolso_es.html'}};
+function setLang(lang){
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.lang-btn[onclick="setLang(\''+lang+'\')"]').classList.add('active');
+  document.querySelectorAll('.t').forEach(el=>{if(el.dataset[lang])el.innerHTML=el.dataset[lang]});
+  document.querySelector('.legal-privacy').href=legalUrls[lang].privacy;
+  document.querySelector('.legal-terms').href=legalUrls[lang].terms;
+  document.querySelector('.legal-refund').href=legalUrls[lang].refund;
+  document.querySelector('.legal-privacy').textContent=document.querySelector('.legal-privacy').dataset[lang]||document.querySelector('.legal-privacy').textContent;
+  document.querySelector('.legal-terms').textContent=document.querySelector('.legal-terms').dataset[lang]||document.querySelector('.legal-terms').textContent;
+  document.querySelector('.legal-refund').textContent=document.querySelector('.legal-refund').dataset[lang]||document.querySelector('.legal-refund').textContent;
+  document.documentElement.lang=lang;
+}
+</script>
+</body>
+</html>
