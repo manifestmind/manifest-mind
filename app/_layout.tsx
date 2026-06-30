@@ -5,8 +5,14 @@ import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { useEffect } from 'react';
 import { Alert } from 'react-native';
 import { auth } from '../services/firebase';
+import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
 import { LanguageProvider } from '../src/i18n/LanguageContext';
 import { useTranslation } from '../src/hooks/useTranslation';
+
+function SubscriptionSync() {
+  useSubscriptionSync();
+  return null;
+}
 
 function DeepLinkHandler() {
   const t = useTranslation();
@@ -78,6 +84,7 @@ export default function RootLayout() {
   return (
     <LanguageProvider>
       <DeepLinkHandler />
+      <SubscriptionSync />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(app)/splash"        options={{ animation: 'fade' }} />

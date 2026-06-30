@@ -46,10 +46,12 @@ app/
 hooks/
   useCycleContent.ts         # getCycleContent(n, lang?) + getCycleColors(n, lang?)
   useShare.ts                # shareProgress() — Sharing + fallback Clipboard
+  useSubscriptionSync.ts     # listener Firestore users/{uid} → sync subscription_active vers AsyncStorage
 
 services/
   firebase.ts                # init Firebase, auth avec getReactNativePersistence(AsyncStorage)
-  config.ts                  # feature flags : STORES_ACTIVE, FREE_CYCLES, DEBUG_SKIP_PAYWALL
+  config.ts                  # feature flags : STORES_ACTIVE, PADDLE_ACTIVE, PADDLE_SANDBOX, FREE_CYCLES, DEBUG_SKIP_PAYWALL, canPay()
+  paddle.ts                  # chargeur dynamique Paddle.js + openCheckout() — web-only, no-op sur native
 
 src/
   i18n/
@@ -242,6 +244,102 @@ Dans tous les cas la row reste tappable → navigue vers `pricing-upgrade.tsx`.
 
 - `handlePurchase` (quand `STORES_ACTIVE=true`) écrit `selected_plan` + `subscription_active='true'` puis `router.replace('/(app)/home')` (et **non** `back()`, sinon boucle quand on vient du gate).
 - Câblage RevenueCat futur : déplacer l'écriture `subscription_active='true'` du flow synchrone vers le callback success de RevenueCat. Le gate `home.tsx` n'a aucune ligne à toucher — il continue à lire la clé peu importe qui l'a écrite.
+
+---
+
+## Paiements
+
+### Stratégie multi-plateforme
+
+| Plateforme | Provider | Source de vérité `subscription_active` |
+|---|---|---|
+| Web (`Platform.OS === 'web'`) | **Paddle Billing** (Paddle.js v2) | Webhook Paddle → Firebase Functions → Firestore → `useSubscriptionSync` listener → AsyncStorage |
+| iOS / Android | **RevenueCat** (planifié) | Webhook RevenueCat → Firebase Functions → Firestore → même listener → AsyncStorage |
+
+→ `subscription_active` dans AsyncStorage n'est écrite **que par `useSubscriptionSync`** (jamais par le client de manière optimiste sur web). Le gate `home.tsx` et la row `parametres.tsx` lisent cette clé sans savoir qui l'a posée — agnostique au provider.
+
+### Flags `services/config.ts`
+
+| Flag | Type | Effet |
+|------|------|-------|
+| `STORES_ACTIVE` | `boolean` | Active RevenueCat sur native (iOS/Android). Sans effet sur web. |
+| `PADDLE_ACTIVE` | `boolean` | Active Paddle.js sur web. Sans effet sur native. |
+| `PADDLE_SANDBOX` | `boolean` | Lu depuis `EXPO_PUBLIC_PADDLE_SANDBOX` dans `.env`. Quand `true`, utilise les vars sandbox token/price IDs + `Paddle.Environment.set('sandbox')`. |
+| `canPay()` | helper | Renvoie `PADDLE_ACTIVE` sur web, `STORES_ACTIVE` sur native. À utiliser dans tous les `handlePurchase` au lieu de checker les flags séparément. |
+
+### Routing dans `handlePurchase`
+
+```
+if (!canPay())                         → Alert "Disponible prochainement"
+else if (Platform.OS === 'web' && PADDLE_ACTIVE) → openCheckout() Paddle
+else /* native, STORES_ACTIVE */       → RevenueCat (futur, aujourd'hui stub)
+```
+
+Appliqué dans `pricing.tsx` (onboarding) et `pricing-upgrade.tsx` (paywall in-app).
+
+### Architecture Paddle web (flow complet)
+
+```
+1. User clique "Confirmer" sur pricing-upgrade.tsx (web, PADDLE_ACTIVE=true)
+2. handlePurchase appelle services/paddle.ts → openCheckout({
+     plan: 'mensuel'|'annuel'|'lifetime',
+     email: auth.currentUser.email,
+     firebaseUid: auth.currentUser.uid
+   })
+3. Paddle.js (chargé lazy via <script>) ouvre la modale checkout
+4. User paie → Paddle valide la carte
+5. Paddle POST → https://manifest-mind.app/api/paddle-webhook (Firebase Function)
+6. La function vérifie la signature HMAC, lit custom_data.firebase_uid,
+   écrit users/{uid}.subscription_active = true dans Firestore
+7. useSubscriptionSync (listener actif app-wide) détecte le snapshot change
+8. Écrit AsyncStorage.setItem('subscription_active', 'true')
+9. Gate home.tsx lève le paywall au prochain focus, l'utilisateur accède au cycle 8+
+```
+
+**Sécurité** : aucune écriture optimiste côté client sur web. `subscription_active` ne devient `'true'` que via le listener Firestore, qui ne reçoit que des updates écrites par le webhook serveur authentifié par HMAC. Un user malin ne peut pas contourner en ouvrant/fermant la modale Paddle.
+
+### `.env` — variables Paddle
+
+```
+EXPO_PUBLIC_PADDLE_CLIENT_TOKEN=live_...
+EXPO_PUBLIC_PADDLE_PRICE_MENSUEL=pri_...
+EXPO_PUBLIC_PADDLE_PRICE_ANNUEL=pri_...
+EXPO_PUBLIC_PADDLE_PRICE_LIFETIME=pri_...
+
+EXPO_PUBLIC_PADDLE_SANDBOX=false
+EXPO_PUBLIC_PADDLE_SANDBOX_TOKEN=
+EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_MENSUEL=
+EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_ANNUEL=
+EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_LIFETIME=
+```
+
+Token client (préfixe `live_*` ou `test_*`) est conçu pour être bundlé côté client. **Aucun secret serveur ici.**
+
+### 🚨 PADDLE_API_KEY serveur — sécurité absolue
+
+- **JAMAIS** dans `.env` de ce repo Expo (même non préfixée `EXPO_PUBLIC_*`, elle finirait dans le bundle si importée).
+- **JAMAIS** dans aucun fichier `.ts` de ce repo.
+- Vit **uniquement** dans la config Firebase Functions : `firebase functions:config:set paddle.api_key="..."`.
+- Sert au backend pour valider la signature HMAC des webhooks Paddle.
+- **Rotation 90 jours obligatoire** (Paddle force l'expiration). Date courante : expire le **2026-09-28**. Voir mémoire `paddle-api-key-expiry` pour la procédure complète.
+
+### UX gap onboarding web (limitation connue V1)
+
+En onboarding, sur web + `PADDLE_ACTIVE=true`, choisir un plan payant ne déclenche **pas** Paddle Checkout immédiatement : Paddle a besoin d'un Firebase UID, qui n'existe pas avant `auth.tsx`. L'utilisateur s'auth, atterrit en mode Free, puis paie via :
+- Parametres → row "Passer à Premium" (à tout moment)
+- Gate freemium au cycle 8 (automatique)
+
+À refiner en V2 si conversion onboarding paye → mode payant doit être plus directe (collecte email pré-auth + auth post-Paddle).
+
+### Backend webhook (à créer, pas dans ce repo encore)
+
+Firebase Cloud Functions (2nd gen), 1 function `paddleWebhook` :
+- Reçoit POST de Paddle sur `manifest-mind.app/api/paddle-webhook` (via Firebase Hosting URL rewrite)
+- Vérifie signature HMAC SHA-256 avec `PADDLE_API_KEY`
+- Sur événement `transaction.paid` / `subscription.activated` : lit `custom_data.firebase_uid`, update `users/{uid}.subscription_active = true`
+- Sur `subscription.canceled` / `subscription.past_due` : update `subscription_active = false`
+
+À scaffolder dans `functions/` à la racine du repo. Pas encore créé — en attente : (1) activation Firebase Functions sur console, (2) création compte Paddle Sandbox + récupération sandbox price IDs.
 
 ---
 

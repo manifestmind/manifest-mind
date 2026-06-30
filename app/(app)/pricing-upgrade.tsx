@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { FREE_CYCLES, STORES_ACTIVE } from '../../services/config';
+import { canPay, FREE_CYCLES, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
+import { auth } from '../../services/firebase';
+import { openCheckout } from '../../services/paddle';
 
 export default function PricingUpgrade() {
   const t = useTranslation();
@@ -26,10 +28,44 @@ export default function PricingUpgrade() {
   }, []);
 
   async function handlePurchase() {
-    if (!STORES_ACTIVE) {
+    // Bloqué si aucun provider de paiement n'est actif pour la plateforme courante
+    // (Paddle sur web, RevenueCat/IAP sur native).
+    if (!canPay()) {
       Alert.alert(t.pricing.disponibleProchainement);
       return;
     }
+
+    // ── Branche WEB → Paddle Checkout ─────────────────────────────────────
+    // Aucune écriture optimiste de subscription_active ici : c'est le listener
+    // useSubscriptionSync (monté dans _layout.tsx) qui s'en chargera quand le
+    // webhook Paddle aura mis à jour Firestore. On enregistre seulement
+    // selected_plan localement pour l'affichage UI du plan choisi.
+    if (Platform.OS === 'web' && PADDLE_ACTIVE) {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        Alert.alert(t.auth.alertNonConnecte.titre, t.auth.alertNonConnecte.corps);
+        return;
+      }
+      try {
+        await AsyncStorage.setItem('selected_plan', selectedPlan);
+      } catch {
+        // Écriture impossible — continuer quand même
+      }
+      await openCheckout({
+        plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+        email: user.email,
+        firebaseUid: user.uid,
+      });
+      // Le checkout reste ouvert ; le listener Firestore fera basculer
+      // subscription_active='true' dès que le webhook aura validé le paiement.
+      return;
+    }
+
+    // ── Branche NATIVE → RevenueCat (futur) ───────────────────────────────
+    // Aujourd'hui : stub d'écriture optimiste, identique au comportement
+    // historique tant que RevenueCat n'est pas câblé. À remplacer par
+    // Purchases.purchaseProduct(...) puis basculer subscription_active='true'
+    // dans le callback success du SDK RevenueCat (cf. checklist pré-stores #1).
     try {
       await AsyncStorage.multiSet([
         ['selected_plan', selectedPlan],

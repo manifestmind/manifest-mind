@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { STORES_ACTIVE } from '../../services/config';
+import { canPay, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
 
 
 export default function Pricing() {
@@ -32,13 +32,35 @@ export default function Pricing() {
       router.replace('/(app)/splash');
       return;
     }
-    // Plan payant (lifetime / annuel / mensuel)
-    // Tant que les stores ne sont pas câblés, on bloque le paiement honnêtement.
-    if (!STORES_ACTIVE) {
+
+    // Plan payant — bloqué si aucun provider de paiement actif pour la plateforme.
+    if (!canPay()) {
       Alert.alert(t.pricing.disponibleProchainement);
       return;
     }
-    // Achat validé (futur : déclenché par RevenueCat success callback)
+
+    // ── Branche WEB → Paddle (paiement post-auth) ──────────────────────────
+    // Paddle nécessite un Firebase UID pour rattacher la transaction à un user
+    // côté webhook. À ce stade de l'onboarding, l'utilisateur n'est pas encore
+    // authentifié. On enregistre le plan choisi et on pousse vers auth.tsx ;
+    // le paiement effectif aura lieu plus tard (depuis parametres.tsx ou via
+    // le gate freemium à partir du cycle 8). Aucune écriture optimiste de
+    // subscription_active — c'est le listener Firestore qui en sera la source.
+    if (Platform.OS === 'web' && PADDLE_ACTIVE) {
+      try {
+        await AsyncStorage.setItem('selected_plan', selectedPlan);
+      } catch {
+        // fallback silencieux
+      }
+      router.push('/(onboarding)/auth');
+      return;
+    }
+
+    // ── Branche NATIVE → RevenueCat (futur) ────────────────────────────────
+    // Aujourd'hui : stub d'écriture optimiste, identique au comportement
+    // historique tant que RevenueCat n'est pas câblé. À remplacer par
+    // Purchases.purchaseProduct(...) puis basculer subscription_active='true'
+    // dans le callback success du SDK RevenueCat (cf. checklist pré-stores #1).
     try {
       await AsyncStorage.multiSet([
         ['selected_plan', selectedPlan],
