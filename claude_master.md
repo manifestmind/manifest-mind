@@ -396,6 +396,41 @@ En cas de fuite ou rotation planifiée :
 
 L'API Key (`pdl_live_apikey_*`) n'est utilisée que pour **appeler** l'API Paddle (cancel, refund, query). Aucune feature V1 n'en a besoin. Ne pas la générer/stocker tant qu'on n'en a pas l'usage concret — surface d'attaque réduite. À planifier en V1.5 quand on ajoutera "Annuler mon abonnement" côté app.
 
+### État actuel Paddle (2026-06-30 fin de session)
+
+| Composant | Statut |
+|---|---|
+| Backend `paddleWebhook` déployé sur `europe-west1` | ✅ Live |
+| Firestore Native en `europe-west1` | ✅ Créé, rules deny-par-défaut + read own users/{uid} |
+| Secret `PADDLE_WEBHOOK_SECRET` v2 dans Secret Manager | ✅ Actif (v1 corrompue laissée en historique pour rollback) |
+| Paddle dashboard → URL webhook + 7 events | ✅ Configuré sur `cloudfunctions.net/paddleWebhook` |
+| Test end-to-end : script → HMAC → webhook → Firestore write | ✅ HTTP 200 validé le 2026-06-30 |
+| App-side code (`services/paddle.ts`, `useSubscriptionSync`, routing) | ✅ Prêt, non actif |
+| `PADDLE_ACTIVE` dans `services/config.ts` | 🔒 `false` |
+| `STORES_ACTIVE` dans `services/config.ts` | 🔒 `false` |
+| `DEBUG_SKIP_PAYWALL` dans `services/config.ts` | 🐞 `true` (bypass paywall pour Expo Go) |
+
+### Prochaine session Paddle — 5 étapes à faire
+
+1. **Créer compte Paddle Sandbox** (`sandbox-vendors.paddle.com`) — 3 produits Mensuel/Annuel/Lifetime → récupérer 3 sandbox price IDs, 1 sandbox client token (`test_*`), 1 sandbox webhook secret (`pdl_ntfset_*` distinct de la prod)
+2. **Configurer sandbox dans `.env`** — remplir les 5 vars `EXPO_PUBLIC_PADDLE_SANDBOX_*` déjà en placeholder + basculer `EXPO_PUBLIC_PADDLE_SANDBOX=true`
+3. **Adapter le backend pour 2 secrets** — soit fallback prod/sandbox dans une seule function, soit 2ᵉ function `paddleWebhookSandbox` avec son propre `defineSecret('PADDLE_SANDBOX_WEBHOOK_SECRET')` (recommandé : plus isolé, secret distinct par environnement)
+4. **Test paiement end-to-end sandbox** — `npx expo start --web`, connecter user Firebase test, ouvrir `pricing-upgrade.tsx`, valider avec [carte de test Paddle Sandbox](https://developer.paddle.com/concepts/payment-methods/test-cards) → attendre webhook → vérifier `subscription_active=true` dans Firestore + AsyncStorage + gate `home.tsx` levé
+5. **Build web** — `npx expo export --platform web` → génère `dist/`, à déployer sur Firebase Hosting ou autre CDN. Tester la version bundlée avant flip prod. Une fois validé : `PADDLE_ACTIVE=true` + `EXPO_PUBLIC_PADDLE_SANDBOX=false` → live.
+
+### Rappel : 2 constructions distinctes prévues
+
+L'app cible **2 pipelines de distribution parallèles** — chacun avec son propre provider de paiement :
+
+| Pipeline | Cible | Provider paiement | Trigger flag | Build command |
+|---|---|---|---|---|
+| **Web** | Navigateurs (desktop + mobile) | **Paddle Billing** ← objet des dernières sessions | `PADDLE_ACTIVE=true` | `npx expo export --platform web` |
+| **Native** | App Store (iOS) + Play Store (Android) | **RevenueCat** ← planifié V1.5 | `STORES_ACTIVE=true` | `eas build --platform ios/android` |
+
+Les deux pipelines partagent le même code source Expo. Le routing par `Platform.OS === 'web'` dans `handlePurchase` (`pricing.tsx` + `pricing-upgrade.tsx`) sélectionne le bon provider au runtime. La source de vérité `subscription_active` est unifiée via Firestore listener (`useSubscriptionSync`) — un user peut ainsi payer sur web puis retrouver son abonnement actif sur l'app mobile après login (même Firebase UID → même doc Firestore users/{uid}).
+
+⚠️ **Ne pas confondre les deux checklists** : `DEBUG_SKIP_PAYWALL` est bloquant pour **les deux** (bypass paywall universel). `PADDLE_ACTIVE` est spécifique au pipeline web. `STORES_ACTIVE` est spécifique au pipeline native. Le point 0 🚨 de la checklist ci-dessous s'applique aux deux.
+
 ---
 
 ## Firebase
