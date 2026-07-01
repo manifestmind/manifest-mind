@@ -1,0 +1,12 @@
+# TypeScript build output
+lib/
+
+# Dependencies
+node_modules/
+
+# Local Firebase config
+*.local
+.runtimeconfig.json
+.firebase/
+firebase-debug.log
+firebase-debug.*.log

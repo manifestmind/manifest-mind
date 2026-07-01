@@ -331,15 +331,70 @@ En onboarding, sur web + `PADDLE_ACTIVE=true`, choisir un plan payant ne déclen
 
 À refiner en V2 si conversion onboarding paye → mode payant doit être plus directe (collecte email pré-auth + auth post-Paddle).
 
-### Backend webhook (à créer, pas dans ce repo encore)
+### Backend webhook (déployé le 2026-06-30)
 
-Firebase Cloud Functions (2nd gen), 1 function `paddleWebhook` :
-- Reçoit POST de Paddle sur `manifest-mind.app/api/paddle-webhook` (via Firebase Hosting URL rewrite)
-- Vérifie signature HMAC SHA-256 avec `PADDLE_API_KEY`
-- Sur événement `transaction.paid` / `subscription.activated` : lit `custom_data.firebase_uid`, update `users/{uid}.subscription_active = true`
-- Sur `subscription.canceled` / `subscription.past_due` : update `subscription_active = false`
+Firebase Cloud Functions 2nd gen dans `functions/` à la racine du repo, region `europe-west1`, runtime Node 20. Une seule function :
 
-À scaffolder dans `functions/` à la racine du repo. Pas encore créé — en attente : (1) activation Firebase Functions sur console, (2) création compte Paddle Sandbox + récupération sandbox price IDs.
+- **`paddleWebhook`** (fichier `functions/src/index.ts`)
+  - Reçoit POST de Paddle
+  - Vérifie signature HMAC-SHA256 sur `<ts>:<rawBody>` avec le Webhook Notification Secret
+  - Anti-replay : rejette timestamps hors fenêtre ±5 min
+  - Comparaison signature en `crypto.timingSafeEqual`
+  - Route selon `event_type` (cf. mapping ci-dessus)
+  - Écrit `users/{uid}` dans Firestore Native mode via Admin SDK (bypass rules)
+  - Répond 200 OK sur succès (Paddle acknowledgement), 401 sur sig invalide, 500 sur Firestore fail (Paddle retry)
+
+**URL webhook stable à utiliser dans Paddle dashboard** :
+```
+https://europe-west1-manifestmind.cloudfunctions.net/paddleWebhook
+```
+
+⚠️ **Ne PAS utiliser l'URL Cloud Run directe** (`https://paddlewebhook-<hash>-ew.a.run.app`) — le hash est régénéré par Firebase Functions 2nd gen à certains redeploys, cassant Paddle. L'alias `cloudfunctions.net` est garanti stable par Firebase.
+
+### Firestore
+
+- **Mode** : Native (obligatoire pour compat Admin SDK + client `onSnapshot`)
+- **Location** : `europe-west1` (même région que le webhook, latence ~ms)
+- **Rules** : deny par défaut + read own `users/{uid}` autorisé pour user authentifié, write bloqué côté client (seul le webhook Admin SDK écrit)
+
+### Secrets serveur — dans Google Secret Manager uniquement
+
+Un seul secret nécessaire au fonctionnement :
+- **`PADDLE_WEBHOOK_SECRET`** (`pdl_ntfset_*`) — clé HMAC pour vérifier les webhooks entrants
+
+Anti-piège documenté : **NE PAS créer ni updater le secret via le champ "Secret value" (textarea) de la Cloud Console UI** — ce champ peut silencieusement corrompre le paste (répétition multiple observée en juin 2026 = 6× la valeur, 420 bytes au lieu de 70). Toujours utiliser :
+- Soit **"Upload from file"** dans Cloud Console (fichier UTF-8 sans BOM, sans trailing newline)
+- Soit `gcloud secrets versions add ... --data-file=-`
+- Soit `firebase functions:secrets:set ...` (interactif, moins sûr, hors sujet ici)
+
+Procédure PowerShell pour créer un fichier propre : cf. commit `<hash>` message ou historique conversation 2026-06-30.
+
+### Test manuel du webhook
+
+Script `scripts/test-webhook.js` : envoie un event `subscription.activated` factice signé HMAC valide.
+
+Usage PowerShell :
+```
+$env:PADDLE_WEBHOOK_SECRET = "<valeur du dashboard Paddle>"
+$env:TEST_FIREBASE_UID = "TEST_WEBHOOK_LOCAL_001"
+node scripts/test-webhook.js
+Remove-Item Env:PADDLE_WEBHOOK_SECRET
+Remove-Item Env:TEST_FIREBASE_UID
+```
+
+Attendu : HTTP 200 + log Cloud Logging `[paddle] users/TEST_WEBHOOK_LOCAL_001 updated: subscription_active=true` + doc créé dans Firestore. Supprimer le doc de test après validation.
+
+### Rotation PADDLE_WEBHOOK_SECRET
+
+En cas de fuite ou rotation planifiée :
+1. Paddle dashboard → Notifications → ton webhook → "Rotate secret"
+2. Cloud Console → Secret Manager → `PADDLE_WEBHOOK_SECRET` → New Version → **Upload from file** avec la nouvelle valeur
+3. `npx firebase deploy --only functions` pour repointer le mount env var sur la latest version
+4. Test via `scripts/test-webhook.js` puis désactive/delete l'ancienne version dans Secret Manager
+
+### PADDLE_API_KEY serveur — pas nécessaire au V1
+
+L'API Key (`pdl_live_apikey_*`) n'est utilisée que pour **appeler** l'API Paddle (cancel, refund, query). Aucune feature V1 n'en a besoin. Ne pas la générer/stocker tant qu'on n'en a pas l'usage concret — surface d'attaque réduite. À planifier en V1.5 quand on ajoutera "Annuler mon abonnement" côté app.
 
 ---
 

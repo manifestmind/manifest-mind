@@ -38,6 +38,14 @@ yarn-error.*
 google-services.json
 GoogleService-Info.plist
 
+# Firebase Functions backend
+functions/lib/
+functions/node_modules/
+functions/.runtimeconfig.json
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
+
 # typescript
 *.tsbuildinfo
 
