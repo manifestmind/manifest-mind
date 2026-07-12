@@ -13,7 +13,7 @@ export const STORES_ACTIVE = false;
 // Bascule à `true` une fois Paddle.js + webhook Firebase Functions câblés
 // pour les paiements web. Tant que `false`, sur web, le bouton d'achat
 // affiche "Disponible prochainement". Sans effet sur native (voir STORES_ACTIVE).
-export const PADDLE_ACTIVE = false;
+export const PADDLE_ACTIVE = true;
 
 // Mode sandbox Paddle (pour tester sans facturation réelle). Lu depuis .env.
 // Quand `true`, services/paddle.ts utilise Paddle.Environment.set('sandbox')
@@ -42,4 +42,4 @@ export function canPay(): boolean {
 // Permet de tester les cycles 8 à 365 sur Expo Go sans payer.
 // Quand `true`, le gate freemium dans home.tsx est court-circuité :
 // aucun utilisateur n'est jamais redirigé vers pricing-upgrade.tsx.
-export const DEBUG_SKIP_PAYWALL = true;
+export const DEBUG_SKIP_PAYWALL = false;

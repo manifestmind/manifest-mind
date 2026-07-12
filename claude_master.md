@@ -232,7 +232,7 @@ Dans tous les cas la row reste tappable → navigue vers `pricing-upgrade.tsx`.
 |------|------|-------------|
 | `STORES_ACTIVE` | `boolean` | `false` tant que RevenueCat / IAP non câblés. Effets : `pricing.tsx` onboarding bloque les plans payants (Alert "Disponible prochainement"), `pricing-upgrade.tsx` Alert au lieu d'achat, `parametres.tsx` label bouton = "Disponible prochainement". Seul le plan Free reste fonctionnel. |
 | `FREE_CYCLES` | `number` | `7` — cycles offerts avant paywall. Utilisé par `home.tsx` (gate) et `pricing-upgrade.tsx` (détection contexte freemium-expiré). |
-| `DEBUG_SKIP_PAYWALL` | `boolean` | **DEBUG**. Quand `true`, le gate freemium dans `home.tsx` est totalement court-circuité — accès illimité cycles 1→365 pour tester sur Expo Go sans payer. `console.warn` au mount de Home pour rappel. **Doit être à `false` avant toute soumission aux stores.** |
+| `DEBUG_SKIP_PAYWALL` | `boolean` | **DEBUG**. Quand `true`, le gate freemium dans `home.tsx` est totalement court-circuité — accès illimité cycles 1→365 pour tester sur Expo Go sans payer. `console.warn` au mount de Home pour rappel. **Doit rester à `false` en prod / avant toute soumission aux stores.** Ne le repasser à `true` que **temporairement** pour tester les cycles sans payer, puis le remettre à `false` aussitôt. (État actuel : `false` depuis 2026-07-11.) |
 
 ### Bandeau freemium dans `pricing-upgrade.tsx`
 
@@ -396,27 +396,51 @@ En cas de fuite ou rotation planifiée :
 
 L'API Key (`pdl_live_apikey_*`) n'est utilisée que pour **appeler** l'API Paddle (cancel, refund, query). Aucune feature V1 n'en a besoin. Ne pas la générer/stocker tant qu'on n'en a pas l'usage concret — surface d'attaque réduite. À planifier en V1.5 quand on ajoutera "Annuler mon abonnement" côté app.
 
-### État actuel Paddle (2026-06-30 fin de session)
+### État actuel Paddle (2026-07-12 fin de session)
 
 | Composant | Statut |
 |---|---|
-| Backend `paddleWebhook` déployé sur `europe-west1` | ✅ Live |
+| Backend `paddleWebhook` déployé sur `europe-west1` | ✅ Live (dual-secret prod + sandbox, redéployé 2026-07-11) |
 | Firestore Native en `europe-west1` | ✅ Créé, rules deny-par-défaut + read own users/{uid} |
 | Secret `PADDLE_WEBHOOK_SECRET` v2 dans Secret Manager | ✅ Actif (v1 corrompue laissée en historique pour rollback) |
-| Paddle dashboard → URL webhook + 7 events | ✅ Configuré sur `cloudfunctions.net/paddleWebhook` |
-| Test end-to-end : script → HMAC → webhook → Firestore write | ✅ HTTP 200 validé le 2026-06-30 |
+| Secret `PADDLE_SANDBOX_WEBHOOK_SECRET` dans Secret Manager | ✅ **versions/2** (v1 = mauvaise clé → 401 ; v2 corrigée le 2026-07-12), lié à la function (IAM secretAccessor OK) |
+| Validation signature dual-secret (`verifyPaddleSignature` teste prod puis sandbox) | ✅ Déployé — prod et sandbox valident en parallèle, sans bascule manuelle |
+| Paddle dashboard PROD → URL webhook + 7 events | ✅ Configuré sur `cloudfunctions.net/paddleWebhook` |
+| Paddle dashboard SANDBOX → URL webhook + events | ✅ Déclaré sur la même URL stable `cloudfunctions.net/paddleWebhook` |
+| Sandbox `.env` (5 vars `EXPO_PUBLIC_PADDLE_SANDBOX_*` + `=true`) | ✅ Renseigné le 2026-07-11 |
+| Test end-to-end PROD : script → HMAC → webhook → Firestore write | ✅ HTTP 200 validé le 2026-06-30 |
+| Test paiement end-to-end SANDBOX (carte test → webhook → `subscription_active`) | ✅ **VALIDÉ le 2026-07-12** — paiement Paddle → webhook (clé sandbox v2) → `users/{uid}.subscription_active=true` dans Firestore. Toute la chaîne fonctionne. |
 | App-side code (`services/paddle.ts`, `useSubscriptionSync`, routing) | ✅ Prêt, non actif |
-| `PADDLE_ACTIVE` dans `services/config.ts` | 🔒 `false` |
+| `PADDLE_ACTIVE` dans `services/config.ts` | ✅ `true` depuis 2026-07-11 (activé pour tester le checkout web sandbox) |
 | `STORES_ACTIVE` dans `services/config.ts` | 🔒 `false` |
-| `DEBUG_SKIP_PAYWALL` dans `services/config.ts` | 🐞 `true` (bypass paywall pour Expo Go) |
+| `DEBUG_SKIP_PAYWALL` dans `services/config.ts` | ✅ `false` depuis 2026-07-11 (gate freemium actif). ⚠️ Repasser à `true` UNIQUEMENT et TEMPORAIREMENT pour tester les cycles 8→365 sur Expo Go sans payer, puis re-`false`. **Doit être `false` en prod / avant toute soumission.** |
 
-### Prochaine session Paddle — 5 étapes à faire
+### Prochaine session Paddle — étapes
 
-1. **Créer compte Paddle Sandbox** (`sandbox-vendors.paddle.com`) — 3 produits Mensuel/Annuel/Lifetime → récupérer 3 sandbox price IDs, 1 sandbox client token (`test_*`), 1 sandbox webhook secret (`pdl_ntfset_*` distinct de la prod)
-2. **Configurer sandbox dans `.env`** — remplir les 5 vars `EXPO_PUBLIC_PADDLE_SANDBOX_*` déjà en placeholder + basculer `EXPO_PUBLIC_PADDLE_SANDBOX=true`
-3. **Adapter le backend pour 2 secrets** — soit fallback prod/sandbox dans une seule function, soit 2ᵉ function `paddleWebhookSandbox` avec son propre `defineSecret('PADDLE_SANDBOX_WEBHOOK_SECRET')` (recommandé : plus isolé, secret distinct par environnement)
-4. **Test paiement end-to-end sandbox** — `npx expo start --web`, connecter user Firebase test, ouvrir `pricing-upgrade.tsx`, valider avec [carte de test Paddle Sandbox](https://developer.paddle.com/concepts/payment-methods/test-cards) → attendre webhook → vérifier `subscription_active=true` dans Firestore + AsyncStorage + gate `home.tsx` levé
+1. ✅ **~~Créer compte Paddle Sandbox~~** (`sandbox-vendors.paddle.com`) — 3 produits Mensuel/Annuel/Lifetime → 3 sandbox price IDs, 1 sandbox client token (`test_*`), 1 sandbox webhook secret (`pdl_ntfset_*` distinct de la prod). *Fait.*
+2. ✅ **~~Configurer sandbox dans `.env`~~** — 5 vars `EXPO_PUBLIC_PADDLE_SANDBOX_*` renseignées + `EXPO_PUBLIC_PADDLE_SANDBOX=true`. *Fait le 2026-07-11.*
+3. ✅ **~~Adapter le backend pour 2 secrets~~** — retenu : **fallback dual-secret dans la function unique** (`verifyPaddleSignature` teste prod puis sandbox). `PADDLE_SANDBOX_WEBHOOK_SECRET` v1 posé + function redéployée le 2026-07-11. Webhook sandbox déclaré sur la même URL stable `cloudfunctions.net/paddleWebhook`. *Fait.*
+4. ✅ **~~Test paiement end-to-end sandbox~~** — **VALIDÉ le 2026-07-12**. Paiement Paddle sandbox (carte test) → webhook (clé sandbox v2) → `users/{uid}.subscription_active=true` dans Firestore. Chaîne complète OK. (Blocage résolu : la clé `PADDLE_SANDBOX_WEBHOOK_SECRET` v1 était erronée → 401 ; v2 = bonne `pdl_ntfset_*` de la destination sandbox.)
 5. **Build web** — `npx expo export --platform web` → génère `dist/`, à déployer sur Firebase Hosting ou autre CDN. Tester la version bundlée avant flip prod. Une fois validé : `PADDLE_ACTIVE=true` + `EXPO_PUBLIC_PADDLE_SANDBOX=false` → live.
+
+### Modèle d'accès définitif — IMPLÉMENTÉ (2026-07-12)
+
+Décision tranchée + livrée : **essai gratuit = 7 CYCLES** (pas 7 jours), **sans carte**, via **compte Firebase anonyme** (`signInAnonymously`). Au **cycle 8**, tout **non-abonné** est bloqué → paywall, avec **conversion inline email+password** (`linkWithCredential`, **même UID** → progression préservée, Option A = progression locale AsyncStorage). Même conversion à l'onboarding si plan payant choisi direct. Reconnexion = magic link.
+
+Phases livrées & validées :
+- **P0** — console : providers Anonymous + Email/Password (+ Email link) activés ; règles Firestore read own `users/{uid}` / write deny.
+- **P2** — gate `home.tsx` : `cycle > FREE_CYCLES && !subscription_active` (retrait de `isFree`).
+- **P1** — `signInAnonymously` au démarrage de l'essai (`pricing.tsx`) ; ancien `handleSkipAccount` supprimé (chemin unique « sans compte » = essai anonyme).
+- **P3** — conversion inline email+password (`services/authConversion.ts` : `convertOrSignIn`/`needsAccount`/`mapConversionError`) sur `pricing-upgrade.tsx` (cycle 8) et `pricing.tsx` (paid onboarding) → enchaîne Paddle. Gère `email-already-in-use` (fallback signIn). i18n `t.compte` (fr/en/es).
+- **Fix authStateReady** — `_layout.tsx` `AnonymousBootstrap` (attend `auth.authStateReady()`, garantit l'anonyme) ; `await auth.authStateReady()` dans les `handlePurchase` ; `mustCreateAccount` réactif via `onAuthStateChanged`. Résout le `currentUser` null prématuré (réhydratation async de la persistance web) → vraie conversion `linkWithCredential`, même UID. **Testé OK end-to-end le 2026-07-12** (paiement → `subscription_active=true` → accès débloqué).
+
+### En attente — prochaine session
+
+1. ⏳ **Retour automatique dans l'app après paiement (cycle 8)** — actuellement, après paiement sur `pricing-upgrade`, il faut aller **manuellement** sur home (on n'auto-route PAS car `checkout.completed` arrive avant la synchro webhook→Firestore→`subscription_active` → router immédiatement rebondirait sur le paywall). À implémenter : écran **« activation en cours »** qui attend `subscription_active=true` (listener) puis route vers home. À l'onboarding (cycle 1) le problème ne se pose pas.
+2. ⏳ **Phase 4 — wording « 7 cycles gratuits »** partout (retirer toute mention « 7 jours »), 3 langues (`translations.ts`). CGU/remboursement à aligner dans un second temps.
+3. ⏳ **Phase 5 — reconnexion** — vérifier que le magic link reconnecte bien un compte converti (email+password) ; `subscription_active` resynchronisé depuis Firestore. (Pas de formulaire password prévu au MVP.)
+4. ⏳ **Configuration PWA (web installable)** — `manifest.webmanifest` (nom, icônes, `display: standalone`, `theme_color`), **service worker** (offline/cache), **icônes** (192/512 + maskable). À faire avant/pendant le build web.
+5. 🧹 **Nettoyage avant prod** — retirer les boutons debug `home.tsx` (« reset », « ⏭ cycle suivant ») et les `console.log` `__DEV__` de diagnostic ; clé i18n `t.auth.sansCompte` + style `skipText` devenus inutilisés.
 
 ### Rappel : 2 constructions distinctes prévues
 

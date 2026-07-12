@@ -483,6 +483,18 @@ export const translations = {
       freemiumBouton: 'Continuer mon parcours',
     },
 
+    // ── Création / conversion de compte (email + mot de passe) ────────────────
+    compte: {
+      titre: 'Crée ton compte pour continuer',
+      emailPlaceholder: 'Ton email',
+      passwordPlaceholder: 'Mot de passe (min. 6 caractères)',
+      errEmailInvalide: 'Adresse email invalide.',
+      errPasswordCourt: 'Le mot de passe doit faire au moins 6 caractères.',
+      errEmailDejaUtilise: 'Cet email a déjà un compte, mais le mot de passe est incorrect.',
+      errReseau: 'Problème de connexion. Réessaie.',
+      errGenerique: 'Impossible de créer le compte. Réessaie.',
+    },
+
     // ── Notifications ─────────────────────────────────────────────────────────
     notifications: {
       affirmationBody: 'Ton affirmation du cycle t\'attend.',
@@ -959,6 +971,18 @@ export const translations = {
       freemiumBouton: 'Continue my journey',
     },
 
+    // ── Account creation / conversion (email + password) ──────────────────────
+    compte: {
+      titre: 'Create your account to continue',
+      emailPlaceholder: 'Your email',
+      passwordPlaceholder: 'Password (min. 6 characters)',
+      errEmailInvalide: 'Invalid email address.',
+      errPasswordCourt: 'Password must be at least 6 characters.',
+      errEmailDejaUtilise: 'This email already has an account, but the password is incorrect.',
+      errReseau: 'Connection problem. Please try again.',
+      errGenerique: 'Could not create the account. Please try again.',
+    },
+
     notifications: {
       affirmationBody: 'Your cycle affirmation is waiting for you.',
       rappelBody: "Today's cycle is not yet complete. You can still finish it!",
@@ -1431,6 +1455,18 @@ export const translations = {
       freemiumTitre: 'Tus 7 ciclos gratuitos han terminado',
       freemiumMessage: 'Has descubierto ManifestMind. Continúa tu transformación hasta el ciclo 365 pasando a Premium.',
       freemiumBouton: 'Continuar mi camino',
+    },
+
+    // ── Creación / conversión de cuenta (email + contraseña) ──────────────────
+    compte: {
+      titre: 'Crea tu cuenta para continuar',
+      emailPlaceholder: 'Tu correo',
+      passwordPlaceholder: 'Contraseña (mín. 6 caracteres)',
+      errEmailInvalide: 'Correo electrónico no válido.',
+      errPasswordCourt: 'La contraseña debe tener al menos 6 caracteres.',
+      errEmailDejaUtilise: 'Este correo ya tiene una cuenta, pero la contraseña es incorrecta.',
+      errReseau: 'Problema de conexión. Inténtalo de nuevo.',
+      errGenerique: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
     },
 
     notifications: {

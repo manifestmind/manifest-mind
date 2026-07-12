@@ -49,6 +49,9 @@ const db = admin.firestore();
 // Valeur posée via : firebase functions:secrets:set PADDLE_WEBHOOK_SECRET
 
 const PADDLE_WEBHOOK_SECRET = defineSecret('PADDLE_WEBHOOK_SECRET');
+// Secret de signature du compte Paddle SANDBOX (distinct de la prod).
+// Posé via : firebase functions:secrets:set PADDLE_SANDBOX_WEBHOOK_SECRET
+const PADDLE_SANDBOX_WEBHOOK_SECRET = defineSecret('PADDLE_SANDBOX_WEBHOOK_SECRET');
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
@@ -85,7 +88,7 @@ type SignatureCheck = { valid: true } | { valid: false; reason: string };
 function verifyPaddleSignature(
   rawBody: Buffer,
   signatureHeader: string | undefined,
-  secret: string,
+  secrets: (string | undefined)[],
 ): SignatureCheck {
   if (!signatureHeader) {
     return { valid: false, reason: 'missing Paddle-Signature header' };
@@ -117,21 +120,30 @@ function verifyPaddleSignature(
     return { valid: false, reason: `event in future (${-ageSec}s)` };
   }
 
-  // Calcul de la signature attendue sur `<ts>:<raw_body>`
+  // Calcul de la signature attendue sur `<ts>:<raw_body>`, testé contre
+  // chaque secret fourni (prod + sandbox). Le premier match gagne.
+  // Le payload et le buffer reçu sont identiques pour tous les secrets :
+  // on les calcule une seule fois hors de la boucle.
   const payload = `${ts}:${rawBody.toString('utf8')}`;
-  const expectedHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-
-  // Comparaison timing-safe (longueurs doivent matcher d'abord)
-  if (expectedHex.length !== h1.length) {
-    return { valid: false, reason: 'signature length mismatch' };
-  }
-  const expectedBuf = Buffer.from(expectedHex, 'hex');
   const receivedBuf = Buffer.from(h1, 'hex');
-  if (expectedBuf.length !== receivedBuf.length) {
-    return { valid: false, reason: 'signature buffer length mismatch' };
+  let anySecretPresent = false;
+
+  for (const secret of secrets) {
+    if (!secret) continue; // secret non configuré (ex : sandbox pas encore posé)
+    anySecretPresent = true;
+    const expectedHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    if (expectedHex.length !== h1.length) continue;
+    const expectedBuf = Buffer.from(expectedHex, 'hex');
+    if (expectedBuf.length !== receivedBuf.length) continue;
+    if (crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
+      return { valid: true };
+    }
   }
-  const equal = crypto.timingSafeEqual(expectedBuf, receivedBuf);
-  return equal ? { valid: true } : { valid: false, reason: 'signature mismatch' };
+
+  if (!anySecretPresent) {
+    return { valid: false, reason: 'no signing secret configured' };
+  }
+  return { valid: false, reason: 'signature mismatch (prod + sandbox)' };
 }
 
 // ─── Dérivation de subscription_active selon l'événement ────────────────────
@@ -175,7 +187,7 @@ function deriveSubscriptionActive(
 export const paddleWebhook = onRequest(
   {
     region: 'europe-west1',
-    secrets: [PADDLE_WEBHOOK_SECRET],
+    secrets: [PADDLE_WEBHOOK_SECRET, PADDLE_SANDBOX_WEBHOOK_SECRET],
     cors: false,
     maxInstances: 10,
     invoker: 'public',
@@ -197,14 +209,15 @@ export const paddleWebhook = onRequest(
     }
 
     // 3. Vérification signature
-    const secret = PADDLE_WEBHOOK_SECRET.value();
-    if (!secret) {
-      logger.error('[paddle] PADDLE_WEBHOOK_SECRET not configured');
+    const prodSecret = PADDLE_WEBHOOK_SECRET.value();
+    const sandboxSecret = PADDLE_SANDBOX_WEBHOOK_SECRET.value();
+    if (!prodSecret && !sandboxSecret) {
+      logger.error('[paddle] no webhook secret configured (prod + sandbox both empty)');
       res.status(500).send('Internal Server Error');
       return;
     }
     const signatureHeader = req.get('Paddle-Signature') ?? req.get('paddle-signature');
-    const sigCheck = verifyPaddleSignature(rawBody, signatureHeader, secret);
+    const sigCheck = verifyPaddleSignature(rawBody, signatureHeader, [prodSecret, sandboxSecret]);
     if (!sigCheck.valid) {
       logger.warn(`[paddle] signature invalid: ${sigCheck.reason}`);
       res.status(401).send('Unauthorized');

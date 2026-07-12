@@ -1,11 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { canPay, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
+import { auth } from '../../services/firebase';
+import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
+import { showAuthToast } from '../../components/ui/AuthToast';
+import { openCheckout } from '../../services/paddle';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
 export default function Pricing() {
@@ -13,14 +20,60 @@ export default function Pricing() {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
+  // Conversion inline pour un plan payant choisi directement à l'onboarding
+  // (même mécanique qu'au cycle 8) : compte permanent email+password avant Paddle.
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  // Réactif à la restauration de session Firebase : formulaire de création de
+  // compte affiché seulement si pas (encore) de compte permanent.
+  const [mustCreateAccount, setMustCreateAccount] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setMustCreateAccount(!user || user.isAnonymous);
+    });
+    return unsub;
+  }, []);
 
   function selectPlan(plan: string) {
     setSelectedPlan(plan);
   }
 
   async function handlePurchase() {
-    // Plan "Free" — accès direct sans paiement, navigation vers l'app sans auth
+    // DIAGNOSTIC dev-only (__DEV__ = false en build prod → strip automatique).
+    // NB : cette page d'onboarding n'ouvre PAS Paddle (user pas encore
+    // authentifié) — elle route vers auth.
+    if (__DEV__) {
+      console.log('[pricing] handlePurchase', {
+        selectedPlan,
+        platform: Platform.OS,
+        canPay: canPay(),
+        PADDLE_ACTIVE,
+      });
+    }
+    // Attendre la restauration de session avant toute lecture de currentUser
+    // (évite de recréer un anonyme en double après un rechargement de page).
+    await auth.authStateReady();
+    // Essai gratuit = 7 cycles, ZÉRO friction. On crée un compte Firebase
+    // ANONYME (identité pour le futur paiement/webhook), sans email ni carte.
+    // La progression reste LOCALE (AsyncStorage). Au cycle 8, ce compte anonyme
+    // sera converti en permanent via email+password (linkWithCredential), même
+    // UID → aucune perte. C'est l'UNIQUE chemin "sans compte" (l'ancien
+    // handleSkipAccount d'auth.tsx a été supprimé au profit de celui-ci).
     if (selectedPlan === 'free') {
+      try {
+        if (!auth.currentUser) {
+          const cred = await signInAnonymously(auth);
+          if (__DEV__) console.log('[pricing] signInAnonymously OK uid=', cred.user.uid, 'anon=', cred.user.isAnonymous);
+        } else if (__DEV__) {
+          console.log('[pricing] session déjà présente uid=', auth.currentUser.uid, 'anon=', auth.currentUser.isAnonymous);
+        }
+      } catch (e: any) {
+        // Échec (hors-ligne) : on ne bloque pas l'entrée en essai. La conversion
+        // du cycle 8 gérera l'absence de compte anonyme (createUser au lieu de link).
+        if (__DEV__) console.log('[pricing] signInAnonymously ÉCHEC', e?.code, e?.message);
+      }
       try {
         await AsyncStorage.multiSet([
           ['selected_plan', 'free'],
@@ -39,20 +92,50 @@ export default function Pricing() {
       return;
     }
 
-    // ── Branche WEB → Paddle (paiement post-auth) ──────────────────────────
-    // Paddle nécessite un Firebase UID pour rattacher la transaction à un user
-    // côté webhook. À ce stade de l'onboarding, l'utilisateur n'est pas encore
-    // authentifié. On enregistre le plan choisi et on pousse vers auth.tsx ;
-    // le paiement effectif aura lieu plus tard (depuis parametres.tsx ou via
-    // le gate freemium à partir du cycle 8). Aucune écriture optimiste de
-    // subscription_active — c'est le listener Firestore qui en sera la source.
+    // ── Branche WEB → conversion inline + Paddle (arbitrage #2) ────────────
+    // Un plan payant choisi directement à l'onboarding : on crée le compte
+    // permanent email+password SUR PLACE (même mécanique qu'au cycle 8), puis
+    // on enchaîne le checkout Paddle sans quitter la page. Aucune écriture
+    // optimiste de subscription_active — c'est le webhook → Firestore.
     if (Platform.OS === 'web' && PADDLE_ACTIVE) {
+      let checkoutEmail = auth.currentUser?.email ?? '';
+      if (needsAccount()) {
+        const email = accountEmail.trim().toLowerCase();
+        if (!EMAIL_RE.test(email)) {
+          showAuthToast(t.compte.errEmailInvalide, 'error');
+          return;
+        }
+        if (accountPassword.length < 6) {
+          showAuthToast(t.compte.errPasswordCourt, 'error');
+          return;
+        }
+        setSubmitting(true);
+        const res = await convertOrSignIn(email, accountPassword);
+        setSubmitting(false);
+        if (!res.ok) {
+          showAuthToast(mapConversionError(res.code, t.compte), 'error');
+          return;
+        }
+        checkoutEmail = res.user.email ?? email;
+      }
+      if (!checkoutEmail || !auth.currentUser) {
+        showAuthToast(t.compte.errGenerique, 'error');
+        return;
+      }
       try {
-        await AsyncStorage.setItem('selected_plan', selectedPlan);
+        await AsyncStorage.multiSet([
+          ['selected_plan', selectedPlan],
+          ['onboarding_completed', 'true'],
+        ]);
       } catch {
         // fallback silencieux
       }
-      router.push('/(onboarding)/auth');
+      await openCheckout({
+        plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+        email: checkoutEmail,
+        firebaseUid: auth.currentUser.uid,
+        onCheckoutCompleted: () => { router.replace('/(app)/splash'); },
+      });
       return;
     }
 
@@ -292,7 +375,39 @@ export default function Pricing() {
       </View>
 
       <View style={styles.bottomBlock}>
-        <Pressable style={styles.btnPrimary} onPress={handlePurchase}>
+        {selectedPlan !== 'free' && mustCreateAccount ? (
+          <View style={styles.accountForm}>
+            <Text style={styles.accountTitle}>{t.compte.titre}</Text>
+            <TextInput
+              style={styles.accountInput}
+              placeholder={t.compte.emailPlaceholder}
+              placeholderTextColor="#A09088"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              value={accountEmail}
+              onChangeText={setAccountEmail}
+            />
+            <TextInput
+              style={styles.accountInput}
+              placeholder={t.compte.passwordPlaceholder}
+              placeholderTextColor="#A09088"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="newPassword"
+              value={accountPassword}
+              onChangeText={setAccountPassword}
+            />
+          </View>
+        ) : null}
+
+        <Pressable
+          style={[styles.btnPrimary, submitting && { opacity: 0.5 }]}
+          onPress={handlePurchase}
+          disabled={submitting}
+        >
           <Text style={styles.btnPrimaryText}>
             {selectedPlan === 'free' ? t.pricing.plans.free.bouton : t.pricing.cta}
           </Text>
@@ -479,6 +594,28 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
     alignItems: 'center',
+  },
+  accountForm: {
+    width: '100%',
+    gap: 8,
+  },
+  accountTitle: {
+    fontFamily: 'serif',
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#3A3530',
+    textAlign: 'center',
+  },
+  accountInput: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#2A2520',
   },
   btnPrimary: {
     width: '100%',

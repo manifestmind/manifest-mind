@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { isSignInWithEmailLink, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
 import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Platform } from 'react-native';
+import { AuthToastHost, showAuthToast } from '../components/ui/AuthToast';
 import { auth } from '../services/firebase';
+import { INITIAL_WEB_HREF } from '../services/initialUrl';
 import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
 import { LanguageProvider } from '../src/i18n/LanguageContext';
 import { useTranslation } from '../src/hooks/useTranslation';
@@ -14,19 +16,71 @@ function SubscriptionSync() {
   return null;
 }
 
+// Bootstrap identité : sur web, la session Firebase est réhydratée de façon
+// ASYNCHRONE au chargement (auth.currentUser = null tant que ce n'est pas fini).
+// On attend authStateReady(), puis on garantit qu'un utilisateur d'essai
+// (onboarding_completed=true) a TOUJOURS un UID : soit l'anonyme restauré, soit
+// on le recrée s'il a été perdu. Ça évite qu'une page (pricing-upgrade) lise un
+// `null` prématuré → createUser au lieu de linkWithCredential.
+function AnonymousBootstrap() {
+  useEffect(() => {
+    (async () => {
+      try {
+        await auth.authStateReady();
+        const started = await AsyncStorage.getItem('onboarding_completed');
+        if (!auth.currentUser && started === 'true') {
+          const cred = await signInAnonymously(auth);
+          if (__DEV__) console.log('[bootstrap] anonyme recréé uid=', cred.user.uid);
+        } else if (__DEV__) {
+          console.log('[bootstrap] authStateReady user=', auth.currentUser?.uid ?? null, 'anon=', auth.currentUser?.isAnonymous ?? null);
+        }
+      } catch (e: any) {
+        if (__DEV__) console.log('[bootstrap] anon échec', e?.code, e?.message);
+      }
+    })();
+  }, []);
+  return null;
+}
+
+// Garde de dé-duplication au niveau MODULE (survit aux remounts, notamment le
+// double-montage de React StrictMode en dev) : le magic link ne doit être
+// consommé qu'UNE fois par chargement de page — sinon la 2e tentative échoue
+// (oobCode déjà consommé) et déclenche une redirection parasite vers /auth.
+let magicLinkProcessed = false;
+
 function DeepLinkHandler() {
   const t = useTranslation();
 
   useEffect(() => {
     async function handleAuthLink(url: string) {
-      if (!isSignInWithEmailLink(auth, url)) return;
+      const isLink = isSignInWithEmailLink(auth, url);
+      if (__DEV__) console.log('[deeplink] url =', url, '| isSignInWithEmailLink =', isLink);
+      if (!isLink) return;
+      if (magicLinkProcessed) {
+        if (__DEV__) console.log('[deeplink] déjà traité ce chargement — skip');
+        return;
+      }
+      magicLinkProcessed = true;
+
       try {
-        const email = await AsyncStorage.getItem('emailForSignIn');
+        let email = await AsyncStorage.getItem('emailForSignIn');
+        if (__DEV__) console.log('[deeplink] emailForSignIn (storage) =', email);
+
+        // Email absent (lien ouvert dans un autre navigateur/onglet, storage
+        // vidé…) : on le DEMANDE au lieu d'abandonner silencieusement.
+        if (!email && Platform.OS === 'web' && typeof window !== 'undefined') {
+          email = window.prompt(t.auth.alertLienEmailManquant.corps) || '';
+          if (__DEV__) console.log('[deeplink] email via prompt =', email || '(vide)');
+        }
         if (!email) {
-          Alert.alert(t.auth.alertLienEmailManquant.titre, t.auth.alertLienEmailManquant.corps);
+          showAuthToast(`${t.auth.alertLienEmailManquant.titre} — ${t.auth.alertLienEmailManquant.corps}`, 'error');
+          magicLinkProcessed = false;
+          router.replace('/(onboarding)/auth' as any);
           return;
         }
+
         await signInWithEmailLink(auth, email, url);
+        if (__DEV__) console.log('[deeplink] signInWithEmailLink OK pour', email);
         await AsyncStorage.removeItem('emailForSignIn');
 
         // Initialiser le cycle si c'est la première connexion
@@ -52,27 +106,48 @@ function DeepLinkHandler() {
         }
 
         await AsyncStorage.setItem('onboarding_completed', 'true');
+        // Flux normal : splash → home. Le gate paywall (cycle > 7 && free &&
+        // !abonné) est appliqué EN AVAL par home.tsx — un user au cycle 1 entre
+        // légitimement dans l'app (7 cycles gratuits).
+        if (__DEV__) console.log('[deeplink] session établie → route /splash');
         router.replace('/(app)/splash' as any);
       } catch (error: any) {
+        magicLinkProcessed = false; // autorise un nouveau lien (nouveau chargement)
         const code: string = error?.code ?? '';
+        if (__DEV__) console.log('[deeplink] signInWithEmailLink FAILED', code, error?.message);
         if (code === 'auth/expired-action-code') {
-          Alert.alert(t.auth.alertLienExpire.titre, t.auth.alertLienExpire.corps);
+          showAuthToast(`${t.auth.alertLienExpire.titre} — ${t.auth.alertLienExpire.corps}`, 'error');
         } else if (code === 'auth/invalid-action-code' || code === 'auth/invalid-email') {
-          Alert.alert(t.auth.alertLienInvalide.titre, t.auth.alertLienInvalide.corps);
+          showAuthToast(`${t.auth.alertLienInvalide.titre} — ${t.auth.alertLienInvalide.corps}`, 'error');
         } else if (code === 'auth/network-request-failed') {
-          Alert.alert(t.auth.alertErreurReseau.titre, t.auth.alertErreurReseau.corps);
+          showAuthToast(`${t.auth.alertErreurReseau.titre} — ${t.auth.alertErreurReseau.corps}`, 'error');
         } else if (code === 'auth/user-not-found') {
-          Alert.alert(t.auth.alertUtilisateurIntrouvable.titre, t.auth.alertUtilisateurIntrouvable.corps);
+          showAuthToast(`${t.auth.alertUtilisateurIntrouvable.titre} — ${t.auth.alertUtilisateurIntrouvable.corps}`, 'error');
         } else {
-          Alert.alert(t.auth.alertLienInvalide.titre, t.auth.alertLienInvalide.corps);
+          showAuthToast(`${t.auth.alertLienInvalide.titre} — ${t.auth.alertLienInvalide.corps}`, 'error');
         }
+        router.replace('/(onboarding)/auth' as any);
       }
     }
 
-    // Démarrage à froid — app ouverte via le lien
-    Linking.getInitialURL().then(url => { if (url) handleAuthLink(url); });
+    // WEB : le retour magic link est le query string standard de
+    // window.location.href (?apiKey=…&oobCode=…&mode=signIn). On le lit
+    // SYNCHRONEMENT au montage, AVANT qu'index.tsx ne redirige et efface les
+    // params de la barre d'URL (c'était la cause du décrochage).
+    if (Platform.OS === 'web') {
+      // On traite l'URL capturée AU MODULE LOAD (INITIAL_WEB_HREF), PAS
+      // window.location.href : ce dernier est déjà réécrit en /auth au moment
+      // où cet effet tourne. INITIAL_WEB_HREF contient encore ?apiKey&oobCode&mode.
+      if (INITIAL_WEB_HREF) {
+        if (__DEV__) console.log('[deeplink] web using INITIAL_WEB_HREF =', INITIAL_WEB_HREF);
+        handleAuthLink(INITIAL_WEB_HREF);
+      }
+    } else {
+      // NATIF : démarrage à froid via deep link
+      Linking.getInitialURL().then(url => { if (url) handleAuthLink(url); });
+    }
 
-    // App déjà ouverte, reçoit le lien
+    // App déjà ouverte, reçoit un lien (surtout natif)
     const sub = Linking.addEventListener('url', ({ url }) => handleAuthLink(url));
     return () => sub.remove();
   }, [t]);
@@ -83,6 +158,7 @@ function DeepLinkHandler() {
 export default function RootLayout() {
   return (
     <LanguageProvider>
+      <AnonymousBootstrap />
       <DeepLinkHandler />
       <SubscriptionSync />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>
@@ -99,6 +175,7 @@ export default function RootLayout() {
         <Stack.Screen name="(app)/parametres"    options={{ animation: 'fade' }} />
         <Stack.Screen name="(app)/name"          options={{ animation: 'fade' }} />
       </Stack>
+      <AuthToastHost />
     </LanguageProvider>
   );
 }

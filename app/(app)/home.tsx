@@ -150,18 +150,15 @@ export default function Home() {
       cycle = newCycle;
     }
 
-    // Gate freemium : seuls les users 'free' sans abonnement actif sont paywallés.
-    // Les plans payants (lifetime/annuel/mensuel) écrivent subscription_active='true'
-    // à l'achat (pricing.tsx onboarding ou pricing-upgrade.tsx in-app) et passent.
+    // Gate freemium (modèle définitif) : au-delà de l'essai gratuit (7 cycles),
+    // TOUT utilisateur sans abonnement payant actif est bloqué vers le paywall.
+    // subscription_active='true' est posé par le webhook Paddle → Firestore →
+    // useSubscriptionSync → AsyncStorage. On ne dépend PLUS de selected_plan :
+    // un anonyme d'essai (ou tout compte sans abonnement) est paywallé au cycle 8.
     // DEBUG_SKIP_PAYWALL court-circuite tout pour les tests Expo Go.
     if (!DEBUG_SKIP_PAYWALL) {
-      const [selectedPlanRaw, subActiveRaw] = await AsyncStorage.multiGet([
-        'selected_plan',
-        'subscription_active',
-      ]);
-      const isFree = selectedPlanRaw[1] === 'free';
-      const subActive = subActiveRaw[1] === 'true';
-      if (cycle > FREE_CYCLES && isFree && !subActive) {
+      const subActive = (await AsyncStorage.getItem('subscription_active')) === 'true';
+      if (cycle > FREE_CYCLES && !subActive) {
         router.replace('/(app)/pricing-upgrade' as any);
         return;
       }

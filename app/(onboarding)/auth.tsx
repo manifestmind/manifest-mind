@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 import { sendSignInLinkToEmail } from 'firebase/auth';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { showAuthToast } from '../../components/ui/AuthToast';
 import { auth } from '../../services/firebase';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
@@ -18,11 +18,14 @@ export default function Auth() {
   const [cooldownUntil, setCooldownUntil] = useState(0);
 
   const handleAppleSignIn = () => {
-    Alert.alert(t.auth.alertApple.titre, t.auth.alertApple.corps);
+    // Stub inchangé (OAuth Apple à implémenter en session dédiée) — on rend juste
+    // le message visible sur web via le toast au lieu d'une Alert muette.
+    showAuthToast(`${t.auth.alertApple.titre} — ${t.auth.alertApple.corps}`, 'info');
   };
 
   const handleGoogleSignIn = () => {
-    Alert.alert(t.auth.alertGoogle.titre, t.auth.alertGoogle.corps);
+    // Stub inchangé (OAuth Google à implémenter en session dédiée).
+    showAuthToast(`${t.auth.alertGoogle.titre} — ${t.auth.alertGoogle.corps}`, 'info');
   };
 
   const handleEmailSignIn = () => {
@@ -32,8 +35,19 @@ export default function Auth() {
   const sendMagicLink = async (emailAddress: string) => {
     if (Date.now() < cooldownUntil) return;
     try {
+      // URL de continuation : sur web on renvoie vers l'ORIGINE COURANTE
+      // (localhost:8082 en dev, manifest-mind.app en prod bundlé). Indispensable :
+      // emailForSignIn est stocké dans le localStorage de cette origine, et
+      // localStorage est cloisonné par origine — le lien doit reboucler ici,
+      // sinon signInWithEmailLink ne retrouve pas l'email. Sur natif, deep link
+      // vers le domaine de prod.
+      const continueUrl =
+        Platform.OS === 'web' ? window.location.origin : 'https://manifest-mind.app';
+      // DIAGNOSTIC dev-only (__DEV__ = false en prod → strip automatique).
+      // Affiche l'origine réellement capturée au clic → détecte une dérive de port.
+      if (__DEV__) console.log('[auth] magic link continueUrl =', continueUrl);
       const actionCodeSettings = {
-        url: 'https://manifest-mind.app',
+        url: continueUrl,
         handleCodeInApp: true,
       };
 
@@ -41,7 +55,7 @@ export default function Auth() {
       await AsyncStorage.setItem('emailForSignIn', emailAddress);
 
       setFailedAttempts(0);
-      Alert.alert(t.auth.alertEmailSent.titre, t.auth.alertEmailSent.corps);
+      showAuthToast(`${t.auth.alertEmailSent.titre} — ${t.auth.alertEmailSent.corps}`, 'success');
 
       setShowEmailInput(false);
       setEmail('');
@@ -53,37 +67,15 @@ export default function Auth() {
         setCooldownUntil(Date.now() + 30_000);
         setFailedAttempts(0);
       }
-      Alert.alert(t.auth.alertEmailError.titre, t.auth.alertEmailError.corps);
+      showAuthToast(`${t.auth.alertEmailError.titre} — ${t.auth.alertEmailError.corps}`, 'error');
     }
   };
 
-  const initFirstCycle = async () => {
-    await AsyncStorage.setItem('current_cycle', '1');
-    await AsyncStorage.setItem('current_theme', '1');
-    await AsyncStorage.setItem('cycle_completed', 'false');
-    await AsyncStorage.setItem('cycle_points', '0');
-    await AsyncStorage.setItem('points_total', '0');
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify({
-      opening: false, affirmation: false,
-      action_easy: false, action_hard: false,
-      visualisation: false, journal: false, vision_board: false,
-    }));
-    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
-      opening: 0, affirmation: 0,
-      action_easy: 0, action_hard: 0,
-      visualisation: 0, journal: 0, vision_board: 0,
-    }));
-  };
-
-  const handleSkipAccount = async () => {
-    try {
-      await initFirstCycle();
-      await AsyncStorage.setItem('onboarding_completed', 'true');
-      router.replace('/(app)/splash' as any);
-    } catch (error) {
-      console.error('Error skipping account:', error);
-    }
-  };
+  // NB : l'initialisation des clés de cycle et `onboarding_completed` est gérée
+  // en aval (loadHome dans home.tsx si absentes, ou DeepLinkHandler au 1er
+  // sign-in magic link). L'ancien `handleSkipAccount` / « continuer sans compte »
+  // a été retiré : l'unique chemin "sans compte" est désormais l'essai gratuit
+  // (signInAnonymously) déclenché depuis pricing.tsx.
 
   return (
     <KeyboardAvoidingView
@@ -230,10 +222,6 @@ export default function Auth() {
       </View>
 
       <View style={styles.bottomBlock}>
-        <Pressable onPress={handleSkipAccount}>
-          <Text style={styles.skipText}>{t.auth.sansCompte}</Text>
-        </Pressable>
-
         <View style={styles.dotsNav}>
           <View style={styles.dotNav} />
           <View style={styles.dotNav} />

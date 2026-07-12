@@ -1,19 +1,30 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { canPay, FREE_CYCLES, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../services/firebase';
+import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
+import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout } from '../../services/paddle';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function PricingUpgrade() {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
   const [isFreemiumExpired, setIsFreemiumExpired] = useState(false);
+  // Conversion inline : si l'utilisateur est anonyme (essai) ou absent, on lui
+  // demande email + mot de passe pour créer son compte permanent avant de payer.
+  const [mustCreateAccount, setMustCreateAccount] = useState(true);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -27,7 +38,35 @@ export default function PricingUpgrade() {
     })();
   }, []);
 
+  // Réactif à la restauration de session Firebase : le formulaire de création
+  // de compte ne s'affiche que si l'utilisateur n'a pas (encore) de compte
+  // permanent (anonyme ou null). Évite un formulaire affiché à tort pendant la
+  // fenêtre de réhydratation.
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setMustCreateAccount(!user || user.isAnonymous);
+    });
+    return unsub;
+  }, []);
+
   async function handlePurchase() {
+    // Attendre la fin de la restauration de la session Firebase : sur web,
+    // auth.currentUser est null au chargement tant que la persistance n'a pas
+    // réhydraté. Sans ça, l'anonyme d'essai apparaît comme "null" → createUser
+    // au lieu de linkWithCredential (perte de la vraie conversion).
+    await auth.authStateReady();
+    // DIAGNOSTIC dev-only (__DEV__ = false en build prod → strip automatique).
+    if (__DEV__) {
+      console.log('[pricing-upgrade] handlePurchase', {
+        selectedPlan,
+        platform: Platform.OS,
+        canPay: canPay(),
+        PADDLE_ACTIVE,
+        uid: auth.currentUser?.uid ?? null,
+        isAnonymous: auth.currentUser?.isAnonymous ?? null,
+        email: auth.currentUser?.email ?? null,
+      });
+    }
     // Bloqué si aucun provider de paiement n'est actif pour la plateforme courante
     // (Paddle sur web, RevenueCat/IAP sur native).
     if (!canPay()) {
@@ -41,20 +80,46 @@ export default function PricingUpgrade() {
     // webhook Paddle aura mis à jour Firestore. On enregistre seulement
     // selected_plan localement pour l'affichage UI du plan choisi.
     if (Platform.OS === 'web' && PADDLE_ACTIVE) {
-      const user = auth.currentUser;
-      if (!user || !user.email) {
-        Alert.alert(t.auth.alertNonConnecte.titre, t.auth.alertNonConnecte.corps);
+      // 1) S'assurer d'un compte permanent avec email. Anonyme (essai) → on
+      //    convertit via email+password (linkWithCredential, même UID → aucune
+      //    perte). Déjà permanent → on saute cette étape.
+      let checkoutEmail = auth.currentUser?.email ?? '';
+      if (needsAccount()) {
+        const email = accountEmail.trim().toLowerCase();
+        if (!EMAIL_RE.test(email)) {
+          showAuthToast(t.compte.errEmailInvalide, 'error');
+          return;
+        }
+        if (accountPassword.length < 6) {
+          showAuthToast(t.compte.errPasswordCourt, 'error');
+          return;
+        }
+        setSubmitting(true);
+        const res = await convertOrSignIn(email, accountPassword);
+        setSubmitting(false);
+        if (!res.ok) {
+          showAuthToast(mapConversionError(res.code, t.compte), 'error');
+          return;
+        }
+        checkoutEmail = res.user.email ?? email;
+        setMustCreateAccount(false);
+      }
+      if (!checkoutEmail || !auth.currentUser) {
+        showAuthToast(t.compte.errGenerique, 'error');
         return;
       }
+      // 2) Enregistrer le plan choisi (affichage) — pas d'écriture optimiste de
+      //    subscription_active : c'est le webhook → Firestore → useSubscriptionSync.
       try {
         await AsyncStorage.setItem('selected_plan', selectedPlan);
       } catch {
         // Écriture impossible — continuer quand même
       }
+      // 3) Enchaîner DIRECTEMENT sur le checkout Paddle, sans quitter la page.
       await openCheckout({
         plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
-        email: user.email,
-        firebaseUid: user.uid,
+        email: checkoutEmail,
+        firebaseUid: auth.currentUser.uid,
       });
       // Le checkout reste ouvert ; le listener Firestore fera basculer
       // subscription_active='true' dès que le webhook aura validé le paiement.
@@ -227,7 +292,39 @@ export default function PricingUpgrade() {
       </View>
 
       <View style={styles.bottomBlock}>
-        <Pressable style={styles.btnPrimary} onPress={handlePurchase}>
+        {mustCreateAccount ? (
+          <View style={styles.accountForm}>
+            <Text style={styles.accountTitle}>{t.compte.titre}</Text>
+            <TextInput
+              style={styles.accountInput}
+              placeholder={t.compte.emailPlaceholder}
+              placeholderTextColor="#A09088"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              value={accountEmail}
+              onChangeText={setAccountEmail}
+            />
+            <TextInput
+              style={styles.accountInput}
+              placeholder={t.compte.passwordPlaceholder}
+              placeholderTextColor="#A09088"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="newPassword"
+              value={accountPassword}
+              onChangeText={setAccountPassword}
+            />
+          </View>
+        ) : null}
+
+        <Pressable
+          style={[styles.btnPrimary, submitting && { opacity: 0.5 }]}
+          onPress={handlePurchase}
+          disabled={submitting}
+        >
           <Text style={styles.btnPrimaryText}>{t.pricingUpgrade.confirmer}</Text>
         </Pressable>
 
@@ -394,6 +491,28 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
     alignItems: 'center',
+  },
+  accountForm: {
+    width: '100%',
+    gap: 8,
+  },
+  accountTitle: {
+    fontFamily: 'serif',
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#3A3530',
+    textAlign: 'center',
+  },
+  accountInput: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#2A2520',
   },
   btnPrimary: {
     width: '100%',
