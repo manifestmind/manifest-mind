@@ -434,13 +434,28 @@ Phases livrées & validées :
 - **P3** — conversion inline email+password (`services/authConversion.ts` : `convertOrSignIn`/`needsAccount`/`mapConversionError`) sur `pricing-upgrade.tsx` (cycle 8) et `pricing.tsx` (paid onboarding) → enchaîne Paddle. Gère `email-already-in-use` (fallback signIn). i18n `t.compte` (fr/en/es).
 - **Fix authStateReady** — `_layout.tsx` `AnonymousBootstrap` (attend `auth.authStateReady()`, garantit l'anonyme) ; `await auth.authStateReady()` dans les `handlePurchase` ; `mustCreateAccount` réactif via `onAuthStateChanged`. Résout le `currentUser` null prématuré (réhydratation async de la persistance web) → vraie conversion `linkWithCredential`, même UID. **Testé OK end-to-end le 2026-07-12** (paiement → `subscription_active=true` → accès débloqué).
 
-### En attente — prochaine session
+### 🗺️ Roadmap priorisée — prochaines sessions (dans cet ordre)
 
-1. ⏳ **Retour automatique dans l'app après paiement (cycle 8)** — actuellement, après paiement sur `pricing-upgrade`, il faut aller **manuellement** sur home (on n'auto-route PAS car `checkout.completed` arrive avant la synchro webhook→Firestore→`subscription_active` → router immédiatement rebondirait sur le paywall). À implémenter : écran **« activation en cours »** qui attend `subscription_active=true` (listener) puis route vers home. À l'onboarding (cycle 1) le problème ne se pose pas.
-2. ⏳ **Phase 4 — wording « 7 cycles gratuits »** partout (retirer toute mention « 7 jours »), 3 langues (`translations.ts`). CGU/remboursement à aligner dans un second temps.
-3. ⏳ **Phase 5 — reconnexion** — vérifier que le magic link reconnecte bien un compte converti (email+password) ; `subscription_active` resynchronisé depuis Firestore. (Pas de formulaire password prévu au MVP.)
-4. ⏳ **Configuration PWA (web installable)** — `manifest.webmanifest` (nom, icônes, `display: standalone`, `theme_color`), **service worker** (offline/cache), **icônes** (192/512 + maskable). À faire avant/pendant le build web.
-5. 🧹 **Nettoyage avant prod** — retirer les boutons debug `home.tsx` (« reset », « ⏭ cycle suivant ») et les `console.log` `__DEV__` de diagnostic ; clé i18n `t.auth.sansCompte` + style `skipText` devenus inutilisés.
+#### PRIORITÉ 1 — Finition du modèle d'accès (en cours, presque bouclé)
+1. ⏳ **Redirection automatique dans l'app après paiement** — actuellement, après paiement sur `pricing-upgrade`, il faut aller **manuellement** sur home/splash (on n'auto-route PAS car `checkout.completed` arrive avant la synchro webhook→Firestore→`subscription_active` → router immédiatement rebondirait sur le paywall). À implémenter : écran **« activation en cours »** qui attend `subscription_active=true` (listener `useSubscriptionSync`) puis route vers home. À l'onboarding (cycle 1) le problème ne se pose pas.
+2. ⏳ **Phase 4 — wording « 7 cycles gratuits »** partout (retirer toute mention « 7 jours »), 3 langues (`translations.ts`).
+3. ⏳ **Phase 5 — reconnexion** — vérifier que le magic link reconnecte bien un utilisateur qui revient (compte converti email+password) ; `subscription_active` resynchronisé depuis Firestore. (Pas de formulaire password au MVP.)
+
+#### PRIORITÉ 2 — Google Sign-In (à faire AVANT le lancement public)
+Les boutons Google existent mais sont des **coquilles vides** (`auth.tsx` : `handleGoogleSignIn` affiche juste un toast). Le provider **Google est déjà activé côté Firebase**. À développer :
+- **Connexion Google** : `signInWithPopup` + `GoogleAuthProvider` (compte Google perso), avec `signInWithRedirect` en fallback si popup bloqué.
+- **Conversion du compte anonyme via Google au cycle 8** — alternative à email+password : `linkWithPopup(auth.currentUser, GoogleAuthProvider)` (même UID conservé, cf. logique `services/authConversion.ts`). Gérer `credential-already-in-use`.
+- **Reconnexion via Google** pour un utilisateur qui revient.
+- (Apple Sign-In laissé de côté pour l'instant — chantier séparé, exige config Apple Developer.)
+
+#### PRIORITÉ 3 — Préparation du lancement web (Phase 1)
+- ⏳ **PWA** — `manifest.webmanifest` (nom, icônes, `display: standalone`, `theme_color`), **service worker** (offline/cache), **jeu d'icônes** (192/512 + maskable) → installable sur écran d'accueil.
+- ⏳ **Passage Paddle sandbox → production** — créer produits + prix côté prod, configurer le webhook prod, **approbation du domaine `manifest-mind.app`** dans Paddle. Puis `.env` : `EXPO_PUBLIC_PADDLE_SANDBOX=false` (bascule sur le token/price IDs prod déjà présents).
+- ⏳ **Documents légaux** — CGU + politique de confidentialité à jour avec **« 7 cycles »** et **essai sans carte** (3 langues).
+- ⏳ **Déploiement web** — build `npx expo export --platform web` → `dist/` → déploiement sur `manifest-mind.app` + **tests finaux en conditions réelles** (paiement prod, magic link, Google).
+
+#### Transverse — nettoyage avant prod
+🧹 Retirer les boutons debug `home.tsx` (« reset », « ⏭ cycle suivant ») et les `console.log` `__DEV__` de diagnostic ; supprimer la clé i18n `t.auth.sansCompte` + le style `skipText` devenus inutilisés. Vérifier `DEBUG_SKIP_PAYWALL = false` (point 0 🚨).
 
 ### Rappel : 2 constructions distinctes prévues
 
