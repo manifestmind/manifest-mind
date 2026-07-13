@@ -6,7 +6,7 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { canPay, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
+import { canPay, PADDLE_ACTIVE } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { showAuthToast } from '../../components/ui/AuthToast';
@@ -415,6 +415,16 @@ export default function Pricing() {
 
         <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
+        {/* Porte de reconnexion. Sans elle, un abonné qui revient sur un nouvel
+            appareil (storage vide → onboarding) n'a AUCUN moyen de retrouver son
+            compte : s'il choisit "Free", signInAnonymously lui crée un nouvel UID
+            et son abonnement (attaché à l'ancien) devient inaccessible. On place
+            donc le lien AVANT qu'il ait pu cliquer. auth.tsx → magic link →
+            même UID → useSubscriptionSync repose subscription_active. */}
+        <Pressable onPress={() => router.push('/(onboarding)/auth')}>
+          <Text style={styles.reconnexionText}>{t.pricing.dejaCompte}</Text>
+        </Pressable>
+
         <Pressable onPress={handleRestore}>
           <Text style={styles.restoreText}>{t.pricing.restaurer}</Text>
         </Pressable>
@@ -639,6 +649,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#6B3FA0',
     textAlign: 'center',
+  },
+  reconnexionText: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#6B3FA0',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   restoreText: {
     fontFamily: 'Jost',

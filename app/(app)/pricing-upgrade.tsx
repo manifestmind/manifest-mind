@@ -5,7 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
-import { canPay, FREE_CYCLES, PADDLE_ACTIVE, STORES_ACTIVE } from '../../services/config';
+import { canPay, FREE_CYCLES, PADDLE_ACTIVE } from '../../services/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
@@ -116,13 +116,20 @@ export default function PricingUpgrade() {
         // Écriture impossible — continuer quand même
       }
       // 3) Enchaîner DIRECTEMENT sur le checkout Paddle, sans quitter la page.
+      //    À la complétion, on route vers l'écran d'activation : `checkout.completed`
+      //    arrive AVANT que le webhook ait écrit subscription_active (Firestore →
+      //    useSubscriptionSync → AsyncStorage). Router vers home ici ferait rebondir
+      //    l'utilisateur sur ce paywall alors qu'il vient de payer. L'écran
+      //    d'activation attend la clé puis route.
       await openCheckout({
         plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
         email: checkoutEmail,
         firebaseUid: auth.currentUser.uid,
+        onCheckoutCompleted: () => {
+          if (__DEV__) console.log('[pricing-upgrade] checkout.completed → route /activation');
+          router.replace('/(app)/activation' as any);
+        },
       });
-      // Le checkout reste ouvert ; le listener Firestore fera basculer
-      // subscription_active='true' dès que le webhook aura validé le paiement.
       return;
     }
 

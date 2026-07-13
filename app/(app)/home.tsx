@@ -401,7 +401,7 @@ export default function Home() {
         <Animated.View style={[styles.mainBtnWrap, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
           {cycleCompleted && cycleNumber >= 365 ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>
-              <Text style={styles.mainBtnText}>{t.home.programmeTermine || t.home.nextCycle}</Text>
+              <Text style={styles.mainBtnText}>{t.home.programmeTermine}</Text>
             </View>
           ) : cycleCompleted ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>

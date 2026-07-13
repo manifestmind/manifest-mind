@@ -28,7 +28,7 @@ declare global {
     Paddle?: {
       Environment: { set: (env: 'sandbox' | 'production') => void };
       Setup: (config: { token: string; eventCallback?: (data: any) => void }) => void;
-      Checkout: { open: (options: any) => void };
+      Checkout: { open: (options: any) => void; close: () => void };
     };
   }
 }
@@ -76,7 +76,31 @@ function loadPaddleScript(): Promise<void> {
 // Setup Paddle (token + environnement) — appelé une seule fois après load
 // ──────────────────────────────────────────────────────────────────────────
 
-function setupPaddle(eventCallback?: (data: any) => void): boolean {
+// Paddle.Setup() n'est appelable qu'UNE fois par chargement de page : son
+// eventCallback est figé. On y branche donc un dispatcher stable qui relit les
+// handlers du checkout COURANT, stockés ici. Sans ça, un 2e openCheckout (1re
+// tentative abandonnée, passage par pricing.tsx…) verrait ses callbacks
+// silencieusement ignorés — checkout.completed ne routerait jamais.
+let currentHandlers: Pick<CheckoutArgs, 'onClose' | 'onCheckoutCompleted'> = {};
+
+function dispatchPaddleEvent(data: any) {
+  if (!data?.name) return;
+  if (__DEV__) console.log('[paddle] event', data.name);
+  if (data.name === 'checkout.closed') currentHandlers.onClose?.();
+  if (data.name === 'checkout.completed') {
+    // Fermer l'overlay Paddle AVANT de rendre la main : sans successUrl, Paddle
+    // laisse sa page "Payment successful" affichée par-dessus l'app. L'écran
+    // d'activation se monterait derrière et resterait invisible.
+    try {
+      window.Paddle?.Checkout.close();
+    } catch (e) {
+      if (__DEV__) console.log('[paddle] Checkout.close() a échoué', e);
+    }
+    currentHandlers.onCheckoutCompleted?.();
+  }
+}
+
+function setupPaddle(): boolean {
   if (Platform.OS !== 'web' || !window.Paddle) return false;
   if (paddleSetupDone) return true;
 
@@ -93,7 +117,7 @@ function setupPaddle(eventCallback?: (data: any) => void): boolean {
 
   try {
     window.Paddle.Environment.set(PADDLE_SANDBOX ? 'sandbox' : 'production');
-    window.Paddle.Setup({ token, eventCallback });
+    window.Paddle.Setup({ token, eventCallback: dispatchPaddleEvent });
     paddleSetupDone = true;
     return true;
   } catch (e) {
@@ -151,11 +175,13 @@ export async function openCheckout(args: CheckoutArgs): Promise<void> {
     return;
   }
 
-  const setupOk = setupPaddle((data: any) => {
-    if (!data?.name) return;
-    if (data.name === 'checkout.closed') args.onClose?.();
-    if (data.name === 'checkout.completed') args.onCheckoutCompleted?.();
-  });
+  // Handlers du checkout courant, relus par le dispatcher stable (cf. supra).
+  currentHandlers = {
+    onClose: args.onClose,
+    onCheckoutCompleted: args.onCheckoutCompleted,
+  };
+
+  const setupOk = setupPaddle();
   if (!setupOk || !window.Paddle) return;
 
   try {

@@ -370,12 +370,6 @@ const styles = StyleSheet.create({
     gap: 16,
     marginTop: 20,
   },
-  skipText: {
-    fontFamily: 'Jost',
-    fontSize: 15,
-    color: '#A09088',
-    textDecorationLine: 'underline',
-  },
   dotsNav: {
     flexDirection: 'row',
     gap: 5,

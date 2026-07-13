@@ -185,6 +185,7 @@ export const translations = {
       ],
       cta: 'Je transforme ma vie maintenant →',
       bottomText: 'Moins de 0,50€ pour changer ta vie',
+      dejaCompte: 'J\'ai déjà un compte → Me reconnecter',
       restaurer: 'Restaurer un achat',
     },
 
@@ -197,7 +198,6 @@ export const translations = {
       email: 'Continuer avec e-mail',
       placeholder: 'Ton adresse e-mail',
       envoyer: 'Envoyer le lien →',
-      sansCompte: 'Continuer sans compte →',
       alertApple: {
         titre: 'Disponible prochainement',
         corps: 'La connexion Apple sera disponible dans une prochaine version.',
@@ -483,6 +483,19 @@ export const translations = {
       freemiumBouton: 'Continuer mon parcours',
     },
 
+    // ── Écran d'attente post-paiement (activation de l'abonnement) ────────────
+    activation: {
+      paiementRecu: '✅ Paiement reçu.',
+      voyage: 'Ton voyage commence maintenant…',
+      preparation: 'Nous préparons ton espace de transformation.',
+      succesTitre: 'Ton espace est prêt',
+      succesMessage: 'Bon retour parmi nous. On reprend ton parcours.',
+      lentTitre: 'Encore un instant',
+      lentMessage: 'Ton paiement est bien reçu, l\'activation prend un peu plus de temps que prévu.',
+      rafraichir: 'Réessayer',
+      continuer: 'Continuer',
+    },
+
     // ── Création / conversion de compte (email + mot de passe) ────────────────
     compte: {
       titre: 'Crée ton compte pour continuer',
@@ -686,6 +699,7 @@ export const translations = {
       ],
       cta: 'Transform my life now →',
       bottomText: 'Less than €0.50 to change your life',
+      dejaCompte: 'I already have an account → Sign back in',
       restaurer: 'Restore a purchase',
     },
 
@@ -697,7 +711,6 @@ export const translations = {
       email: 'Continue with email',
       placeholder: 'Your email address',
       envoyer: 'Send link →',
-      sansCompte: 'Continue without account →',
       alertApple: {
         titre: 'Coming soon',
         corps: 'Apple sign-in will be available in a future version.',
@@ -971,6 +984,19 @@ export const translations = {
       freemiumBouton: 'Continue my journey',
     },
 
+    // ── Post-payment waiting screen (subscription activation) ─────────────────
+    activation: {
+      paiementRecu: '✅ Payment received.',
+      voyage: 'Your journey begins now…',
+      preparation: 'We\'re preparing your space of transformation.',
+      succesTitre: 'Your space is ready',
+      succesMessage: 'Welcome back. Let\'s pick up your journey.',
+      lentTitre: 'Just a moment longer',
+      lentMessage: 'Your payment was received — activation is taking a little longer than expected.',
+      rafraichir: 'Try again',
+      continuer: 'Continue',
+    },
+
     // ── Account creation / conversion (email + password) ──────────────────────
     compte: {
       titre: 'Create your account to continue',
@@ -1172,6 +1198,7 @@ export const translations = {
       ],
       cta: 'Transformar mi vida ahora →',
       bottomText: 'Menos de 0,50€ para cambiar tu vida',
+      dejaCompte: 'Ya tengo una cuenta → Volver a entrar',
       restaurer: 'Restaurar una compra',
     },
 
@@ -1183,7 +1210,6 @@ export const translations = {
       email: 'Continuar con e-mail',
       placeholder: 'Tu dirección de e-mail',
       envoyer: 'Enviar enlace →',
-      sansCompte: 'Continuar sin cuenta →',
       alertApple: {
         titre: 'Próximamente',
         corps: 'El acceso con Apple estará disponible en una versión futura.',
@@ -1455,6 +1481,19 @@ export const translations = {
       freemiumTitre: 'Tus 7 ciclos gratuitos han terminado',
       freemiumMessage: 'Has descubierto ManifestMind. Continúa tu transformación hasta el ciclo 365 pasando a Premium.',
       freemiumBouton: 'Continuar mi camino',
+    },
+
+    // ── Pantalla de espera tras el pago (activación de la suscripción) ────────
+    activation: {
+      paiementRecu: '✅ Pago recibido.',
+      voyage: 'Tu viaje empieza ahora…',
+      preparation: 'Estamos preparando tu espacio de transformación.',
+      succesTitre: 'Tu espacio está listo',
+      succesMessage: 'Bienvenido de nuevo. Retomamos tu camino.',
+      lentTitre: 'Un instante más',
+      lentMessage: 'Tu pago se ha recibido correctamente; la activación tarda un poco más de lo previsto.',
+      rafraichir: 'Reintentar',
+      continuer: 'Continuar',
     },
 
     // ── Creación / conversión de cuenta (email + contraseña) ──────────────────

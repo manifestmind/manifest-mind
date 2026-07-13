@@ -174,6 +174,7 @@ export default function RootLayout() {
         <Stack.Screen name="(app)/profil"        options={{ animation: 'fade' }} />
         <Stack.Screen name="(app)/parametres"    options={{ animation: 'fade' }} />
         <Stack.Screen name="(app)/name"          options={{ animation: 'fade' }} />
+        <Stack.Screen name="(app)/activation"    options={{ animation: 'fade' }} />
       </Stack>
       <AuthToastHost />
     </LanguageProvider>
