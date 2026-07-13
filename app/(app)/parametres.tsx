@@ -470,7 +470,10 @@ export default function Parametres() {
           </Pressable>
 
           {/* Ligne 2 — Restaurer les achats */}
-          <Pressable style={[styles.rowBase, styles.rowLast]} onPress={handleRestorePurchases}>
+          <Pressable
+            style={[styles.rowBase, subscriptionActive && styles.rowLast]}
+            onPress={handleRestorePurchases}
+          >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Rect x="3" y="5" width="14" height="10" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
               <Path d="M3 9h14" stroke="#6B3FA0" strokeWidth="1.2" />
@@ -478,6 +481,24 @@ export default function Parametres() {
             <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.abonnement.restaurer}</Text>
             <Chevron />
           </Pressable>
+
+          {/* Ligne 3 — Lien de secours : un abonné qui a perdu sa session (nouvel
+              appareil, cache vidé, déconnexion) et qui est entré en essai anonyme
+              n'a sinon aucun moyen de retrouver son abonnement avant le cycle 8.
+              Masquée si l'abonnement est déjà actif ici : elle n'aurait pas de sens. */}
+          {!subscriptionActive ? (
+            <Pressable
+              style={[styles.rowBase, styles.rowLast]}
+              onPress={() => router.push('/(onboarding)/auth' as any)}
+            >
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path d="M10 3a7 7 0 1 0 6.3 4" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                <Path d="M17 2v5h-5" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </Svg>
+              <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.abonnement.restaurerAcces}</Text>
+              <Chevron />
+            </Pressable>
+          ) : null}
         </Animated.View>
 
         {/* 5. COMPTE + LÉGAL + VERSION */}

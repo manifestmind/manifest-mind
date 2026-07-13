@@ -38,7 +38,14 @@ export function useSubscriptionSync() {
           try {
             const subActive = snap.exists() && snap.data()?.subscription_active === true;
             if (subActive) {
-              await AsyncStorage.setItem('subscription_active', 'true');
+              // `had_subscription` = marqueur d'appareil, volontairement JAMAIS
+              // retiré ici ni à la déconnexion : il sert à reconnaître un ancien
+              // abonné qui revient (cf. services/subscription.ts). Seul
+              // « Supprimer mon compte » (AsyncStorage.clear()) l'efface.
+              await AsyncStorage.multiSet([
+                ['subscription_active', 'true'],
+                ['had_subscription', 'true'],
+              ]);
             } else {
               await AsyncStorage.removeItem('subscription_active');
             }
@@ -58,11 +65,50 @@ export function useSubscriptionSync() {
       unsubscribeFirestore = null;
     }
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    // Purge des droits hérités à tout CHANGEMENT d'identité.
+    //
+    // `subscription_active` est un cache local ; il appartient à l'UID qui l'a
+    // fait écrire. Si l'utilisateur connecté change (reconnexion magic link,
+    // Google demain, nouvel anonyme…), l'ancienne valeur n'est plus la sienne :
+    // on l'efface AVANT d'écouter Firestore. Sans ça, deux trous :
+    //   - le gate de home.tsx lit AsyncStorage immédiatement après la bascule,
+    //     avant l'arrivée du 1er snapshot → accès accordé à tort le temps de la
+    //     synchro ;
+    //   - si Firestore est injoignable (hors ligne, règles, panne), le handler
+    //     d'erreur ci-dessus ne touche volontairement à rien → la clé résiduelle
+    //     survivrait indéfiniment sur un compte qui n'a jamais payé.
+    //
+    // On ne purge QUE si l'UID a réellement changé : à un simple rechargement de
+    // page (même UID), effacer puis reposer la clé ferait rebondir un abonné
+    // légitime sur le paywall pendant la fenêtre de synchro.
+    async function purgeIfIdentityChanged(uid: string | null) {
+      try {
+        const lastUid = await AsyncStorage.getItem('sub_sync_uid');
+        if (lastUid === uid) return;
+        await AsyncStorage.removeItem('subscription_active');
+        if (uid) {
+          await AsyncStorage.setItem('sub_sync_uid', uid);
+        } else {
+          await AsyncStorage.removeItem('sub_sync_uid');
+        }
+        if (__DEV__) console.log('[subSync] identité changée', lastUid, '→', uid, '— subscription_active purgé');
+      } catch {
+        // AsyncStorage indisponible — le snapshot Firestore fera foi.
+      }
+    }
+
+    // La purge doit être TERMINÉE avant que le listener ne s'attache : sinon son
+    // removeItem() pourrait s'exécuter APRÈS le 1er snapshot et effacer un
+    // `subscription_active='true'` légitime tout juste reposé — l'abonné se
+    // retrouverait bloqué jusqu'au prochain rechargement.
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        await purgeIfIdentityChanged(user.uid);
         attachFirestoreListener(user);
       } else {
+        // Plus d'identité → plus d'accès premium.
         detachFirestoreListener();
+        await purgeIfIdentityChanged(null);
       }
     });
 

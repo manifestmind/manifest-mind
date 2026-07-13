@@ -185,8 +185,16 @@ export const translations = {
       ],
       cta: 'Je transforme ma vie maintenant →',
       bottomText: 'Moins de 0,50€ pour changer ta vie',
-      dejaCompte: 'J\'ai déjà un compte → Me reconnecter',
+      dejaCompte: 'J\'ai déjà un abonnement — Me reconnecter',
       restaurer: 'Restaurer un achat',
+      // Question posée au clic « essai gratuit » quand l'appareil porte le
+      // marqueur had_subscription (un abonnement a déjà existé ici).
+      retourAbonne: {
+        titre: 'Bon retour parmi nous ✨',
+        texte: 'Il semble qu\'un abonnement existe déjà sur cet appareil. Tu peux retrouver ton espace, ou créer un nouveau compte (essai gratuit de 7 cycles, puis abonnement).',
+        retrouver: 'Retrouver mon espace',
+        nouveauCompte: 'Nouveau compte',
+      },
     },
 
     // ── Onboarding : auth ─────────────────────────────────────────────────────
@@ -430,6 +438,7 @@ export const translations = {
         actif: 'Actif',
         passerPremium: 'Passer à Premium',
         restaurer: 'Restaurer les achats',
+        restaurerAcces: 'J\'ai déjà un abonnement — Restaurer mon accès',
       },
       compte: {
         deconnecter: 'Se déconnecter',
@@ -488,6 +497,10 @@ export const translations = {
       paiementRecu: '✅ Paiement reçu.',
       voyage: 'Ton voyage commence maintenant…',
       preparation: 'Nous préparons ton espace de transformation.',
+      // Mode restauration (?restore=1) : abonnement déjà actif, aucun paiement.
+      restaureConfirmation: '✅ Abonnement retrouvé.',
+      restaureTitre: 'Ton espace t\'attend…',
+      restaurePreparation: 'Nous rouvrons ton espace de transformation.',
       succesTitre: 'Ton espace est prêt',
       succesMessage: 'Bon retour parmi nous. On reprend ton parcours.',
       lentTitre: 'Encore un instant',
@@ -699,8 +712,14 @@ export const translations = {
       ],
       cta: 'Transform my life now →',
       bottomText: 'Less than €0.50 to change your life',
-      dejaCompte: 'I already have an account → Sign back in',
+      dejaCompte: 'I already have a subscription — Log in',
       restaurer: 'Restore a purchase',
+      retourAbonne: {
+        titre: 'Welcome back ✨',
+        texte: 'It looks like a subscription already exists on this device. You can return to your space, or create a new account (7 free cycles, then subscription).',
+        retrouver: 'Return to my space',
+        nouveauCompte: 'New account',
+      },
     },
 
     auth: {
@@ -932,6 +951,7 @@ export const translations = {
         actif: 'Active',
         passerPremium: 'Go Premium',
         restaurer: 'Restore purchases',
+        restaurerAcces: 'I already have a subscription — Restore my access',
       },
       compte: {
         deconnecter: 'Sign out',
@@ -989,6 +1009,9 @@ export const translations = {
       paiementRecu: '✅ Payment received.',
       voyage: 'Your journey begins now…',
       preparation: 'We\'re preparing your space of transformation.',
+      restaureConfirmation: '✅ Subscription found.',
+      restaureTitre: 'Your space is waiting…',
+      restaurePreparation: 'We\'re reopening your space of transformation.',
       succesTitre: 'Your space is ready',
       succesMessage: 'Welcome back. Let\'s pick up your journey.',
       lentTitre: 'Just a moment longer',
@@ -1198,8 +1221,14 @@ export const translations = {
       ],
       cta: 'Transformar mi vida ahora →',
       bottomText: 'Menos de 0,50€ para cambiar tu vida',
-      dejaCompte: 'Ya tengo una cuenta → Volver a entrar',
+      dejaCompte: 'Ya tengo una suscripción — Iniciar sesión',
       restaurer: 'Restaurar una compra',
+      retourAbonne: {
+        titre: 'Qué bueno verte de nuevo ✨',
+        texte: 'Parece que ya existe una suscripción en este dispositivo. Puedes volver a tu espacio o crear una cuenta nueva (7 ciclos gratis y luego suscripción).',
+        retrouver: 'Volver a mi espacio',
+        nouveauCompte: 'Cuenta nueva',
+      },
     },
 
     auth: {
@@ -1431,6 +1460,7 @@ export const translations = {
         actif: 'Activo',
         passerPremium: 'Pasar a Premium',
         restaurer: 'Restaurar compras',
+        restaurerAcces: 'Ya tengo una suscripción — Restaurar mi acceso',
       },
       compte: {
         deconnecter: 'Cerrar sesión',
@@ -1488,6 +1518,9 @@ export const translations = {
       paiementRecu: '✅ Pago recibido.',
       voyage: 'Tu viaje empieza ahora…',
       preparation: 'Estamos preparando tu espacio de transformación.',
+      restaureConfirmation: '✅ Suscripción recuperada.',
+      restaureTitre: 'Tu espacio te espera…',
+      restaurePreparation: 'Estamos reabriendo tu espacio de transformación.',
       succesTitre: 'Tu espacio está listo',
       succesMessage: 'Bienvenido de nuevo. Retomamos tu camino.',
       lentTitre: 'Un instante más',

@@ -1,16 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signOut } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { canPay, PADDLE_ACTIVE } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout } from '../../services/paddle';
+import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -28,6 +29,11 @@ export default function Pricing() {
   // Réactif à la restauration de session Firebase : formulaire de création de
   // compte affiché seulement si pas (encore) de compte permanent.
   const [mustCreateAccount, setMustCreateAccount] = useState(true);
+  // Question « Bon retour parmi nous » : posée au clic « essai gratuit » quand
+  // l'appareil porte le marqueur had_subscription. Sans elle, un abonné qui
+  // revient (nouveau tél, cache vidé) se fabriquerait un anonyme NEUF et
+  // perdrait l'accès à son abonnement, attaché à son ancien UID.
+  const [showRetourAbonne, setShowRetourAbonne] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -38,6 +44,54 @@ export default function Pricing() {
 
   function selectPlan(plan: string) {
     setSelectedPlan(plan);
+  }
+
+  // Démarrage de l'essai gratuit (7 cycles, ZÉRO friction) : compte Firebase
+  // ANONYME (identité pour le futur paiement/webhook), sans email ni carte. La
+  // progression reste LOCALE (AsyncStorage). Au cycle 8, ce compte anonyme sera
+  // converti en permanent via linkWithCredential, même UID → aucune perte.
+  // C'est l'UNIQUE chemin « sans compte » (l'ancien handleSkipAccount d'auth.tsx
+  // a été supprimé au profit de celui-ci).
+  async function startFreeTrial() {
+    try {
+      const current = auth.currentUser;
+      // Un compte PERMANENT (donc potentiellement abonné) est encore connecté :
+      // la session Firebase vit dans IndexedDB et survit au reset comme au
+      // AsyncStorage.clear(). Sans ce signOut, « nouveau compte » réutiliserait
+      // cette identité — l'utilisateur hériterait de l'abonnement (accès aux
+      // cycles 8+) et, pire, se retrouverait DANS le compte de quelqu'un d'autre
+      // sur un appareil prêté. Un essai gratuit ne démarre jamais sur l'identité
+      // d'un compte permanent.
+      if (current && !current.isAnonymous) {
+        if (__DEV__) console.log('[pricing] compte permanent connecté (uid=', current.uid, ') → signOut avant nouvel essai');
+        await signOut(auth);
+      }
+      if (!auth.currentUser) {
+        const cred = await signInAnonymously(auth);
+        if (__DEV__) console.log('[pricing] signInAnonymously OK uid=', cred.user.uid, 'anon=', cred.user.isAnonymous);
+      } else if (__DEV__) {
+        console.log('[pricing] session anonyme réutilisée uid=', auth.currentUser.uid);
+      }
+    } catch (e: any) {
+      // Échec (hors-ligne) : on ne bloque pas l'entrée en essai. La conversion
+      // du cycle 8 gérera l'absence de compte anonyme (createUser au lieu de link).
+      if (__DEV__) console.log('[pricing] signInAnonymously ÉCHEC', e?.code, e?.message);
+    }
+    try {
+      // Purge des droits hérités. useSubscriptionSync finira par retirer la clé
+      // (le doc du nouvel anonyme n'a pas d'abonnement), mais le gate de home.tsx
+      // lit AsyncStorage IMMÉDIATEMENT au chargement : sans cette purge explicite,
+      // un ancien subscription_active='true' laisserait passer pendant la fenêtre
+      // de synchro. Un essai gratuit démarre toujours sans accès payant.
+      await AsyncStorage.removeItem('subscription_active');
+      await AsyncStorage.multiSet([
+        ['selected_plan', 'free'],
+        ['onboarding_completed', 'true'],
+      ]);
+    } catch {
+      // fallback silencieux — on continue la navigation
+    }
+    router.replace('/(app)/splash');
   }
 
   async function handlePurchase() {
@@ -62,27 +116,16 @@ export default function Pricing() {
     // UID → aucune perte. C'est l'UNIQUE chemin "sans compte" (l'ancien
     // handleSkipAccount d'auth.tsx a été supprimé au profit de celui-ci).
     if (selectedPlan === 'free') {
-      try {
-        if (!auth.currentUser) {
-          const cred = await signInAnonymously(auth);
-          if (__DEV__) console.log('[pricing] signInAnonymously OK uid=', cred.user.uid, 'anon=', cred.user.isAnonymous);
-        } else if (__DEV__) {
-          console.log('[pricing] session déjà présente uid=', auth.currentUser.uid, 'anon=', auth.currentUser.isAnonymous);
-        }
-      } catch (e: any) {
-        // Échec (hors-ligne) : on ne bloque pas l'entrée en essai. La conversion
-        // du cycle 8 gérera l'absence de compte anonyme (createUser au lieu de link).
-        if (__DEV__) console.log('[pricing] signInAnonymously ÉCHEC', e?.code, e?.message);
+      // Garde-fou : cet appareil a-t-il déjà porté un abonnement ? Si oui, on ne
+      // crée SURTOUT PAS un anonyme neuf en silence — on demande à l'utilisateur
+      // s'il revient (→ reconnexion) ou s'il veut vraiment un nouveau compte.
+      // Un vrai nouvel utilisateur (aucun marqueur) ne voit jamais cette question.
+      if (await deviceHadSubscription()) {
+        if (__DEV__) console.log('[pricing] had_subscription détecté → question retour abonné');
+        setShowRetourAbonne(true);
+        return;
       }
-      try {
-        await AsyncStorage.multiSet([
-          ['selected_plan', 'free'],
-          ['onboarding_completed', 'true'],
-        ]);
-      } catch {
-        // fallback silencieux — on continue la navigation
-      }
-      router.replace('/(app)/splash');
+      await startFreeTrial();
       return;
     }
 
@@ -129,6 +172,15 @@ export default function Pricing() {
         ]);
       } catch {
         // fallback silencieux
+      }
+      // GARDE-FOU anti double-paiement : convertOrSignIn a pu reconnecter un
+      // utilisateur EXISTANT (email déjà enregistré → signIn sur son compte).
+      // On ne l'envoie chez Paddle qu'après avoir vérifié côté serveur qu'il
+      // n'est pas déjà abonné. Sinon on lui rouvre simplement son espace.
+      if (await hasActiveSubscription(auth.currentUser.uid)) {
+        if (__DEV__) console.log('[pricing] abonnement déjà actif → aucun paiement, restauration');
+        router.replace('/(app)/activation?restore=1' as any);
+        return;
       }
       await openCheckout({
         plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
@@ -413,21 +465,28 @@ export default function Pricing() {
           </Text>
         </Pressable>
 
+        {/* Porte de reconnexion, juste sous le CTA. Sans elle, un abonné qui
+            revient sur un nouvel appareil (storage vide → onboarding) n'a AUCUN
+            moyen de retrouver son compte : s'il choisit « essai gratuit »,
+            signInAnonymously lui crée un nouvel UID et son abonnement (attaché à
+            l'ancien) devient inaccessible. auth.tsx → magic link → même UID →
+            useSubscriptionSync repose subscription_active. */}
+        <Pressable style={styles.btnReconnexion} onPress={() => router.push('/(onboarding)/auth')}>
+          <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
+        </Pressable>
+
         <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
-        {/* Porte de reconnexion. Sans elle, un abonné qui revient sur un nouvel
-            appareil (storage vide → onboarding) n'a AUCUN moyen de retrouver son
-            compte : s'il choisit "Free", signInAnonymously lui crée un nouvel UID
-            et son abonnement (attaché à l'ancien) devient inaccessible. On place
-            donc le lien AVANT qu'il ait pu cliquer. auth.tsx → magic link →
-            même UID → useSubscriptionSync repose subscription_active. */}
-        <Pressable onPress={() => router.push('/(onboarding)/auth')}>
-          <Text style={styles.reconnexionText}>{t.pricing.dejaCompte}</Text>
-        </Pressable>
-
-        <Pressable onPress={handleRestore}>
-          <Text style={styles.restoreText}>{t.pricing.restaurer}</Text>
-        </Pressable>
+        {/* « Restaurer un achat » est un concept de store natif (App Store /
+            Play Store, via RevenueCat en Phase 2). Sur web, la source de vérité
+            est Firestore et le vrai chemin est le lien de reconnexion ci-dessus :
+            on masque donc ce lien, qui ne ferait rien et sèmerait la confusion.
+            Code conservé tel quel pour le pipeline natif. */}
+        {Platform.OS !== 'web' ? (
+          <Pressable onPress={handleRestore}>
+            <Text style={styles.restoreText}>{t.pricing.restaurer}</Text>
+          </Pressable>
+        ) : null}
 
         <View style={styles.dotsNav}>
           <View style={styles.dotNav} />
@@ -437,6 +496,42 @@ export default function Pricing() {
           <View style={styles.dotNav} />
         </View>
       </View>
+
+      {/* Question « Bon retour parmi nous » — uniquement si l'appareil porte le
+          marqueur had_subscription. Modal (et non Alert) : Alert.alert n'affiche
+          rien sur React Native Web. */}
+      <Modal
+        visible={showRetourAbonne}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRetourAbonne(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t.pricing.retourAbonne.titre}</Text>
+            <Text style={styles.modalText}>{t.pricing.retourAbonne.texte}</Text>
+
+            <Pressable
+              style={styles.modalBtnPrimary}
+              onPress={() => {
+                setShowRetourAbonne(false);
+                router.push('/(onboarding)/auth');
+              }}
+            >
+              <Text style={styles.modalBtnPrimaryText}>{t.pricing.retourAbonne.retrouver}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={async () => {
+                setShowRetourAbonne(false);
+                await startFreeTrial();
+              }}
+            >
+              <Text style={styles.modalBtnSecondaryText}>{t.pricing.retourAbonne.nouveauCompte}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -650,12 +745,77 @@ const styles = StyleSheet.create({
     color: '#6B3FA0',
     textAlign: 'center',
   },
-  reconnexionText: {
+  btnReconnexion: {
+    width: '100%',
+    paddingVertical: 11,
+    borderRadius: 999,
+    borderWidth: 1.2,
+    borderColor: '#6B3FA0',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  btnReconnexionText: {
     fontFamily: 'Jost',
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '500',
     color: '#6B3FA0',
     textAlign: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(26,14,48,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#F0EAE0',
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+    gap: 14,
+  },
+  modalTitle: {
+    fontFamily: 'serif',
+    fontSize: 21,
+    fontStyle: 'italic',
+    color: '#2A2520',
+    textAlign: 'center',
+    width: '100%',
+  },
+  modalText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#3A3530',
+    textAlign: 'center',
+    lineHeight: 20,
+    width: '100%',
+  },
+  modalBtnPrimary: {
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 999,
+    backgroundColor: '#3A3530',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  modalBtnPrimaryText: {
+    color: '#F0EAE0',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  modalBtnSecondaryText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#6B3FA0',
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   restoreText: {
     fontFamily: 'Jost',

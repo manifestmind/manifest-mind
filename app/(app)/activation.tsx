@@ -14,7 +14,7 @@
 // en reste le seul écrivain.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
@@ -38,6 +38,11 @@ type Phase = 'waiting' | 'activated' | 'slow';
 export default function Activation() {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
+  // ?restore=1 → l'utilisateur n'a RIEN payé : on a détecté qu'il était déjà
+  // abonné (garde-fou de services/subscription.ts) et on lui rouvre son espace.
+  // Parler de « paiement reçu » ici serait faux.
+  const { restore } = useLocalSearchParams<{ restore?: string }>();
+  const isRestore = restore === '1';
   const [phase, setPhase] = useState<Phase>('waiting');
   const pulse = useRef(new Animated.Value(0)).current;
   const mountedAt = useRef(Date.now()).current;
@@ -161,13 +166,13 @@ export default function Activation() {
           {phase === 'waiting' ? (
             <>
               <Text style={styles.confirmation} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.paiementRecu}
+                {isRestore ? t.activation.restaureConfirmation : t.activation.paiementRecu}
               </Text>
               <Text style={styles.title} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.voyage}
+                {isRestore ? t.activation.restaureTitre : t.activation.voyage}
               </Text>
               <Text style={styles.message} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.preparation}
+                {isRestore ? t.activation.restaurePreparation : t.activation.preparation}
               </Text>
             </>
           ) : phase === 'activated' ? (
@@ -182,7 +187,7 @@ export default function Activation() {
           ) : (
             <>
               <Text style={styles.confirmation} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.paiementRecu}
+                {isRestore ? t.activation.restaureConfirmation : t.activation.paiementRecu}
               </Text>
               <Text style={styles.title} numberOfLines={0} adjustsFontSizeToFit={false}>
                 {t.activation.lentTitre}

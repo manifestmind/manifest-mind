@@ -11,6 +11,7 @@ import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout } from '../../services/paddle';
+import { hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -108,14 +109,26 @@ export default function PricingUpgrade() {
         showAuthToast(t.compte.errGenerique, 'error');
         return;
       }
-      // 2) Enregistrer le plan choisi (affichage) — pas d'écriture optimiste de
+      // 2) GARDE-FOU anti double-paiement. convertOrSignIn a pu reconnecter un
+      //    utilisateur EXISTANT (email déjà enregistré → signIn sur son compte) :
+      //    typiquement l'abonné revenu sur un appareil neuf, qui a démarré un
+      //    essai anonyme et se retrouve ici au cycle 8. Son abonnement vit sur
+      //    son ancien UID — on le détecte AVANT d'ouvrir Paddle, et on lui rouvre
+      //    son espace au lieu de le faire payer une seconde fois.
+      if (await hasActiveSubscription(auth.currentUser.uid)) {
+        if (__DEV__) console.log('[pricing-upgrade] abonnement déjà actif → aucun paiement, restauration');
+        router.replace('/(app)/activation?restore=1' as any);
+        return;
+      }
+
+      // 3) Enregistrer le plan choisi (affichage) — pas d'écriture optimiste de
       //    subscription_active : c'est le webhook → Firestore → useSubscriptionSync.
       try {
         await AsyncStorage.setItem('selected_plan', selectedPlan);
       } catch {
         // Écriture impossible — continuer quand même
       }
-      // 3) Enchaîner DIRECTEMENT sur le checkout Paddle, sans quitter la page.
+      // 4) Enchaîner DIRECTEMENT sur le checkout Paddle, sans quitter la page.
       //    À la complétion, on route vers l'écran d'activation : `checkout.completed`
       //    arrive AVANT que le webhook ait écrit subscription_active (Firestore →
       //    useSubscriptionSync → AsyncStorage). Router vers home ici ferait rebondir
@@ -335,11 +348,25 @@ export default function PricingUpgrade() {
           <Text style={styles.btnPrimaryText}>{t.pricingUpgrade.confirmer}</Text>
         </Pressable>
 
+        {/* Porte de reconnexion. C'est ICI qu'atterrit l'ancien abonné revenu sur
+            un appareil neuf : essai anonyme démarré, bloqué au cycle 8, son
+            abonnement vivant sur son ancien UID. Sans ce lien il n'avait aucune
+            sortie autre que repayer. → auth.tsx → magic link → même UID →
+            useSubscriptionSync repose subscription_active. */}
+        <Pressable style={styles.btnReconnexion} onPress={() => router.push('/(onboarding)/auth' as any)}>
+          <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
+        </Pressable>
+
         <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
-        <Pressable onPress={handleRestore}>
-          <Text style={styles.restoreText}>{t.pricingUpgrade.restaurer}</Text>
-        </Pressable>
+        {/* Concept de store natif (RevenueCat, Phase 2) : sans effet sur web, où
+            le vrai chemin est le lien de reconnexion ci-dessus. Masqué pour ne pas
+            semer la confusion ; code conservé pour le pipeline natif. */}
+        {Platform.OS !== 'web' ? (
+          <Pressable onPress={handleRestore}>
+            <Text style={styles.restoreText}>{t.pricingUpgrade.restaurer}</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -535,6 +562,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  btnReconnexion: {
+    width: '100%',
+    paddingVertical: 11,
+    borderRadius: 999,
+    borderWidth: 1.2,
+    borderColor: '#6B3FA0',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  btnReconnexionText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B3FA0',
     textAlign: 'center',
   },
   bottomText: {
