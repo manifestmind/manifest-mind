@@ -434,11 +434,76 @@ Phases livrées & validées :
 - **P3** — conversion inline email+password (`services/authConversion.ts` : `convertOrSignIn`/`needsAccount`/`mapConversionError`) sur `pricing-upgrade.tsx` (cycle 8) et `pricing.tsx` (paid onboarding) → enchaîne Paddle. Gère `email-already-in-use` (fallback signIn). i18n `t.compte` (fr/en/es).
 - **Fix authStateReady** — `_layout.tsx` `AnonymousBootstrap` (attend `auth.authStateReady()`, garantit l'anonyme) ; `await auth.authStateReady()` dans les `handlePurchase` ; `mustCreateAccount` réactif via `onAuthStateChanged`. Résout le `currentUser` null prématuré (réhydratation async de la persistance web) → vraie conversion `linkWithCredential`, même UID. **Testé OK end-to-end le 2026-07-12** (paiement → `subscription_active=true` → accès débloqué).
 
-### 🗺️ Roadmap priorisée — prochaines sessions (dans cet ordre)
+### 🗺️ FEUILLE DE ROUTE JUSQU'À PUBLICATION (fusion audit + roadmap — 2026-07-14)
+
+> **Ceci est la roadmap AUTORITAIRE.** Elle intègre les constats de l'audit global du 2026-07-14. Le détail technique du travail DÉJÀ RÉALISÉ est archivé plus bas (section 📦 ARCHIVE).
+
+═══════════════════════════════
+**STRATÉGIE EN DEUX TEMPS**
+═══════════════════════════════
+- **PHASE 1 — Publication WEB + PWA**, paiements Paddle, domaine `manifest-mind.app`. Pas de DUNS ni de compte store nécessaire. ← **PRIORITÉ ACTUELLE**
+- **PHASE 2 (plus tard, chantier séparé) — Publication STORES en NOM PROPRE** (compte individuel, évite le DUNS). **NOUVELLE CONSTRUCTION native** de l'app (pas un simple portage). Paiements via **RevenueCat** (Paddle interdit sur stores). **Apple Sign-In obligatoire**. Config native `app.json` (permissions, notifications, deep links). Contraintes stores (test fermé Google 14 j, risque rejet Apple).
+
+═══════════════════════════════
+**FEUILLE DE ROUTE PHASE 1 (WEB) — dans l'ordre**
+═══════════════════════════════
+
+**PHASE A — Sécuriser l'accès payant (CHANTIER N°1, avant tout)**
+1. 🔴 Versionner + verrouiller les **règles Firestore** (lecture/suppression de son propre doc, écriture client interdite, `subscription_active` non forgeable). *Audit : aucune règle versionnée dans le repo.*
+2. 🔴 Protéger **TOUS les écrans de contenu** via le gate au niveau du **layout `(app)`** (pas seulement `home` ; aujourd'hui accessibles par URL directe `/(app)/affirmation`…). *Audit vérifié : `(app)/_layout.tsx` est un `<Stack>` nu, les écrans de contenu ne lisent pas `subscription_active`.*
+3. 🔴 Empêcher l'**essai gratuit renouvelable à l'infini** (bouton reset / vidage localStorage / réinitialisation profil redonnent 7 cycles ; rien côté serveur ne retient « essai épuisé »).
+
+**PHASE B — Autres points critiques**
+4. 🔴 Débloquer l'utilisateur qui **a payé mais dont le webhook échoue** (`activation.tsx` renvoie en boucle au paywall après 30 s → `home` re-gate) : prévoir un vrai recours.
+5. 🔴 Supprimer **`firebase.ts` mort** (racine, clé API en dur committée, importé nulle part) + restreindre la clé par domaine côté Google Cloud.
+6. 🔴 Sortir de la **« souricière » du cycle 8** : `pricing-upgrade.tsx` n'a ni navbar ni retour → accès minimal à déconnexion / suppression compte (RGPD) / langue.
+
+**PHASE C — Finir Google Sign-In (Priorité 2 restante)**
+7. Volet C — **conversion anonyme au cycle 8 via `linkWithPopup`** (option en plus de email+password). Détail technique : voir archive « Reste à faire — Google, volets C et D ».
+8. Volet D — **reconnexion Google** (tests).
+
+**PHASE D — Robustesse & paiement**
+9. 🟠 Rendre **visibles les échecs de paiement** (aujourd'hui silencieux : `services/paddle.ts` avale tout en `console.warn`, le bouton « payer » ne fait rien).
+10. 🟠 Gérer le **remboursement lifetime** (accès jamais retiré : `adjustment.created` / `transaction.refunded` non traités par le webhook).
+11. 🟠 **Protéger le double-clic d'achat** pour comptes permanents (`submitting` ne couvre pas le chargement de Paddle.js).
+12. 🟠 **Vérifier la désactivation à l'annulation** (`firebase_uid` peut-être absent des événements lifecycle Paddle → annulation jamais propagée) — **tester sur vrai payload**.
+13. 🟠 **Sortir les prix codés en dur** (`149€ / 12,99€ / 6,58€` dans le JSX, déconnectés des price IDs Paddle ; `6,58€` = 79/12 calculé à la main ; pas de multi-devises).
+
+**PHASE E — Légal & conformité**
+14. **CGU + confidentialité** : « 7 jours » → « 7 cycles », essai sans carte (FR/EN/ES). Publier. *(fichiers hors repo : `manifestmind.github.io/manifest-mind/`)*
+15. 🟠 Ajouter l'**export de données** (droit RGPD de portabilité — au-delà de la suppression déjà faite).
+16. 🟡 **Bannière consentement** cookies/traceurs (à qualifier).
+17. Vérifier **mentions Paddle** (merchant of record, TVA) accessibles.
+
+**PHASE F — Nettoyage avant prod**
+18. Retirer **boutons debug** (`reset`, `⏭ cycle suivant`) de `home.tsx`.
+19. Nettoyer **code mort** (logs non `__DEV__` dans `useShare.ts`/`auth.tsx`/`paddle.ts`, `icon-symbol`, dépendance `expo-av`, assets template `react-logo*`, mockups HTML racine, `handleRestore` vides).
+20. Corriger `app.json` (**plugin `expo-font` déclaré en double**).
+21. Vérifier `DEBUG_SKIP_PAYWALL = false`.
+
+**PHASE G — Config production**
+22. Paddle **sandbox → prod** (`EXPO_PUBLIC_PADDLE_SANDBOX=false` — ⚠️ actuellement `true` dans `.env`, un build prod encaisserait en sandbox ; produits/prix/webhook prod).
+23. ⚠️ Faire **approuver le domaine `manifest-mind.app` par Paddle** — **DÉLAI EXTERNE, lancer TÔT, en parallèle des autres phases**.
+24. **Config Google prod** : `manifest-mind.app` aux domaines Firebase ; **servir le handler auth depuis le domaine** (sinon `signInWithRedirect` cassé sur Safari/iPhone à cause des cookies tiers) ; **publier l'écran de consentement OAuth**.
+
+**PHASE H — PWA & déploiement**
+25. **PWA** (manifest, service worker, icônes 192/512/maskable, robots.txt).
+26. Build : `npx expo export --platform web`.
+27. Déployer sur `manifest-mind.app`.
+28. **Tests finaux réels** (vrai paiement, multi-navigateurs dont **Safari/iPhone**).
+→ 🚀 **PUBLICATION WEB**
+
+**Notes :** Phases **A et B non négociables** avant lancement. Point **23 (Paddle) à lancer tôt** car délai externe. Après lancement web → **PHASE 2 stores**.
+
+---
+
+### 📦 ARCHIVE — détail technique du travail DÉJÀ RÉALISÉ
+
+> Historique et justifications des décisions (ne pas re-débattre sans raison). Les « ⏳ Reste à faire » ci-dessous sont désormais cadrés par la feuille de route ci-dessus.
 
 #### ✅ PRIORITÉ 1 — Finition du modèle d'accès — **TERMINÉE (2026-07-13)**
 
-> Les 3 points ci-dessous sont livrés et testés. **Prochain chantier : PRIORITÉ 2 — Google Sign-In.**
+> Les 3 points ci-dessous sont livrés et testés.
 1. ✅ **~~Redirection automatique dans l'app après paiement~~** — **FAIT (2026-07-13)**. Écran `app/(app)/activation.tsx` : après `checkout.completed`, `pricing-upgrade.tsx` route vers `/(app)/activation`, qui poll `subscription_active` dans AsyncStorage (la MÊME clé que relit le gate de `home.tsx` → zéro course) puis route vers home. Affichage min. 2,5 s + 1,2 s de respiration. Timeout 30 s → écran « Encore un instant » + boutons Réessayer / Continuer (jamais de loader infini). Abandon de paiement non géré volontairement (on reste sur la page des prix).
    - Deux fixes dans `services/paddle.ts` au passage : (a) `Paddle.Checkout.close()` sur `checkout.completed` — sans `successUrl`, l'overlay Paddle restait affiché PAR-DESSUS l'écran d'activation, qui était monté mais invisible ; (b) `Paddle.Setup()` n'étant appelable qu'une fois par chargement de page, son `eventCallback` est désormais un **dispatcher stable** qui relit les handlers du checkout courant (variable de module `currentHandlers`) — avant, les callbacks d'un 2e `openCheckout` étaient silencieusement ignorés.
 2. ✅ **~~Phase 4 — wording « 7 cycles gratuits »~~** — **RIEN À FAIRE côté interface (vérifié 2026-07-13)**. `translations.ts` ne contient AUCUNE mention « 7 jours / 7 days / 7 días » : le wording de l'essai est déjà 100 % en cycles dans les 3 langues (`pricing.plans.free.*`, `pricingUpgrade.freemium*`). Les « jour / day / día » restants sont légitimes (journal, actions *quotidiennes* — un cycle par jour, c'est exact — et « prochain cycle à minuit »).
@@ -513,7 +578,7 @@ Une poignée d'`Alert.alert` **informatives** ne s'affichent pas non plus sur we
 - 🚨 **À VÉRIFIER — Firebase → Authentication → Settings → liaison des comptes** : doit être sur **un seul compte par adresse email**. Sinon un utilisateur inscrit en email+password qui se connecte ensuite avec un Google du **même email** obtient un **2e UID** → **abonnement perdu silencieusement**.
 - ⏳ Avant prod : **écran de consentement OAuth** (nom, email de support, logo, URLs légales) configuré et **publié**, sinon avertissement « application non vérifiée ». Ajouter `manifest-mind.app` aux domaines autorisés Firebase.
 
-#### PRIORITÉ 3 — Préparation du lancement web (Phase 1)
+#### 📎 Détail technique — lancement web (cadré par PHASES G & H ci-dessus)
 - 🚨 **AUTH GOOGLE EN PROD — 2 points à ne PAS oublier** (issus du volet B, 2026-07-14) :
   1. **`signInWithRedirect` est cassé par le blocage des cookies tiers** (Safari/ITP, et Chrome qui s'y met). Le repli popup-bloqué repose sur un aller-retour via `manifestmind.firebaseapp.com` — un domaine TIERS du point de vue de `manifest-mind.app`. Invisible en localhost (le popup passe), mais **le repli ne marchera pas sur iPhone en prod**. Correctif : servir le handler d'auth depuis NOTRE domaine → `authDomain: 'manifest-mind.app'` dans la config Firebase + **rewrite Firebase Hosting** de `/__/auth/**` vers le handler. À faire au déploiement web.
   2. **Écran de consentement OAuth à configurer ET publier** (Google Cloud → APIs & Services → OAuth consent screen) : nom de l'app, email de support, logo, URLs légales. Sans ça → avertissement **« application non vérifiée »** pour les utilisateurs. Ajouter aussi `manifest-mind.app` aux domaines autorisés Firebase.
@@ -522,8 +587,8 @@ Une poignée d'`Alert.alert` **informatives** ne s'affichent pas non plus sur we
 - ⏳ **Documents légaux** — CGU + politique de confidentialité à jour avec **« 7 cycles »** et **essai sans carte** (3 langues).
 - ⏳ **Déploiement web** — build `npx expo export --platform web` → `dist/` → déploiement sur `manifest-mind.app` + **tests finaux en conditions réelles** (paiement prod, magic link, Google).
 
-#### Transverse — nettoyage avant prod
-🧹 Retirer les boutons debug `home.tsx` (« reset », « ⏭ cycle suivant ») et les `console.log` `__DEV__` de diagnostic ; supprimer la clé i18n `t.auth.sansCompte` + le style `skipText` devenus inutilisés. Vérifier `DEBUG_SKIP_PAYWALL = false` (point 0 🚨).
+#### 📎 Détail technique — nettoyage (cadré par PHASE F ci-dessus)
+🧹 Boutons debug `home.tsx` (« reset », « ⏭ cycle suivant ») + logs non-`__DEV__`. `DEBUG_SKIP_PAYWALL = false` (point 0 🚨). *(La clé i18n `t.auth.sansCompte` + le style `skipText` ont déjà été supprimés le 2026-07-13.)*
 
 ### Rappel : 2 constructions distinctes prévues
 
