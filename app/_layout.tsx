@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { isSignInWithEmailLink, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
+import { getRedirectResult, isSignInWithEmailLink, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { AuthToastHost, showAuthToast } from '../components/ui/AuthToast';
 import { auth } from '../services/firebase';
+import { finalizeSignIn } from '../services/authSession';
 import { INITIAL_WEB_HREF } from '../services/initialUrl';
 import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
 import { LanguageProvider } from '../src/i18n/LanguageContext';
@@ -16,15 +17,38 @@ function SubscriptionSync() {
   return null;
 }
 
-// Bootstrap identité : sur web, la session Firebase est réhydratée de façon
-// ASYNCHRONE au chargement (auth.currentUser = null tant que ce n'est pas fini).
-// On attend authStateReady(), puis on garantit qu'un utilisateur d'essai
-// (onboarding_completed=true) a TOUJOURS un UID : soit l'anonyme restauré, soit
-// on le recrée s'il a été perdu. Ça évite qu'une page (pricing-upgrade) lise un
-// `null` prématuré → createUser au lieu de linkWithCredential.
-function AnonymousBootstrap() {
+// Bootstrap identité — SÉQUENTIEL, l'ordre est critique :
+//
+//   1. getRedirectResult() — récupère la session d'un signInWithRedirect Google
+//      (repli quand le popup est bloqué). DOIT être résolu EN PREMIER : sinon
+//      l'étape 3 fabriquerait un anonyme parasite juste avant que la session
+//      Google n'arrive, et l'utilisateur atterrirait sur le mauvais UID.
+//   2. authStateReady() — sur web, la session est réhydratée de façon ASYNCHRONE
+//      (auth.currentUser = null tant que ce n'est pas fini).
+//   3. Anonyme de secours — on garantit qu'un utilisateur d'essai
+//      (onboarding_completed=true) a TOUJOURS un UID. Évite qu'une page
+//      (pricing-upgrade) lise un `null` prématuré → createUser au lieu de
+//      linkWithCredential.
+function AuthBootstrap() {
   useEffect(() => {
     (async () => {
+      // ── 1. Retour d'un signInWithRedirect Google (web uniquement) ──────────
+      if (Platform.OS === 'web') {
+        try {
+          const cred = await getRedirectResult(auth);
+          if (cred?.user) {
+            if (__DEV__) console.log('[bootstrap] retour redirect Google uid=', cred.user.uid, 'email=', cred.user.email);
+            await finalizeSignIn();
+            return; // session établie et routée — pas d'anonyme à créer
+          }
+        } catch (e: any) {
+          // Redirect échoué (cookies tiers bloqués, state perdu…) : on ne bloque
+          // pas le démarrage, l'utilisateur retombe sur l'écran d'auth.
+          if (__DEV__) console.log('[bootstrap] getRedirectResult échoué', e?.code, e?.message);
+        }
+      }
+
+      // ── 2 & 3. Réhydratation puis anonyme de secours ───────────────────────
       try {
         await auth.authStateReady();
         const started = await AsyncStorage.getItem('onboarding_completed');
@@ -83,34 +107,11 @@ function DeepLinkHandler() {
         if (__DEV__) console.log('[deeplink] signInWithEmailLink OK pour', email);
         await AsyncStorage.removeItem('emailForSignIn');
 
-        // Initialiser le cycle si c'est la première connexion
-        const cycle = await AsyncStorage.getItem('current_cycle');
-        if (!cycle) {
-          await AsyncStorage.multiSet([
-            ['current_cycle', '1'],
-            ['current_theme', '1'],
-            ['cycle_completed', 'false'],
-            ['cycle_points', '0'],
-            ['points_total', '0'],
-            ['cycle_step_status', JSON.stringify({
-              opening: false, affirmation: false,
-              action_easy: false, action_hard: false,
-              visualisation: false, journal: false, vision_board: false,
-            })],
-            ['cycle_earned_points', JSON.stringify({
-              opening: 0, affirmation: 0,
-              action_easy: 0, action_hard: 0,
-              visualisation: 0, journal: 0, vision_board: 0,
-            })],
-          ]);
-        }
-
-        await AsyncStorage.setItem('onboarding_completed', 'true');
-        // Flux normal : splash → home. Le gate paywall (cycle > 7 && free &&
-        // !abonné) est appliqué EN AVAL par home.tsx — un user au cycle 1 entre
-        // légitimement dans l'app (7 cycles gratuits).
+        // Init des clés de cycle (si absentes) + onboarding_completed + route
+        // splash. Helper partagé avec Google (services/authSession.ts) : le gate
+        // paywall est appliqué EN AVAL par home.tsx.
         if (__DEV__) console.log('[deeplink] session établie → route /splash');
-        router.replace('/(app)/splash' as any);
+        await finalizeSignIn();
       } catch (error: any) {
         magicLinkProcessed = false; // autorise un nouveau lien (nouveau chargement)
         const code: string = error?.code ?? '';
@@ -158,7 +159,7 @@ function DeepLinkHandler() {
 export default function RootLayout() {
   return (
     <LanguageProvider>
-      <AnonymousBootstrap />
+      <AuthBootstrap />
       <DeepLinkHandler />
       <SubscriptionSync />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>

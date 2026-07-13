@@ -5,7 +5,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   Image,
@@ -18,6 +17,7 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { shareProgress } from '../../hooks/useShare';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 type StepStatus = {
   opening: boolean;
@@ -36,6 +36,7 @@ export default function Profil() {
   const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
 
   const [userName, setUserName] = useState('');
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(1);
   const [themeName, setThemeName] = useState('');
@@ -170,30 +171,30 @@ export default function Profil() {
     router.push('/(app)/name?edit=true' as any);
   }
 
-  async function handleReset() {
-    Alert.alert(
-      t.profil.alertReset.titre,
-      t.profil.alertReset.corps,
-      [
-        { text: t.profil.alertReset.annuler, style: 'cancel' },
-        {
-          text: t.profil.alertReset.confirmer,
-          style: 'destructive',
-          onPress: async () => {
-            const keys = [
-              'points_total', 'current_cycle', 'current_theme',
-              'cycle_step_status', 'cycle_points', 'cycle_earned_points',
-              'cycle_completed', 'next_cycle_time', 'best_cycle_points',
-              'profile_photo', 'vision_board_photos', 'user_name',
-            ];
-            const allKeys = await AsyncStorage.getAllKeys();
-            const journalKeys = allKeys.filter(k => k.startsWith('journal_cycle_'));
-            await AsyncStorage.multiRemove([...keys, ...journalKeys]);
-            router.replace('/(app)/name' as any);
-          },
-        },
-      ]
-    );
+  // Réinitialisation de la progression : on repart au cycle 1, mais le COMPTE et
+  // l'ABONNEMENT restent intacts (`subscription_active` et `had_subscription` ne
+  // sont pas dans la liste). L'utilisateur reste connecté, il recommence juste
+  // le parcours.
+  //
+  // Confirmation en Modal et NON en Alert : Alert.alert est un no-op silencieux
+  // sur react-native-web — le onPress n'était jamais appelé, donc la
+  // réinitialisation ne s'exécutait pas du tout.
+  async function confirmReset() {
+    setShowResetDialog(false);
+    try {
+      const keys = [
+        'points_total', 'current_cycle', 'current_theme',
+        'cycle_step_status', 'cycle_points', 'cycle_earned_points',
+        'cycle_completed', 'next_cycle_time', 'best_cycle_points',
+        'profile_photo', 'vision_board_photos', 'user_name',
+      ];
+      const allKeys = await AsyncStorage.getAllKeys();
+      const journalKeys = allKeys.filter(k => k.startsWith('journal_cycle_'));
+      await AsyncStorage.multiRemove([...keys, ...journalKeys]);
+    } catch {
+      // fallback silencieux — on route quand même
+    }
+    router.replace('/(app)/name' as any);
   }
 
   return (
@@ -397,7 +398,7 @@ export default function Profil() {
         </Pressable>
 
         {/* 7. Recommencer */}
-        <Pressable style={styles.resetRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleReset(); }}>
+        <Pressable style={styles.resetRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowResetDialog(true); }}>
           <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
             <Path d="M4 10a6 6 0 1 0 1-3.5" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" />
             <Path d="M4 4v3h3" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -413,6 +414,18 @@ export default function Profil() {
         </Animated.View>
 
       </ScrollView>
+
+      {/* Confirmation — Modal et non Alert (no-op silencieux sur web) */}
+      <ConfirmDialog
+        visible={showResetDialog}
+        titre={t.profil.alertReset.titre}
+        corps={t.profil.alertReset.corps}
+        confirmer={t.profil.alertReset.confirmer}
+        annuler={t.profil.alertReset.annuler}
+        destructif
+        onConfirm={confirmReset}
+        onCancel={() => setShowResetDialog(false)}
+      />
 
       {/* Navbar */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>

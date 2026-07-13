@@ -472,13 +472,41 @@ Le `DeepLinkHandler` ne purgeait rien : un `subscription_active='true'` résidue
 - Lien **« J'ai déjà un abonnement — Me reconnecter »** (bouton bordé violet, pleine largeur) **sous le CTA**, sur les **DEUX** écrans : `pricing.tsx` ET `pricing-upgrade.tsx` (le paywall du cycle 8 — c'est là qu'atterrit réellement l'abonné bloqué, il n'avait aucune sortie).
 - **« Restaurer un achat » masqué sur web** (`Platform.OS !== 'web'`) : concept de store natif (RevenueCat, Phase 2), sans effet sur web où la source de vérité est Firestore. Code conservé pour le pipeline natif.
 
-##### ⏳ Reste à faire — Google Sign-In (avant le lancement public)
-Les boutons Google sont encore des **coquilles vides** (`auth.tsx` : `handleGoogleSignIn` affiche juste un toast). Provider **déjà activé côté Firebase**. Ordre retenu :
-- **Volet B — Connexion Google** : `signInWithPopup` + `GoogleAuthProvider`, repli `signInWithRedirect` si popup bloqué (Safari, navigateurs mobiles) → impose de traiter `getRedirectResult` au démarrage dans `_layout.tsx`, **avant** qu'`AnonymousBootstrap` ne fabrique un anonyme. Extraire au passage un helper de finalisation de session (init clés de cycle + `onboarding_completed` + route splash) aujourd'hui dupliqué dans `DeepLinkHandler`.
-- **Volet C — Conversion anonyme au cycle 8 via Google** : `linkWithPopup` (même UID). Gérer `auth/credential-already-in-use` → `GoogleAuthProvider.credentialFromError()` + `signInWithCredential` → l'utilisateur retombe sur son ancien compte, et le garde-fou (c) détecte son abonnement sans le faire payer.
-- **Volet D — Reconnexion Google** : aucun code propre, fourni par le volet B. À tester seulement.
-- ⚠️ **Web uniquement** : `signInWithPopup` n'existe pas sur React Native. La version native exigera `expo-auth-session` / `@react-native-google-signin` → chantier séparé, avec le pipeline RevenueCat. Boutons derrière `Platform.OS === 'web'`, toast conservé sur natif.
-- (Apple Sign-In laissé de côté — chantier séparé, exige config Apple Developer.)
+##### ✅ Volet B — Connexion Google — **TERMINÉ & VALIDÉ (2026-07-14)**
+- `services/googleAuth.ts` : `signInWithPopup` + `prompt: 'select_account'` (sans ça, Google reconnecte silencieusement au dernier compte → mauvais UID → abonnement introuvable). **Discrimination des erreurs** : popup **bloqué par le navigateur** (`auth/popup-blocked`, `auth/operation-not-supported-in-environment`) → repli `signInWithRedirect` ; popup **fermé par l'utilisateur** (`auth/popup-closed-by-user`, `auth/cancelled-popup-request`) → abandon **silencieux** (le renvoyer chez Google serait absurde).
+- `services/authSession.ts` : `finalizeSignIn()` extrait du `DeepLinkHandler` — init des clés de cycle **si absentes uniquement** (ne JAMAIS écraser une progression), `onboarding_completed`, route splash. **Partagé magic link + Google** (+ Apple demain).
+- `_layout.tsx` : `AnonymousBootstrap` → **`AuthBootstrap`, SÉQUENTIEL** : `getRedirectResult()` → `authStateReady()` → anonyme de secours. L'ordre est **critique** : sinon un anonyme parasite est créé juste avant l'arrivée de la session Google de retour, et l'utilisateur atterrit sur le mauvais UID.
+- `auth.tsx` : bouton câblé (web only, garde `googleBusy` anti double-popup), toasts i18n `t.auth.googleErreur` / `googleReseau`. Toast « disponible prochainement » conservé sur natif.
+- ✅ **FUSION email ↔ Google VALIDÉE (2026-07-14)** : paiement en email+password sur `ncpnettoyage@gmail.com`, puis reconnexion **Google** sur la même adresse → **même UID**, abonnement retrouvé, aucun paywall au cycle 8. Le réglage Firebase « associer les comptes qui utilisent la même adresse e-mail » fait son travail.
+  - ⚠️ **Piège de test** (rencontré) : la fusion n'opère que sur une **adresse IDENTIQUE**. Se connecter avec Google sur `ncpnettoyage@gmail.com` alors que l'abonnement a été payé sur `duboislyana@hotmail.fr` donne — normalement — un **UID neuf sans abonnement** → paywall. Ce n'est PAS un bug : deux adresses = deux comptes.
+
+##### 📌 Compromis Option A confirmé — progression LOCALE (2026-07-14)
+Test en fenêtre privée : abonnement retrouvé ✅, mais **progression repartie au cycle 1**. Comportement **attendu** (Option A : progression en AsyncStorage, non clé par UID, jamais synchronisée). Conséquence assumée : **changer d'appareil = garder son abonnement mais perdre sa progression**.
+→ **Amélioration future possible — Option B** : progression dans Firestore (`users/{uid}.progress`), synchronisée au login. À évaluer si des utilisateurs remontent la perte de progression au changement d'appareil. Impacte : `home.tsx`, `finalizeSignIn()`, règles Firestore (write own doc), gestion des conflits local↔cloud.
+
+##### ✅ 3 fonctions d'action CASSÉES sur web — **CORRIGÉ (2026-07-14)**
+
+🚨 **RÈGLE ABSOLUE : `Alert.alert` est un no-op SILENCIEUX sur react-native-web.** Toute confirmation enveloppée dedans ne s'affiche jamais → son `onPress` n'est JAMAIS exécuté → **l'action ne s'exécute pas du tout**. Trois fonctions étaient mortes sur web sans aucun message d'erreur : **se déconnecter**, **supprimer mon compte** (trou RGPD !) et **réinitialiser ma progression**. Le code était correct, il n'était jamais atteint.
+→ **Toute confirmation passe désormais par `components/ui/ConfirmDialog.tsx`** (basé sur `Modal`, variante `destructif`). **NE JAMAIS réutiliser `Alert` pour une confirmation.**
+
+- **Se déconnecter** (`parametres.tsx`) — comportement CHANGÉ : l'ancienne version effaçait cycles/journal/vision board/points (se déconnecter = tout perdre). Désormais **la progression est CONSERVÉE** (Option A, locale) et retrouvée à la reconnexion — `finalizeSignIn()` n'initialise que si les clés sont absentes. On ne retire que : `subscription_active` (les droits appartiennent à l'UID qui part), `selected_plan`, `emailForSignIn`, et **`onboarding_completed`** — ⚠️ sans ce dernier, `AuthBootstrap` recréerait un **anonyme** au prochain chargement et l'utilisateur n'atteindrait JAMAIS l'écran de connexion. `had_subscription` volontairement conservé (déclenche « Bon retour parmi nous »).
+- **Supprimer mon compte (RGPD)** — ordre **critique** : doc Firestore `users/{uid}` **d'abord** (après `deleteUser`, `request.auth` n'existe plus → les règles refuseraient), puis compte Firebase, puis `AsyncStorage.clear()`. Cas `auth/requires-recent-login` → `ConfirmDialog` proposant un nouveau magic link, **rien n'est effacé** tant que la ré-auth n'a pas eu lieu.
+  - ✅ **Règle Firestore publiée (2026-07-14)** : `allow delete: if request.auth != null && request.auth.uid == uid;` sur `users/{uid}`. Sans elle → `permission-denied` et le doc **survivait** à la suppression du compte. Sans danger : l'utilisateur peut détruire son propre doc (au pire il se prive de son abonnement), il ne peut toujours pas s'en accorder un.
+- **Réinitialiser ma progression** (`profil.tsx`) — retour au cycle 1, **compte et abonnement intacts** (`subscription_active` / `had_subscription` hors de la liste).
+
+##### ⏳ Reste à faire — Alert informatives (Priorité 3)
+Une poignée d'`Alert.alert` **informatives** ne s'affichent pas non plus sur web (aucune action perdue, juste du silence) : permission photo refusée (`vision-board.tsx`), partage copié / échoué (`useShare.ts`), « disponible prochainement » (`pricing.tsx`, `pricing-upgrade.tsx`), « restaurer un achat » + notifs désactivées (`parametres.tsx`). → à basculer sur `showAuthToast` (qui, lui, fonctionne sur web) lors du nettoyage prod.
+
+##### ⏳ Reste à faire — Google, volets C et D
+- **Volet C — Conversion anonyme au cycle 8 via Google** : `linkWithPopup` (même UID → progression préservée), en alternative au formulaire email+password de `pricing-upgrade.tsx`. Gérer `auth/credential-already-in-use` → `GoogleAuthProvider.credentialFromError()` + `signInWithCredential` → l'utilisateur retombe sur son ancien compte, et le **garde-fou serveur** `hasActiveSubscription()` détecte son abonnement **sans le faire payer**.
+- **Volet D — Reconnexion Google** : aucun code propre à écrire, fourni par le volet B. À **tester** seulement.
+- ⚠️ **Web uniquement** : `signInWithPopup` n'existe pas sur React Native. La version native exigera `expo-auth-session` / `@react-native-google-signin` → chantier séparé, avec le pipeline RevenueCat.
+
+##### 🍎 Apple Sign-In — MASQUÉ sur web (2026-07-14), à câbler en Phase 2
+- `auth.tsx` : bouton Apple derrière `Platform.OS !== 'web'` (même traitement que « Restaurer un achat »). `handleAppleSignIn` reste une **coquille vide** (toast) — **code conservé**, rien supprimé.
+- Pourquoi masqué : le Sign in with Apple **web** exige un compte **Apple Developer payant (99 $/an)** + config côté Apple (Service ID, clé privée, domaines/Return URLs vérifiés). Pas encore en place → on ne montre pas un bouton qui ne fait rien.
+- 🚨 **Phase 2 (App Store) — OBLIGATOIRE** : dès qu'une app propose un login social tiers (Google), **Apple IMPOSE** de proposer aussi Sign in with Apple (App Review Guideline 4.8). Sans lui, **rejet à la soumission**. Prérequis : compte Apple Developer actif.
+- Sur web (Phase 1), **Google + email/magic link suffisent**.
 
 ##### 🔧 Config console à faire par l'utilisateur (Google)
 - ✅ Provider Google activé + domaines autorisés (`localhost` présent) → **suffisant pour tester le popup en dev** (Firebase crée le client OAuth Web et enregistre `.../__/auth/handler` tout seul).
@@ -486,6 +514,9 @@ Les boutons Google sont encore des **coquilles vides** (`auth.tsx` : `handleGoog
 - ⏳ Avant prod : **écran de consentement OAuth** (nom, email de support, logo, URLs légales) configuré et **publié**, sinon avertissement « application non vérifiée ». Ajouter `manifest-mind.app` aux domaines autorisés Firebase.
 
 #### PRIORITÉ 3 — Préparation du lancement web (Phase 1)
+- 🚨 **AUTH GOOGLE EN PROD — 2 points à ne PAS oublier** (issus du volet B, 2026-07-14) :
+  1. **`signInWithRedirect` est cassé par le blocage des cookies tiers** (Safari/ITP, et Chrome qui s'y met). Le repli popup-bloqué repose sur un aller-retour via `manifestmind.firebaseapp.com` — un domaine TIERS du point de vue de `manifest-mind.app`. Invisible en localhost (le popup passe), mais **le repli ne marchera pas sur iPhone en prod**. Correctif : servir le handler d'auth depuis NOTRE domaine → `authDomain: 'manifest-mind.app'` dans la config Firebase + **rewrite Firebase Hosting** de `/__/auth/**` vers le handler. À faire au déploiement web.
+  2. **Écran de consentement OAuth à configurer ET publier** (Google Cloud → APIs & Services → OAuth consent screen) : nom de l'app, email de support, logo, URLs légales. Sans ça → avertissement **« application non vérifiée »** pour les utilisateurs. Ajouter aussi `manifest-mind.app` aux domaines autorisés Firebase.
 - ⏳ **PWA** — `manifest.webmanifest` (nom, icônes, `display: standalone`, `theme_color`), **service worker** (offline/cache), **jeu d'icônes** (192/512 + maskable) → installable sur écran d'accueil.
 - ⏳ **Passage Paddle sandbox → production** — créer produits + prix côté prod, configurer le webhook prod, **approbation du domaine `manifest-mind.app`** dans Paddle. Puis `.env` : `EXPO_PUBLIC_PADDLE_SANDBOX=false` (bascule sur le token/price IDs prod déjà présents).
 - ⏳ **Documents légaux** — CGU + politique de confidentialité à jour avec **« 7 cycles »** et **essai sans carte** (3 langues).

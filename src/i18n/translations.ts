@@ -214,6 +214,8 @@ export const translations = {
         titre: 'Disponible prochainement',
         corps: 'La connexion Google sera disponible dans une prochaine version.',
       },
+      googleErreur: 'Connexion Google impossible. Réessaie.',
+      googleReseau: 'Problème de connexion. Vérifie ton accès internet.',
       alertEmailSent: {
         titre: 'Lien envoyé !',
         corps: 'Vérifie ta boîte mail ✉️\nUn lien de connexion t\'a été envoyé.',
@@ -738,6 +740,8 @@ export const translations = {
         titre: 'Coming soon',
         corps: 'Google sign-in will be available in a future version.',
       },
+      googleErreur: 'Google sign-in failed. Please try again.',
+      googleReseau: 'Connection problem. Check your internet access.',
       alertEmailSent: {
         titre: 'Link sent!',
         corps: 'Check your inbox ✉️\nA sign-in link has been sent to you.',
@@ -1247,6 +1251,8 @@ export const translations = {
         titre: 'Próximamente',
         corps: 'El acceso con Google estará disponible en una versión futura.',
       },
+      googleErreur: 'No se pudo iniciar sesión con Google. Inténtalo de nuevo.',
+      googleReseau: 'Problema de conexión. Comprueba tu acceso a internet.',
       alertEmailSent: {
         titre: '¡Enlace enviado!',
         corps: 'Revisa tu bandeja ✉️\nSe ha enviado un enlace de acceso.',

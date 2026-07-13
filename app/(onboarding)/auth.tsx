@@ -6,6 +6,8 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path, Rect } from 'react-native-s
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { auth } from '../../services/firebase';
+import { signInWithGoogle } from '../../services/googleAuth';
+import { finalizeSignIn } from '../../services/authSession';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
 
@@ -16,6 +18,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const handleAppleSignIn = () => {
     // Stub inchangé (OAuth Apple à implémenter en session dédiée) — on rend juste
@@ -23,9 +26,36 @@ export default function Auth() {
     showAuthToast(`${t.auth.alertApple.titre} — ${t.auth.alertApple.corps}`, 'info');
   };
 
-  const handleGoogleSignIn = () => {
-    // Stub inchangé (OAuth Google à implémenter en session dédiée).
-    showAuthToast(`${t.auth.alertGoogle.titre} — ${t.auth.alertGoogle.corps}`, 'info');
+  const handleGoogleSignIn = async () => {
+    if (googleBusy) return; // évite un 2e popup (auth/cancelled-popup-request)
+    setGoogleBusy(true);
+    const res = await signInWithGoogle();
+    setGoogleBusy(false);
+
+    switch (res.status) {
+      case 'signed-in':
+        // Session établie : useSubscriptionSync (monté dans _layout) purge les
+        // droits de l'identité précédente puis resynchronise subscription_active
+        // depuis users/{uid}. Le paywall est décidé en aval par le gate de home.
+        await finalizeSignIn();
+        return;
+      case 'redirecting':
+        // La page part chez Google ; le retour est traité au démarrage par
+        // getRedirectResult (_layout.tsx). Rien à afficher.
+        return;
+      case 'cancelled':
+        // L'utilisateur a fermé le popup — silence, pas d'erreur.
+        return;
+      case 'unsupported':
+        // Native : signInWithPopup n'existe pas en React Native.
+        showAuthToast(`${t.auth.alertGoogle.titre} — ${t.auth.alertGoogle.corps}`, 'info');
+        return;
+      default:
+        showAuthToast(
+          res.code === 'auth/network-request-failed' ? t.auth.googleReseau : t.auth.googleErreur,
+          'error',
+        );
+    }
   };
 
   const handleEmailSignIn = () => {
@@ -165,14 +195,26 @@ export default function Auth() {
         </View>
 
         <View style={styles.buttonsContainer}>
-          <Pressable style={styles.appleButton} onPress={handleAppleSignIn}>
-            <Svg width="14" height="14" viewBox="0 0 18 18">
-              <Path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4z" fill="white"/>
-            </Svg>
-            <Text style={styles.appleButtonText}>{t.auth.apple}</Text>
-          </Pressable>
+          {/* Apple Sign-In : coquille vide (handleAppleSignIn = toast). Le câblage
+              web exige un compte Apple Developer payant, qu'on n'a pas encore →
+              masqué sur web pour ne pas proposer un bouton qui ne fait rien.
+              Code conservé : il reprend vie en Phase 2 (App Store), où Apple
+              IMPOSE son sign-in dès qu'on propose Google. Sur web, Google +
+              email/magic link suffisent. */}
+          {Platform.OS !== 'web' ? (
+            <Pressable style={styles.appleButton} onPress={handleAppleSignIn}>
+              <Svg width="14" height="14" viewBox="0 0 18 18">
+                <Path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4z" fill="white"/>
+              </Svg>
+              <Text style={styles.appleButtonText}>{t.auth.apple}</Text>
+            </Pressable>
+          ) : null}
 
-          <Pressable style={styles.googleButton} onPress={handleGoogleSignIn}>
+          <Pressable
+            style={[styles.googleButton, googleBusy && { opacity: 0.5 }]}
+            onPress={handleGoogleSignIn}
+            disabled={googleBusy}
+          >
             <Svg width="14" height="14" viewBox="0 0 18 18">
               <Path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
               <Path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>

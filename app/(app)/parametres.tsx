@@ -2,7 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { deleteUser, sendSignInLinkToEmail, signOut } from 'firebase/auth';
-import { auth } from '../../services/firebase';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { auth, db } from '../../services/firebase';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { getCycleContent } from '../../hooks/useCycleContent';
@@ -59,6 +62,10 @@ export default function Parametres() {
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+  // Confirmation affichée. Modal et NON Alert : Alert.alert est un no-op
+  // silencieux sur react-native-web — la boîte ne s'affichait jamais, donc la
+  // déconnexion et la suppression de compte ne s'exécutaient tout simplement pas.
+  const [dialog, setDialog] = useState<'signout' | 'delete' | 'reauth' | null>(null);
 
   useEffect(() => {
     const t0 = setTimeout(() => {
@@ -205,108 +212,115 @@ export default function Parametres() {
     }
   }
 
-  function handleSignOut() {
-    Alert.alert(
-      t.parametres.alertDeconnecter.titre,
-      t.parametres.alertDeconnecter.corps,
-      [
-        { text: t.parametres.alertDeconnecter.annuler, style: 'cancel' },
-        {
-          text: t.parametres.alertDeconnecter.confirmer,
-          style: 'destructive',
-          onPress: async () => {
-            // 1. Firebase sign out (silencieux si pas de compte connecté)
-            try {
-              if (auth.currentUser) await signOut(auth);
-            } catch {}
-
-            // 2. Supprimer toutes les clés nommées (user_language conservée)
-            await AsyncStorage.multiRemove([
-              'onboarding_completed',
-              'user_name',
-              'current_cycle',
-              'current_theme',
-              'cycle_completed',
-              'cycle_points',
-              'points_total',
-              'next_cycle_time',
-              'cycle_step_status',
-              'cycle_earned_points',
-              'vision_board_photos',
-              'notif_affirmation',
-              'notif_rappel',
-              'reminder_time',
-              'selected_plan',
-              'emailForSignIn',
-            ]);
-
-            // 3. Supprimer les entrées journal (journal_cycle_N)
-            try {
-              const allKeys = await AsyncStorage.getAllKeys();
-              const journalKeys = allKeys.filter(k => k.startsWith('journal_cycle_'));
-              if (journalKeys.length > 0) await AsyncStorage.multiRemove(journalKeys);
-            } catch {}
-
-            router.replace('/(onboarding)/welcome' as any);
-          },
-        },
-      ]
-    );
+  // Déconnexion : on ferme la session, on NE TOUCHE PAS à la progression.
+  //
+  // L'ancienne version effaçait cycles, journal, vision board et points — donc
+  // se déconnecter revenait à tout perdre. Désormais la progression (locale,
+  // Option A) reste sur l'appareil et l'utilisateur la retrouve intacte à sa
+  // prochaine connexion : `finalizeSignIn()` n'initialise les clés de cycle que
+  // si elles sont ABSENTES, il n'écrase jamais.
+  //
+  // On retire en revanche :
+  //   - `onboarding_completed` → SANS ça, `AuthBootstrap` verrait un utilisateur
+  //     d'essai sans session et lui recréerait un compte ANONYME au prochain
+  //     chargement : la personne n'atteindrait jamais l'écran de connexion.
+  //   - `subscription_active` → les droits appartiennent à l'UID qui vient de
+  //     partir. Ils seront resynchronisés depuis Firestore selon le vrai UID à
+  //     la reconnexion (cf. purge à changement d'identité de useSubscriptionSync).
+  //   - `selected_plan` / `emailForSignIn` → état de l'ancienne session.
+  //
+  // `had_subscription` (marqueur d'appareil) est volontairement CONSERVÉ : c'est
+  // lui qui déclenchera la question « Bon retour parmi nous » si la personne
+  // repasse par « essai gratuit » au lieu de se reconnecter.
+  async function confirmSignOut() {
+    setDialog(null);
+    try {
+      if (auth.currentUser) await signOut(auth);
+    } catch {
+      // Déjà déconnecté / réseau : on nettoie le local quand même.
+    }
+    try {
+      await AsyncStorage.multiRemove([
+        'onboarding_completed',
+        'subscription_active',
+        'selected_plan',
+        'emailForSignIn',
+      ]);
+    } catch {
+      // fallback silencieux — on route quand même
+    }
+    router.replace('/(onboarding)/welcome' as any);
   }
 
-  function handleDeleteAccount() {
-    Alert.alert(
-      t.parametres.alertSupprimer.titre,
-      t.parametres.alertSupprimer.corps,
-      [
-        { text: t.parametres.alertSupprimer.annuler, style: 'cancel' },
-        {
-          text: t.parametres.alertSupprimer.confirmer,
-          style: 'destructive',
-          onPress: async () => {
-            const user = auth.currentUser;
-            if (user) {
-              try {
-                await deleteUser(user);
-              } catch (error: any) {
-                if (error?.code === 'auth/requires-recent-login') {
-                  // Ré-authentification nécessaire → proposer un nouveau magic link
-                  const email = user.email ?? '';
-                  Alert.alert(
-                    t.parametres.alertSupprimerReauth.titre,
-                    t.parametres.alertSupprimerReauth.corps,
-                    [
-                      { text: t.parametres.alertSupprimerReauth.annuler, style: 'cancel' },
-                      {
-                        text: t.parametres.alertSupprimerReauth.envoyer,
-                        onPress: async () => {
-                          try {
-                            await sendSignInLinkToEmail(auth, email, {
-                              url: 'https://manifest-mind.app',
-                              handleCodeInApp: true,
-                            });
-                            await AsyncStorage.setItem('emailForSignIn', email);
-                            Alert.alert(t.auth.alertEmailSent.titre, t.auth.alertEmailSent.corps);
-                          } catch {
-                            Alert.alert(t.auth.alertEmailError.titre, t.auth.alertEmailError.corps);
-                          }
-                        },
-                      },
-                    ]
-                  );
-                  return; // Attendre la ré-auth — ne pas effacer les données
-                }
-                // Autre erreur Firebase → continuer quand même le nettoyage local
-              }
-            }
+  // Envoi du lien de reconnexion quand Firebase exige une session récente avant
+  // de supprimer le compte. On n'efface rien : l'utilisateur relancera la
+  // suppression une fois reconnecté.
+  async function sendReauthLink() {
+    setDialog(null);
+    const email = auth.currentUser?.email ?? '';
+    if (!email) {
+      showAuthToast(`${t.auth.alertEmailError.titre} — ${t.auth.alertEmailError.corps}`, 'error');
+      return;
+    }
+    try {
+      await sendSignInLinkToEmail(auth, email, {
+        // Même logique que auth.tsx : sur web, reboucler sur l'ORIGINE COURANTE
+        // (emailForSignIn est stocké dans le localStorage de cette origine).
+        url: Platform.OS === 'web' && typeof window !== 'undefined'
+          ? window.location.origin
+          : 'https://manifest-mind.app',
+        handleCodeInApp: true,
+      });
+      await AsyncStorage.setItem('emailForSignIn', email);
+      showAuthToast(`${t.auth.alertEmailSent.titre} — ${t.auth.alertEmailSent.corps}`, 'success');
+    } catch {
+      showAuthToast(`${t.auth.alertEmailError.titre} — ${t.auth.alertEmailError.corps}`, 'error');
+    }
+  }
 
-            // Effacer toutes les données locales et rediriger
-            await AsyncStorage.clear();
-            router.replace('/(onboarding)/welcome' as any);
-          },
-        },
-      ]
-    );
+  // Suppression de compte (RGPD) : effacement TOTAL, ici la remise à zéro est
+  // voulue. Ordre important : le doc Firestore d'abord (une fois `deleteUser`
+  // passé, `request.auth` n'existe plus et les règles refuseraient la suppression),
+  // puis le compte Firebase, puis tout le storage local.
+  async function confirmDeleteAccount() {
+    setDialog(null);
+    const user = auth.currentUser;
+
+    if (user) {
+      // 1. Doc Firestore users/{uid} (subscription_active, identifiants Paddle…).
+      //    ⚠️ Nécessite `allow delete: if request.auth.uid == uid` dans les règles
+      //    Firestore — sans ça, permission-denied et le doc SURVIT à la
+      //    suppression du compte (trou RGPD).
+      try {
+        await deleteDoc(doc(db, 'users', user.uid));
+      } catch (e: any) {
+        if (__DEV__) console.log('[parametres] suppression doc Firestore échouée', e?.code);
+      }
+
+      // 2. Compte Firebase.
+      try {
+        await deleteUser(user);
+      } catch (error: any) {
+        if (error?.code === 'auth/requires-recent-login') {
+          // Session trop ancienne : Firebase exige une ré-authentification. On
+          // DEMANDE avant d'envoyer un lien, et on N'EFFACE RIEN — l'utilisateur
+          // relancera la suppression une fois reconnecté.
+          setDialog('reauth');
+          return;
+        }
+        // Autre erreur : on poursuit le nettoyage local malgré tout.
+        if (__DEV__) console.log('[parametres] deleteUser échoué', error?.code);
+      }
+    }
+
+    // 3. Tout le storage local (y compris had_subscription : le compte n'existe
+    //    plus, l'appareil ne doit plus prétendre qu'un abonnement y a vécu).
+    try {
+      await AsyncStorage.clear();
+    } catch {
+      // fallback silencieux — on route quand même
+    }
+    router.replace('/(onboarding)/welcome' as any);
   }
 
   function handleRestorePurchases() {
@@ -507,7 +521,7 @@ export default function Parametres() {
           <Text style={styles.sectionLabel}>{t.parametres.sections.compte}</Text>
 
           {/* Ligne 1 — Se déconnecter */}
-          <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={handleSignOut}>
+          <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={() => setDialog('signout')}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M13 3h4v14h-4M9 14l4-4-4-4M3 10h10" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
             </Svg>
@@ -516,7 +530,7 @@ export default function Parametres() {
           </Pressable>
 
           {/* Ligne 2 — Supprimer mon compte */}
-          <Pressable style={[styles.rowBase, styles.rowLast]} onPress={handleDeleteAccount}>
+          <Pressable style={[styles.rowBase, styles.rowLast]} onPress={() => setDialog('delete')}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M5 5l10 10M15 5L5 15" stroke="#C04040" strokeWidth="1.2" strokeLinecap="round" />
             </Svg>
@@ -576,6 +590,39 @@ export default function Parametres() {
         </Animated.View>
 
       </ScrollView>
+
+      {/* Confirmations — Modal et non Alert (no-op silencieux sur web) */}
+      <ConfirmDialog
+        visible={dialog === 'signout'}
+        titre={t.parametres.alertDeconnecter.titre}
+        corps={t.parametres.alertDeconnecter.corps}
+        confirmer={t.parametres.alertDeconnecter.confirmer}
+        annuler={t.parametres.alertDeconnecter.annuler}
+        destructif
+        onConfirm={confirmSignOut}
+        onCancel={() => setDialog(null)}
+      />
+      <ConfirmDialog
+        visible={dialog === 'delete'}
+        titre={t.parametres.alertSupprimer.titre}
+        corps={t.parametres.alertSupprimer.corps}
+        confirmer={t.parametres.alertSupprimer.confirmer}
+        annuler={t.parametres.alertSupprimer.annuler}
+        destructif
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setDialog(null)}
+      />
+      {/* Ré-authentification exigée par Firebase avant suppression (session
+          trop ancienne) : on propose un nouveau magic link. */}
+      <ConfirmDialog
+        visible={dialog === 'reauth'}
+        titre={t.parametres.alertSupprimerReauth.titre}
+        corps={t.parametres.alertSupprimerReauth.corps}
+        confirmer={t.parametres.alertSupprimerReauth.envoyer}
+        annuler={t.parametres.alertSupprimerReauth.annuler}
+        onConfirm={sendReauthLink}
+        onCancel={() => setDialog(null)}
+      />
 
       {/* Time Picker */}
       {showTimePicker && (
