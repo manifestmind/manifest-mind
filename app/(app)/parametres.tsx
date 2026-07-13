@@ -462,7 +462,7 @@ export default function Parametres() {
             ) : (
               <>
                 <Text style={[styles.rowTitle, { flex: 1 }]}>
-                  {STORES_ACTIVE ? t.parametres.abonnement.passerPremium : t.pricing.disponibleProchainement}
+                  {STORES_ACTIVE ? t.parametres.abonnement.passerPremium : t.commun.disponibleProchainement}
                 </Text>
                 <Chevron />
               </>

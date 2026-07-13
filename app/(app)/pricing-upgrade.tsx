@@ -70,7 +70,7 @@ export default function PricingUpgrade() {
     // Bloqué si aucun provider de paiement n'est actif pour la plateforme courante
     // (Paddle sur web, RevenueCat/IAP sur native).
     if (!canPay()) {
-      Alert.alert(t.pricing.disponibleProchainement);
+      Alert.alert(t.commun.disponibleProchainement);
       return;
     }
 

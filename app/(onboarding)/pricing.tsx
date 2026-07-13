@@ -88,7 +88,7 @@ export default function Pricing() {
 
     // Plan payant — bloqué si aucun provider de paiement actif pour la plateforme.
     if (!canPay()) {
-      Alert.alert(t.pricing.disponibleProchainement);
+      Alert.alert(t.commun.disponibleProchainement);
       return;
     }
 

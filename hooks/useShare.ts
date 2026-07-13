@@ -18,7 +18,9 @@ export async function shareProgress() {
     const t = translations[lang];
 
     const pct = (pointsTotal / 36500) * 100;
-    let level = t.niveaux.eveil;
+    // Annotation explicite : sans elle, TS fige le type sur le littéral de
+    // `eveil` et refuse les 3 autres niveaux (aucun impact au runtime).
+    let level: string = t.niveaux.eveil;
     if (pct >= 75) level = t.niveaux.manifestation;
     else if (pct >= 50) level = t.niveaux.expansion;
     else if (pct >= 25) level = t.niveaux.ancrage;
