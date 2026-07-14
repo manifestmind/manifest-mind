@@ -449,9 +449,9 @@ Phases livrées & validées :
 ═══════════════════════════════
 
 **PHASE A — Sécuriser l'accès payant (CHANTIER N°1, avant tout)**
-1. 🔴 Versionner + verrouiller les **règles Firestore** (lecture/suppression de son propre doc, écriture client interdite, `subscription_active` non forgeable). *Audit : aucune règle versionnée dans le repo.*
-2. 🔴 Protéger **TOUS les écrans de contenu** via le gate au niveau du **layout `(app)`** (pas seulement `home` ; aujourd'hui accessibles par URL directe `/(app)/affirmation`…). *Audit vérifié : `(app)/_layout.tsx` est un `<Stack>` nu, les écrans de contenu ne lisent pas `subscription_active`.*
-3. 🔴 Empêcher l'**essai gratuit renouvelable à l'infini** (bouton reset / vidage localStorage / réinitialisation profil redonnent 7 cycles ; rien côté serveur ne retient « essai épuisé »).
+1. ✅ **~~Versionner + verrouiller les règles Firestore~~** — **FAIT (2026-07-14)**. Cf. « A.1 » en archive.
+2. ✅ **~~Protéger TOUS les écrans de contenu (gate au niveau du layout `(app)`)~~** — **FAIT (2026-07-14)**. Cf. « A.2 » en archive.
+3. 🔴 **RESTE À FAIRE — Empêcher l'essai gratuit renouvelable à l'infini** (bouton reset / vidage localStorage / réinitialisation profil redonnent 7 cycles ; rien côté serveur ne retient « essai épuisé »). ← **PROCHAIN CHANTIER, dernier point de la Phase A.**
 
 **PHASE B — Autres points critiques**
 4. 🔴 Débloquer l'utilisateur qui **a payé mais dont le webhook échoue** (`activation.tsx` renvoie en boucle au paywall après 30 s → `home` re-gate) : prévoir un vrai recours.
@@ -500,6 +500,37 @@ Phases livrées & validées :
 ### 📦 ARCHIVE — détail technique du travail DÉJÀ RÉALISÉ
 
 > Historique et justifications des décisions (ne pas re-débattre sans raison). Les « ⏳ Reste à faire » ci-dessous sont désormais cadrés par la feuille de route ci-dessus.
+
+#### ✅ A.1 — Règles Firestore versionnées — **TERMINÉ (2026-07-14)**
+
+- **`firestore.rules`** créé à la racine + `firebase.json` déclare `"firestore": { "rules": "firestore.rules" }`. **Volontairement PAS de clé `indexes`** : ajouter un `firestore.indexes.json` vide ferait courir le risque qu'un déploiement supprime des index existants. Aucun index utilisé aujourd'hui.
+- Les règles publiées en console (2026-07-13) ont été **récupérées via l'API Rules** et versionnées à l'identique, à une clarification près : `allow write: if false` → **`allow create, update: if false`**. ⚠️ **Sémantiquement IDENTIQUE**, mais `write` recouvre create + update + **delete** en Firestore et se relisait donc comme une contradiction avec la règle `delete` juste au-dessus. Sans effet réel (les règles s'additionnent : un `allow … : if false` n'accorde rien mais ne refuse rien non plus — c'est bien la règle `delete` qui accorde la suppression).
+- **Périmètre client vérifié exhaustivement** — le client ne fait QUE 3 opérations Firestore, toutes sur son propre doc : `onSnapshot` (`useSubscriptionSync.ts`), `getDoc` (`services/subscription.ts`), `deleteDoc` (`parametres.tsx`). **Aucune écriture client nulle part.** Interdire create/update ne casse donc rien. Le webhook écrit via l'**Admin SDK**, qui **contourne** les règles par conception.
+- **Déploiement** : `npx firebase deploy --only firestore:rules` (le `--only` est essentiel — sans lui, `firebase deploy` redéploierait aussi `paddleWebhook`).
+- **Validé au Rules Playground (2026-07-14)** : `get` sur son doc ✅ Allowed · `update` (`subscription_active: true`) 🔴 **Denied** ← *l'abonnement n'est pas forgeable depuis le navigateur* · `delete` sur son doc ✅ Allowed.
+
+#### ✅ A.2 — Gate de périmètre sur TOUS les écrans de contenu — **TERMINÉ (2026-07-14)**
+
+Avant : `(app)/_layout.tsx` était un `<Stack>` nu et seul `home.tsx` portait le gate → `/affirmation`, `/journal`, etc. étaient **joignables par URL directe** sans aucune vérification d'abonnement.
+
+- **`services/access.ts`** (nouveau) — **`isPaywalled()` = SOURCE DE VÉRITÉ UNIQUE** de la règle (`cycle > FREE_CYCLES && !subscription_active`, court-circuitée par `DEBUG_SKIP_PAYWALL`). **Ne JAMAIS re-dupliquer cette règle ailleurs** : deux copies d'une règle de sécurité finissent par diverger.
+- **`(app)/_layout.tsx`** — gate de périmètre, vérifié à chaque changement de `usePathname`. **LISTE BLANCHE** (`ALWAYS_ALLOWED`), pas liste noire : tout écran ajouté demain est **protégé d'office**, et un oubli se voit au premier test (écran bloqué) au lieu de rester une faille invisible. Le `<Stack>` reste **toujours monté** (le démonter relancerait les écrans à zéro) ; pendant le contrôle, un **voile opaque `#F0EAE0`** le recouvre → aucun flash de contenu payant avant la redirection.
+- **`home.tsx`** — sa copie locale de la règle remplacée par `await isPaywalled()`.
+
+**🚨 DOUBLE GATE — les deux points d'application sont complémentaires, ne pas en supprimer un :**
+- **Layout = le PÉRIMÈTRE** (accès par URL directe).
+- **`home` = la TRANSITION.** Le passage au cycle 8 ne vient PAS d'une navigation : c'est `home` qui fait avancer `current_cycle` quand minuit est passé. Au moment où le layout a vérifié la route, le cycle valait **encore 7** — il a laissé passer, à raison. Seul le gate de `home`, placé **après** l'incrément, attrape la bascule.
+
+**🚨 ÉCRANS QUI DOIVENT RESTER HORS DU GATE** (`ALWAYS_ALLOWED`) :
+- **`activation`** ← **LE PIÈGE**. L'utilisateur **vient de payer** et `subscription_active` n'est, **par construction**, pas encore `true` (c'est exactement ce que l'écran attend en polling). Le gater renverrait **tout nouveau payeur** au paywall. C'est le seul écran où l'état « cycle > 7 + pas d'abonnement » est **normal**.
+- **`pricing-upgrade`** — le paywall lui-même → le gater = **boucle de redirection infinie**.
+- **`parametres`** (RGPD : suppression de compte, déconnexion, langue), **`profil`**, **`splash`**, **`name`**.
+
+**FAIL-OPEN assumé** : lecture AsyncStorage en échec ou valeur corrompue → `isPaywalled()` renvoie `false` (accès permis). Un pépin de stockage ne doit **jamais** enfermer dehors un abonné qui a payé. Même arbitrage que `hasActiveSubscription()`.
+
+**Portée honnête** : A.2 ferme l'accès **opportuniste** (URL directe, onglet resté ouvert). Les 365 jours de contenu (`assets/content/content_*.json`) restent **embarqués dans le bundle JS** et sont extractibles par quelqu'un de motivé. Une vraie protection supposerait de servir le contenu depuis le serveur contre vérification d'abonnement — chantier d'une autre ampleur, **non retenu** (hors périmètre, non justifié ici).
+
+**Tests validés (2026-07-14)** : activation NON gatée (payeur passe) · paiement sandbox complet OK · URL directe bloquée pour les 7 écrans de contenu · parametres accessible même paywallé · cycles 1-7 intacts · blocage au cycle 8.
 
 #### ✅ PRIORITÉ 1 — Finition du modèle d'accès — **TERMINÉE (2026-07-13)**
 
