@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ManifestMind — Règles de sécurité Firestore
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Modèle : Firestore est la SOURCE DE VÉRITÉ de l'abonnement
+// (users/{uid}.subscription_active). Le client ne fait que la LIRE — il ne
+// doit jamais pouvoir l'écrire, sinon n'importe qui s'accorderait un
+// abonnement depuis la console de son navigateur.
+//
+// Seules écritures légitimes : le webhook Paddle (functions/src/index.ts),
+// qui tourne côté serveur avec le Firebase Admin SDK. L'Admin SDK CONTOURNE
+// entièrement ces règles — les interdictions d'écriture ci-dessous ne le
+// gênent donc pas, elles ne s'appliquent qu'aux SDK clients.
+//
+// Déploiement :  npx firebase deploy --only firestore:rules
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      // Lecture de son propre document uniquement.
+      // Utilisée par useSubscriptionSync (onSnapshot) et par le garde-fou
+      // anti double-paiement hasActiveSubscription (getDoc).
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Suppression de son propre document — obligation RGPD, déclenchée par
+      // « Supprimer mon compte » (parametres.tsx). Sans danger : l'utilisateur
+      // ne peut que se priver de son propre abonnement, jamais s'en accorder un.
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Création et mise à jour INTERDITES au client, sans exception.
+      // C'est ce qui rend subscription_active non forgeable.
+      //
+      // NB : on écrit bien « create, update » et non « write » — en Firestore,
+      // `write` recouvre create + update + DELETE, et se relirait donc comme
+      // une contradiction avec la règle de suppression ci-dessus. (Sans effet
+      // réel : les règles s'additionnent, un `allow ... : if false` n'accorde
+      // rien mais ne refuse rien non plus. On l'écrit pour dire l'intention.)
+      allow create, update: if false;
+    }
+
+    // Tout le reste : refusé. Aucune autre collection n'est utilisée.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -16,7 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
-import { DEBUG_SKIP_PAYWALL, FREE_CYCLES } from '../../services/config';
+import { isPaywalled } from '../../services/access';
+import { DEBUG_SKIP_PAYWALL } from '../../services/config';
 
 type StepStatus = {
   opening: boolean;
@@ -150,18 +151,18 @@ export default function Home() {
       cycle = newCycle;
     }
 
-    // Gate freemium (modèle définitif) : au-delà de l'essai gratuit (7 cycles),
-    // TOUT utilisateur sans abonnement payant actif est bloqué vers le paywall.
-    // subscription_active='true' est posé par le webhook Paddle → Firestore →
-    // useSubscriptionSync → AsyncStorage. On ne dépend PLUS de selected_plan :
-    // un anonyme d'essai (ou tout compte sans abonnement) est paywallé au cycle 8.
-    // DEBUG_SKIP_PAYWALL court-circuite tout pour les tests Expo Go.
-    if (!DEBUG_SKIP_PAYWALL) {
-      const subActive = (await AsyncStorage.getItem('subscription_active')) === 'true';
-      if (cycle > FREE_CYCLES && !subActive) {
-        router.replace('/(app)/pricing-upgrade' as any);
-        return;
-      }
+    // Gate freemium — point d'application « TRANSITION ».
+    //
+    // Le layout (app)/_layout.tsx garde le périmètre (accès par URL directe),
+    // mais il ne peut pas attraper le passage au cycle 8 : celui-ci vient
+    // d'être décidé JUSTE AU-DESSUS, par l'avancement de minuit. Quand le
+    // layout a vérifié la route, `current_cycle` valait encore 7 — il a laissé
+    // passer, à raison. C'est ici qu'on rattrape la bascule.
+    //
+    // Même règle exactement, via la fonction partagée : cf. services/access.ts.
+    if (await isPaywalled()) {
+      router.replace('/(app)/pricing-upgrade' as any);
+      return;
     }
 
     setCycleNumber(cycle);
