@@ -471,8 +471,11 @@ Phases livrées & validées :
 → ✅ **PHASE B TERMINÉE (2026-07-15).** Les 3 points (4 webhook / 5 firebase.ts / 6 souricière) sont livrés, `tsc` clean, app bootée. **Commit groupé en attente** (après tests utilisateur). Prochaine étape : **PHASE C** (Google Sign-In, volets C et D).
 
 **PHASE C — Finir Google Sign-In (Priorité 2 restante)**
-7. Volet C — **conversion anonyme au cycle 8 via `linkWithPopup`** (option en plus de email+password). Détail technique : voir archive « Reste à faire — Google, volets C et D ».
-8. Volet D — **reconnexion Google** (tests).
+7. ✅ **~~Volet C — conversion anonyme via `linkWithPopup`~~** — **CODÉ (2026-07-15), à tester.** Bouton « Continuer avec Google » **au-dessus** du formulaire email+password (séparateur « ou », web only, visible seulement en conversion `mustCreateAccount`) sur `pricing-upgrade.tsx` **et** `pricing.tsx`. **Approche par DÉLÉGATION (zéro touche au chemin email, zéro copie du garde-fou)** : nouveau service `linkOrSignInWithGoogle()` (`services/googleAuth.ts`) rend le compte permanent (`linkWithPopup` → **même UID**, progression préservée), puis `handleGooglePurchase` **appelle `handlePurchase()`** — qui, voyant `needsAccount()=false`, saute le bloc compte et enchaîne SON garde-fou `hasActiveSubscription()` + `openCheckout`. **POPUP-ONLY** (pas de repli `linkWithRedirect` : au retour, `AuthBootstrap` route vers splash → casserait l'enchaînement Paddle) → popup bloqué = message `t.compte.googleBloque` + repli sur email. `auth/credential-already-in-use` / `email-already-in-use` → `GoogleAuthProvider.credentialFromError()` + `signInWithCredential` (`status:'switched'`) → l'utilisateur retombe sur SON compte, le garde-fou serveur le restaure sans re-paiement. i18n : 1 clé neuve `t.compte.googleBloque` (FR/EN/ES) ; le reste réutilise `t.auth.google`/`t.commun.ou`/`t.auth.googleErreur`/`t.auth.googleReseau`. `tsc` clean + app bootée.
+7-bis. ✅ **Volet C VALIDÉ (tests 2026-07-15)** — (a) chemin email+password intact, comportement identique ; (b) Google au cycle 8 crée le compte + enchaîne Paddle → paiement → activation → home ; (c) garde-fou anti double-paiement couvre aussi le chemin Google (abonnement retrouvé, aucun paiement).
+8. ✅ **~~Volet D — reconnexion Google~~** — **VALIDÉ (tests 2026-07-15)**, aucun code neuf (fourni par le volet B). Reconnexion Google (`auth.tsx` → `signInWithGoogle` → `finalizeSignIn`) restaure l'abonnement sur le **bon UID sans re-paiement** ; un compte **non-abonné** reste bloqué au paywall (sécurité OK). ⚠️ Repli `signInWithRedirect` (popup bloqué) OK en localhost ; **prod Safari/iPhone à revalider en Phase H** (dépend du point 24 : handler d'auth servi depuis `manifest-mind.app`).
+
+→ ✅ **PHASE C TERMINÉE (2026-07-15).** **Google Sign-In complet** : connexion (volet B), conversion au cycle 8 via `linkWithPopup` (volet C), reconnexion (volet D). Prochaine étape : **PHASE D** (robustesse paiement).
 
 **PHASE D — Robustesse & paiement**
 9. 🟠 Rendre **visibles les échecs de paiement** (aujourd'hui silencieux : `services/paddle.ts` avale tout en `console.warn`, le bouton « payer » ne fait rien).
@@ -495,7 +498,8 @@ Phases livrées & validées :
 
 **PHASE G — Config production**
 22. Paddle **sandbox → prod** (`EXPO_PUBLIC_PADDLE_SANDBOX=false` — ⚠️ actuellement `true` dans `.env`, un build prod encaisserait en sandbox ; produits/prix/webhook prod).
-23. ⚠️ Faire **approuver le domaine `manifest-mind.app` par Paddle** — **DÉLAI EXTERNE, lancer TÔT, en parallèle des autres phases**.
+23. ✅ **~~Approuver le domaine `manifest-mind.app` par Paddle~~** — **FAIT (2026-07-15)**. Paddle a approuvé le domaine (« vous pouvez commencer à collecter les paiements dès que vous serez prêt »). **Le seul délai externe de la feuille de route est levé** — tout le reste ne dépend plus que de nous.
+23-bis. 🆕 **Détails de paiement Paddle — compte bancaire pour RECEVOIR les fonds.** Sans ça, on peut encaisser côté client mais Paddle **ne peut pas reverser**. Dashboard Paddle → *Business / Payout details* → compte bancaire + infos fiscales/entreprise. **À finaliser une fois le catalogue prod configuré (point 22).** Peut demander une vérification (prévoir un peu de marge).
 24. **Config Google prod** : `manifest-mind.app` aux domaines Firebase ; **servir le handler auth depuis le domaine** (sinon `signInWithRedirect` cassé sur Safari/iPhone à cause des cookies tiers) ; **publier l'écran de consentement OAuth**.
     - **🔑 Restreindre la clé API web** (déplacée du point 5 ; protège le quota/facture, PAS les données) — Console Google Cloud → projet `manifestmind` → **APIs & Services → Credentials** → clé « Browser key (auto created by Firebase) » (`AIzaSyDqKc…`) :
       1. **Application restrictions → Websites (HTTP referrers)** — ajouter **TOUS** les référents sinon l'auth casse : `manifest-mind.app/*`, `*.manifest-mind.app/*`, **`manifestmind.firebaseapp.com/*`** (⚠️ domaine du handler d'auth — popup/redirect Google + magic link ; l'oublier casse la connexion), `manifestmind.web.app/*` (si Hosting par défaut), `localhost/*` + `localhost:*/*` (dev) — ou **clé de dev séparée**.
@@ -508,9 +512,10 @@ Phases livrées & validées :
 26. Build : `npx expo export --platform web`.
 27. Déployer sur `manifest-mind.app`.
 28. **Tests finaux réels** (vrai paiement, multi-navigateurs dont **Safari/iPhone**).
+    - 📧 **Vérifier le destinataire du reçu Paddle.** Au **premier VRAI paiement en prod**, confirmer que le **reçu/la confirmation Paddle part bien au CLIENT** (e-mail saisi/utilisé au checkout), **pas à moi**. ⚠️ En **sandbox**, les confirmations arrivent sur MON e-mail vendeur — **comportement normal du sandbox** ; l'e-mail client est bien enregistré sur la transaction. À revalider en prod car un reçu manquant côté client = source de litiges/chargebacks.
 → 🚀 **PUBLICATION WEB**
 
-**Notes :** Phases **A et B non négociables** avant lancement. Point **23 (Paddle) à lancer tôt** car délai externe. Après lancement web → **PHASE 2 stores**.
+**Notes :** Phases **A et B non négociables** avant lancement (✅ faites). **Domaine `manifest-mind.app` approuvé par Paddle (23 ✅, 2026-07-15) → plus aucun délai externe.** Reste **23-bis** (détails de paiement bancaire) à finaliser une fois le catalogue prod configuré. **On suit la feuille de route dans l'ordre** (pas de re-séquençage). Après lancement web → **PHASE 2 stores**.
 
 ---
 

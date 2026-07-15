@@ -544,6 +544,7 @@ export const translations = {
       errGenerique: 'Impossible de créer le compte. Réessaie.',
       rappelReconnexion: 'Retiens bien ce mot de passe : il te servira à te reconnecter.',
       boutonReconnexion: 'Me reconnecter',
+      googleBloque: 'Popup Google bloqué par le navigateur. Autorise-le, ou crée ton compte avec un e-mail ci-dessous.',
     },
 
     // ── Notifications ─────────────────────────────────────────────────────────
@@ -1076,6 +1077,7 @@ export const translations = {
       errGenerique: 'Could not create the account. Please try again.',
       rappelReconnexion: 'Remember this password — you\'ll use it to log back in.',
       boutonReconnexion: 'Log in',
+      googleBloque: 'Google popup blocked by the browser. Allow it, or create your account with an email below.',
     },
 
     notifications: {
@@ -1606,6 +1608,7 @@ export const translations = {
       errGenerique: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
       rappelReconnexion: 'Recuerda esta contraseña: la necesitarás para volver a entrar.',
       boutonReconnexion: 'Iniciar sesión',
+      googleBloque: 'El navegador bloqueó la ventana de Google. Permítela o crea tu cuenta con un correo abajo.',
     },
 
     notifications: {

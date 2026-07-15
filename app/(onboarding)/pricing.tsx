@@ -9,6 +9,7 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 import { canPay, PADDLE_ACTIVE } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
+import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout } from '../../services/paddle';
 import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
@@ -29,6 +30,8 @@ export default function Pricing() {
   // Email saisi déjà rattaché à un compte : invite honnête « connecte-toi » +
   // bouton de reconnexion, plutôt qu'un faux « mot de passe incorrect ».
   const [emailExists, setEmailExists] = useState(false);
+  // Volet C — anti double-popup Google pendant le linkWithPopup.
+  const [googleBusy, setGoogleBusy] = useState(false);
   // Réactif à la restauration de session Firebase : formulaire de création de
   // compte affiché seulement si pas (encore) de compte permanent.
   const [mustCreateAccount, setMustCreateAccount] = useState(true);
@@ -216,6 +219,42 @@ export default function Pricing() {
       // fallback silencieux — on continue la navigation
     }
     router.push('/(onboarding)/auth');
+  }
+
+  // Volet C — conversion via Google, PUIS délégation à handlePurchase. Rend le
+  // compte permanent (linkWithPopup → même UID, progression préservée) ; ensuite
+  // handlePurchase enchaîne SON garde-fou anti double-paiement + Paddle
+  // (needsAccount()=false une fois permanent). Aucune logique de paiement dupliquée.
+  async function handleGooglePurchase() {
+    if (googleBusy || submitting) return;
+    if (!(Platform.OS === 'web' && PADDLE_ACTIVE && canPay())) {
+      handlePurchase();
+      return;
+    }
+    setGoogleBusy(true);
+    const res = await linkOrSignInWithGoogle();
+    setGoogleBusy(false);
+
+    switch (res.status) {
+      case 'linked':   // même UID → progression préservée
+      case 'switched': // compte existant retrouvé → hasActiveSubscription() prend le relais
+        setEmailExists(false);
+        await handlePurchase();
+        return;
+      case 'cancelled':
+        return; // popup fermé — silence
+      case 'blocked':
+        showAuthToast(t.compte.googleBloque, 'error');
+        return;
+      case 'unsupported':
+        handlePurchase();
+        return;
+      default:
+        showAuthToast(
+          res.code === 'auth/network-request-failed' ? t.auth.googleReseau : t.auth.googleErreur,
+          'error',
+        );
+    }
   }
 
   function handleRestore() {
@@ -440,6 +479,31 @@ export default function Pricing() {
         {selectedPlan !== 'free' && mustCreateAccount ? (
           <View style={styles.accountForm}>
             <Text style={styles.accountTitle}>{t.compte.titre}</Text>
+            {/* Volet C — conversion via Google (web only), au-dessus du formulaire,
+                séparateur « ou » (comme auth.tsx). Rend le compte permanent puis
+                enchaîne handlePurchase (garde-fou + Paddle). */}
+            {Platform.OS === 'web' ? (
+              <>
+                <Pressable
+                  style={[styles.googleBtn, googleBusy && { opacity: 0.5 }]}
+                  onPress={handleGooglePurchase}
+                  disabled={googleBusy || submitting}
+                >
+                  <Svg width={16} height={16} viewBox="0 0 18 18">
+                    <Path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                    <Path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                    <Path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                    <Path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                  </Svg>
+                  <Text style={styles.googleBtnText}>{t.auth.google}</Text>
+                </Pressable>
+                <View style={styles.separator}>
+                  <View style={styles.separatorLine} />
+                  <Text style={styles.separatorText}>{t.commun.ou}</Text>
+                  <View style={styles.separatorLine} />
+                </View>
+              </>
+            ) : null}
             <TextInput
               style={styles.accountInput}
               placeholder={t.compte.emailPlaceholder}
@@ -732,6 +796,40 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#3A3530',
     textAlign: 'center',
+  },
+  googleBtn: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 0.5,
+    borderColor: '#D4C4B8',
+    borderRadius: 999,
+    paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  googleBtnText: {
+    fontFamily: 'Jost',
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#2A2520',
+  },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  separatorLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: '#D4C4B8',
+  },
+  separatorText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#A09088',
   },
   accountInput: {
     width: '100%',
