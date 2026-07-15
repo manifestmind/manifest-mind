@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
-import { openCheckout } from '../../services/paddle';
+import { openCheckout, mapCheckoutError } from '../../services/paddle';
 import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,12 +26,14 @@ export default function Pricing() {
   // (même mécanique qu'au cycle 8) : compte permanent email+password avant Paddle.
   const [accountEmail, setAccountEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   // Email saisi déjà rattaché à un compte : invite honnête « connecte-toi » +
   // bouton de reconnexion, plutôt qu'un faux « mot de passe incorrect ».
   const [emailExists, setEmailExists] = useState(false);
-  // Volet C — anti double-popup Google pendant le linkWithPopup.
-  const [googleBusy, setGoogleBusy] = useState(false);
+  // VERROU D'ACHAT UNIFIÉ (point 11) — remplace submitting + googleBusy.
+  // busyRef = verrou synchrone anti-réentrance ; busyKind = UI (désactive les
+  // deux boutons, « Chargement… » sur l'actif). Couvre tout le flux + Paddle.js.
+  const busyRef = useRef(false);
+  const [busyKind, setBusyKind] = useState<null | 'confirm' | 'google'>(null);
   // Réactif à la restauration de session Firebase : formulaire de création de
   // compte affiché seulement si pas (encore) de compte permanent.
   const [mustCreateAccount, setMustCreateAccount] = useState(true);
@@ -100,7 +102,10 @@ export default function Pricing() {
     router.replace('/(app)/splash');
   }
 
-  async function handlePurchase() {
+  // Cœur de l'achat, SANS gestion du verrou — appelé par les 2 boutons
+  // (handlePurchase « Confirmer » et handleGooglePurchase) qui, eux, tiennent le
+  // verrou. Le garde-fou anti double-paiement reste ici, en UNE seule copie.
+  async function runPurchase() {
     // DIAGNOSTIC dev-only (__DEV__ = false en build prod → strip automatique).
     // NB : cette page d'onboarding n'ouvre PAS Paddle (user pas encore
     // authentifié) — elle route vers auth.
@@ -159,9 +164,7 @@ export default function Pricing() {
           return;
         }
         setEmailExists(false);
-        setSubmitting(true);
         const res = await convertOrSignIn(email, accountPassword);
-        setSubmitting(false);
         if (!res.ok) {
           // Email connu mais connexion impossible → invite honnête inline + bouton
           // « Me reconnecter » (auth.tsx). Les autres erreurs restent des toasts.
@@ -195,12 +198,17 @@ export default function Pricing() {
         router.replace('/(app)/activation?restore=1' as any);
         return;
       }
-      await openCheckout({
+      const result = await openCheckout({
         plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
         email: checkoutEmail,
         firebaseUid: auth.currentUser.uid,
         onCheckoutCompleted: () => { router.replace('/(app)/splash'); },
       });
+      // Échec d'OUVERTURE du checkout → message visible (fini l'échec silencieux).
+      if (!result.ok) {
+        const msg = mapCheckoutError(result.reason, t.paiement);
+        if (msg) showAuthToast(msg, 'error');
+      }
       return;
     }
 
@@ -221,39 +229,57 @@ export default function Pricing() {
     router.push('/(onboarding)/auth');
   }
 
-  // Volet C — conversion via Google, PUIS délégation à handlePurchase. Rend le
-  // compte permanent (linkWithPopup → même UID, progression préservée) ; ensuite
-  // handlePurchase enchaîne SON garde-fou anti double-paiement + Paddle
-  // (needsAccount()=false une fois permanent). Aucune logique de paiement dupliquée.
-  async function handleGooglePurchase() {
-    if (googleBusy || submitting) return;
-    if (!(Platform.OS === 'web' && PADDLE_ACTIVE && canPay())) {
-      handlePurchase();
-      return;
+  // Bouton « Confirmer » — acquiert le VERROU (busyRef synchrone + busyKind pour
+  // l'UI), appelle le cœur runPurchase, et RELÂCHE dans finally → jamais de bouton
+  // mort, même sur échec du checkout (point 9).
+  async function handlePurchase() {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusyKind('confirm');
+    try {
+      await runPurchase();
+    } finally {
+      busyRef.current = false;
+      setBusyKind(null);
     }
-    setGoogleBusy(true);
-    const res = await linkOrSignInWithGoogle();
-    setGoogleBusy(false);
+  }
 
-    switch (res.status) {
-      case 'linked':   // même UID → progression préservée
-      case 'switched': // compte existant retrouvé → hasActiveSubscription() prend le relais
-        setEmailExists(false);
-        await handlePurchase();
+  // Bouton « Continuer avec Google » (Volet C) — tient le MÊME verrou pendant le
+  // popup ET le checkout, puis appelle directement runPurchase (le cœur, sans
+  // verrou) : pas de dance release/re-acquire, garde-fou en une seule copie.
+  async function handleGooglePurchase() {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusyKind('google');
+    try {
+      if (!(Platform.OS === 'web' && PADDLE_ACTIVE && canPay())) {
+        await runPurchase();
         return;
-      case 'cancelled':
-        return; // popup fermé — silence
-      case 'blocked':
-        showAuthToast(t.compte.googleBloque, 'error');
-        return;
-      case 'unsupported':
-        handlePurchase();
-        return;
-      default:
-        showAuthToast(
-          res.code === 'auth/network-request-failed' ? t.auth.googleReseau : t.auth.googleErreur,
-          'error',
-        );
+      }
+      const res = await linkOrSignInWithGoogle();
+      switch (res.status) {
+        case 'linked':   // même UID → progression préservée
+        case 'switched': // compte existant retrouvé → hasActiveSubscription() prend le relais
+          setEmailExists(false);
+          await runPurchase();
+          return;
+        case 'cancelled':
+          return; // popup fermé — silence
+        case 'blocked':
+          showAuthToast(t.compte.googleBloque, 'error');
+          return;
+        case 'unsupported':
+          await runPurchase();
+          return;
+        default:
+          showAuthToast(
+            res.code === 'auth/network-request-failed' ? t.auth.googleReseau : t.auth.googleErreur,
+            'error',
+          );
+      }
+    } finally {
+      busyRef.current = false;
+      setBusyKind(null);
     }
   }
 
@@ -485,9 +511,9 @@ export default function Pricing() {
             {Platform.OS === 'web' ? (
               <>
                 <Pressable
-                  style={[styles.googleBtn, googleBusy && { opacity: 0.5 }]}
+                  style={[styles.googleBtn, busyKind !== null && { opacity: 0.5 }]}
                   onPress={handleGooglePurchase}
-                  disabled={googleBusy || submitting}
+                  disabled={busyKind !== null}
                 >
                   <Svg width={16} height={16} viewBox="0 0 18 18">
                     <Path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -495,7 +521,9 @@ export default function Pricing() {
                     <Path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
                     <Path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
                   </Svg>
-                  <Text style={styles.googleBtnText}>{t.auth.google}</Text>
+                  <Text style={styles.googleBtnText}>
+                    {busyKind === 'google' ? t.paiement.chargement : t.auth.google}
+                  </Text>
                 </Pressable>
                 <View style={styles.separator}>
                   <View style={styles.separatorLine} />
@@ -542,12 +570,14 @@ export default function Pricing() {
         ) : null}
 
         <Pressable
-          style={[styles.btnPrimary, submitting && { opacity: 0.5 }]}
+          style={[styles.btnPrimary, busyKind !== null && { opacity: 0.5 }]}
           onPress={handlePurchase}
-          disabled={submitting}
+          disabled={busyKind !== null}
         >
           <Text style={styles.btnPrimaryText}>
-            {selectedPlan === 'free' ? t.pricing.plans.free.bouton : t.pricing.cta}
+            {busyKind === 'confirm'
+              ? t.paiement.chargement
+              : selectedPlan === 'free' ? t.pricing.plans.free.bouton : t.pricing.cta}
           </Text>
         </Pressable>
 

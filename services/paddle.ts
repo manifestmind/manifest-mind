@@ -9,7 +9,7 @@
 // puis attend que window.Paddle soit disponible.
 
 import { Platform } from 'react-native';
-import { PADDLE_SANDBOX } from './config';
+import { PADDLE_SANDBOX, SUPPORT_EMAIL } from './config';
 
 const PADDLE_JS_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
@@ -22,6 +22,17 @@ type CheckoutArgs = {
   onClose?: () => void;
   onCheckoutCompleted?: () => void;
 };
+
+// Cause d'un échec d'OUVERTURE du checkout (pas d'un paiement — le paiement est
+// asynchrone via webhook). L'appelant traduit ça en message utilisateur.
+export type CheckoutErrorReason = 'config' | 'load' | 'setup' | 'open' | 'unsupported';
+
+// Résultat de openCheckout : { ok: true } = la modale Paddle S'EST OUVERTE (et
+// NON « payé »). Le paiement effectif reste confirmé côté serveur (webhook →
+// Firestore → activation.tsx). { ok: false } = on n'a pas pu ouvrir → l'appelant
+// affiche un message. La fermeture volontaire de la modale n'est PAS un échec
+// (elle arrive APRÈS ce retour, via l'événement checkout.closed → onClose).
+export type CheckoutResult = { ok: true } | { ok: false; reason: CheckoutErrorReason };
 
 declare global {
   interface Window {
@@ -156,23 +167,26 @@ function getPriceId(plan: PaddlePlan): string | undefined {
 // useSubscriptionSync. L'utilisateur peut fermer le checkout sans payer ;
 // seul un paiement effectif validé côté serveur déclenche l'update.
 
-export async function openCheckout(args: CheckoutArgs): Promise<void> {
+export async function openCheckout(args: CheckoutArgs): Promise<CheckoutResult> {
   if (Platform.OS !== 'web') {
     console.warn('[paddle] openCheckout appelé sur native — ignoré (utilise STORES_ACTIVE / RevenueCat)');
-    return;
+    return { ok: false, reason: 'unsupported' };
   }
 
   const priceId = getPriceId(args.plan);
   if (!priceId) {
-    console.warn(`[paddle] price ID manquant pour plan="${args.plan}" (PADDLE_SANDBOX=${PADDLE_SANDBOX})`);
-    return;
+    // ⚠️ Diagnostic INTENTIONNEL (config .env cassée = 100 % des paiements
+    // échouent) — NE PAS retirer au nettoyage Phase F.
+    console.error(`[paddle] price ID manquant pour plan="${args.plan}" (PADDLE_SANDBOX=${PADDLE_SANDBOX}) — vérifier .env`);
+    return { ok: false, reason: 'config' };
   }
 
   try {
     await loadPaddleScript();
   } catch (e) {
+    // Cause la plus fréquente en prod : bloqueur de pub / réseau bloque cdn.paddle.com.
     console.warn('[paddle] chargement script échoué', e);
-    return;
+    return { ok: false, reason: 'load' };
   }
 
   // Handlers du checkout courant, relus par le dispatcher stable (cf. supra).
@@ -182,7 +196,10 @@ export async function openCheckout(args: CheckoutArgs): Promise<void> {
   };
 
   const setupOk = setupPaddle();
-  if (!setupOk || !window.Paddle) return;
+  if (!setupOk || !window.Paddle) {
+    console.error('[paddle] setup impossible (token manquant ou Setup en échec)');
+    return { ok: false, reason: 'setup' };
+  }
 
   try {
     window.Paddle.Checkout.open({
@@ -190,7 +207,31 @@ export async function openCheckout(args: CheckoutArgs): Promise<void> {
       customer: { email: args.email },
       customData: { firebase_uid: args.firebaseUid },
     });
+    // La modale s'est ouverte. Le paiement (ou l'abandon) suit de façon asynchrone
+    // via les événements Paddle — ce n'est PAS l'objet de ce retour.
+    return { ok: true };
   } catch (e) {
     console.warn('[paddle] Checkout.open failed', e);
+    return { ok: false, reason: 'open' };
+  }
+}
+
+// Traduit une cause d'échec en message utilisateur. 2 messages seulement :
+//   - 'load'  → actionnable (connexion / bloqueur de pub) ;
+//   - autres  → technique, avec le support (SUPPORT_EMAIL interpolé).
+// 'unsupported' (native, no-op) → null : l'appelant n'affiche rien.
+export function mapCheckoutError(
+  reason: CheckoutErrorReason,
+  msgs: { erreurChargement: string; erreurTechnique: string },
+): string | null {
+  switch (reason) {
+    case 'load':
+      return msgs.erreurChargement;
+    case 'config':
+    case 'setup':
+    case 'open':
+      return msgs.erreurTechnique.replace('{email}', SUPPORT_EMAIL);
+    case 'unsupported':
+      return null;
   }
 }

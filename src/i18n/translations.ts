@@ -547,6 +547,13 @@ export const translations = {
       googleBloque: 'Popup Google bloqué par le navigateur. Autorise-le, ou crée ton compte avec un e-mail ci-dessous.',
     },
 
+    // ── Échecs d'ouverture du paiement (services/paddle.ts) ────────────────────
+    paiement: {
+      erreurChargement: 'Impossible de charger le paiement. Vérifie ta connexion ou désactive ton bloqueur de publicités, puis réessaie.',
+      erreurTechnique: 'Paiement momentanément indisponible. Réessaie dans un instant ; si le souci persiste, écris-nous à {email}.',
+      chargement: 'Chargement…',
+    },
+
     // ── Notifications ─────────────────────────────────────────────────────────
     notifications: {
       affirmationBody: 'Ton affirmation du cycle t\'attend.',
@@ -1080,6 +1087,13 @@ export const translations = {
       googleBloque: 'Google popup blocked by the browser. Allow it, or create your account with an email below.',
     },
 
+    // ── Payment open failures (services/paddle.ts) ─────────────────────────────
+    paiement: {
+      erreurChargement: 'Couldn\'t load payment. Check your connection or disable your ad blocker, then try again.',
+      erreurTechnique: 'Payment is temporarily unavailable. Try again in a moment; if it persists, email us at {email}.',
+      chargement: 'Loading…',
+    },
+
     notifications: {
       affirmationBody: 'Your cycle affirmation is waiting for you.',
       rappelBody: "Today's cycle is not yet complete. You can still finish it!",
@@ -1609,6 +1623,13 @@ export const translations = {
       rappelReconnexion: 'Recuerda esta contraseña: la necesitarás para volver a entrar.',
       boutonReconnexion: 'Iniciar sesión',
       googleBloque: 'El navegador bloqueó la ventana de Google. Permítela o crea tu cuenta con un correo abajo.',
+    },
+
+    // ── Fallos al abrir el pago (services/paddle.ts) ───────────────────────────
+    paiement: {
+      erreurChargement: 'No se pudo cargar el pago. Revisa tu conexión o desactiva tu bloqueador de anuncios y vuelve a intentarlo.',
+      erreurTechnique: 'El pago no está disponible por el momento. Inténtalo de nuevo en un momento; si persiste, escríbenos a {email}.',
+      chargement: 'Cargando…',
     },
 
     notifications: {
