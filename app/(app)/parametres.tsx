@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { deleteUser, sendSignInLinkToEmail, signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
+import { isPaywalled } from '../../services/access';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
@@ -123,7 +124,13 @@ export default function Parametres() {
     await Notifications.cancelAllScheduledNotificationsAsync();
     if (notifRappel) await scheduleRappelNotifRaw(time);
     const cycleNumber = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-    const cycleContent = getCycleContent(cycleNumber, lang);
+    // 🚨 Anti-fuite de contenu : ne JAMAIS mettre l'affirmation réelle du cycle
+    // dans la notif d'un NON-ABONNÉ paywallé — elle divulguerait le contenu que
+    // le gate lui refuse à l'écran. Repli sur le texte générique. Inerte sur web
+    // (pas de notif locale récurrente), mais indispensable sur natif (Phase 2).
+    // Source de vérité unique = isPaywalled() : un essai (cycles 1-7) n'est PAS
+    // paywallé → il garde légitimement son affirmation.
+    const cycleContent = (await isPaywalled()) ? null : getCycleContent(cycleNumber, lang);
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'ManifestMind ✦',

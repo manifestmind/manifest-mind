@@ -382,6 +382,16 @@ export default function PricingUpgrade() {
 
         <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
 
+        {/* SORTIE DE SOURICIÈRE (Phase B) : accès minimal aux fonctions de COMPTE
+            (déconnexion, suppression RGPD, langue) pour un non-abonné bloqué au
+            cycle 8. `parametres` est DÉJÀ dans la liste blanche du gate A.2 — il
+            manquait juste un lien. Le gate reste l'unique décideur : la navbar
+            « Accueil » de parametres retombe sur ce paywall (home est gaté), donc
+            AUCUN accès au contenu payant n'est ouvert. Lien tertiaire discret. */}
+        <Pressable style={styles.gererCompteLink} onPress={() => router.push('/(app)/parametres' as any)}>
+          <Text style={styles.gererCompteText}>{t.pricingUpgrade.gererCompte}</Text>
+        </Pressable>
+
         {/* Concept de store natif (RevenueCat, Phase 2) : sans effet sur web, où
             le vrai chemin est le lien de reconnexion ci-dessus. Masqué pour ne pas
             semer la confusion ; code conservé pour le pipeline natif. */}
@@ -652,6 +662,16 @@ const styles = StyleSheet.create({
   restoreText: {
     fontFamily: 'Jost',
     fontSize: 10,
+    color: '#A09088',
+    textDecorationLine: 'underline',
+  },
+  gererCompteLink: {
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  gererCompteText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
     color: '#A09088',
     textDecorationLine: 'underline',
   },

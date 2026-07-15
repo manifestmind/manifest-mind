@@ -23,6 +23,12 @@ export const PADDLE_SANDBOX = process.env.EXPO_PUBLIC_PADDLE_SANDBOX === 'true';
 // Nombre de cycles offerts avant le paywall freemium.
 export const FREE_CYCLES = 7;
 
+// Adresse de support (boîte configurée et relevée). Utilisée par activation.tsx
+// pour offrir un recours à un vrai payeur dont le webhook a échoué. Si un jour
+// on la vide (''), le bloc "contacter le support" disparaît automatiquement et
+// seule la guidance Paddle reste — aucune promesse de contact qu'on ne tient pas.
+export const SUPPORT_EMAIL = 'contact@manifest-mind.app';
+
 // Helper platform-aware : renvoie true si la plateforme courante a un provider
 // de paiement actif. Permet d'unifier les checks dans pricing.tsx,
 // pricing-upgrade.tsx et parametres.tsx sans dupliquer la logique.

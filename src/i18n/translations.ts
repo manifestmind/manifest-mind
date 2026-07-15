@@ -502,6 +502,7 @@ export const translations = {
       freemiumTitre: 'Tes 7 cycles offerts sont terminés',
       freemiumMessage: 'Tu as découvert ManifestMind. Continue ta transformation jusqu\'au cycle 365 en passant à Premium.',
       freemiumBouton: 'Continuer mon parcours',
+      gererCompte: 'Paramètres du compte',
     },
 
     // ── Écran d'attente post-paiement (activation de l'abonnement) ────────────
@@ -519,6 +520,16 @@ export const translations = {
       lentMessage: 'Ton paiement est bien reçu, l\'activation prend un peu plus de temps que prévu.',
       rafraichir: 'Réessayer',
       continuer: 'Continuer',
+      // Feedback à chaque clic sur "Réessayer" : vérif en cours, puis cooldown
+      // visible (anti-martèlement Firestore affiché) — jamais de bouton muet.
+      verification: 'Vérification…',
+      reessayerDans: 'Réessayer dans {s} s',
+      // Escalade "vrai recours" quand l'activation ne se débloque pas après
+      // plusieurs vérifications serveur (webhook probablement en échec).
+      jaiPaye: 'J\'ai payé — me reconnecter',
+      bloqueTitre: 'Ton paiement est en sécurité',
+      bloqueMessage: 'Ton paiement a été traité par Paddle, qui t\'a envoyé un e-mail de reçu. L\'activation peut tarder de quelques minutes. Si rien ne se débloque, reconnecte-toi avec le compte utilisé pour payer, ou réessaie dans un moment.',
+      bloqueSupport: 'Besoin d\'aide ? Écris-nous à {email}',
     },
 
     // ── Création / conversion de compte (email + mot de passe) ────────────────
@@ -1028,6 +1039,7 @@ export const translations = {
       freemiumTitre: 'Your 7 free cycles are complete',
       freemiumMessage: 'You\'ve discovered ManifestMind. Continue your transformation to cycle 365 by going Premium.',
       freemiumBouton: 'Continue my journey',
+      gererCompte: 'Account settings',
     },
 
     // ── Post-payment waiting screen (subscription activation) ─────────────────
@@ -1044,6 +1056,12 @@ export const translations = {
       lentMessage: 'Your payment was received — activation is taking a little longer than expected.',
       rafraichir: 'Try again',
       continuer: 'Continue',
+      verification: 'Checking…',
+      reessayerDans: 'Try again in {s}s',
+      jaiPaye: 'I paid — log me back in',
+      bloqueTitre: 'Your payment is safe',
+      bloqueMessage: 'Your payment was processed by Paddle, which emailed you a receipt. Activation can take a few minutes. If nothing unlocks, log back in with the account you paid with, or try again shortly.',
+      bloqueSupport: 'Need help? Email us at {email}',
     },
 
     // ── Account creation / conversion (email + password) ──────────────────────
@@ -1551,6 +1569,7 @@ export const translations = {
       freemiumTitre: 'Tus 7 ciclos gratuitos han terminado',
       freemiumMessage: 'Has descubierto ManifestMind. Continúa tu transformación hasta el ciclo 365 pasando a Premium.',
       freemiumBouton: 'Continuar mi camino',
+      gererCompte: 'Ajustes de la cuenta',
     },
 
     // ── Pantalla de espera tras el pago (activación de la suscripción) ────────
@@ -1567,6 +1586,12 @@ export const translations = {
       lentMessage: 'Tu pago se ha recibido correctamente; la activación tarda un poco más de lo previsto.',
       rafraichir: 'Reintentar',
       continuer: 'Continuar',
+      verification: 'Comprobando…',
+      reessayerDans: 'Reintentar en {s} s',
+      jaiPaye: 'He pagado — volver a iniciar sesión',
+      bloqueTitre: 'Tu pago está seguro',
+      bloqueMessage: 'Tu pago fue procesado por Paddle, que te envió un recibo por correo. La activación puede tardar unos minutos. Si no se desbloquea, vuelve a iniciar sesión con la cuenta con la que pagaste, o inténtalo de nuevo en un momento.',
+      bloqueSupport: '¿Necesitas ayuda? Escríbenos a {email}',
     },
 
     // ── Creación / conversión de cuenta (email + contraseña) ──────────────────
