@@ -37,6 +37,38 @@ import { DEBUG_SKIP_PAYWALL, FREE_CYCLES } from './config';
  * Un pépin de stockage ne doit JAMAIS enfermer dehors un abonné qui a payé.
  * Même arbitrage que hasActiveSubscription() dans services/subscription.ts.
  */
+/**
+ * L'utilisateur a-t-il un abonnement actif ?
+ *
+ * ⚠️ CE N'EST PAS L'INVERSE DE isPaywalled(). Trois états, pas deux :
+ *   - essai en cours (cycle ≤ FREE_CYCLES, pas d'abonnement)
+ *       → isPaywalled() = false  ET  isSubscriber() = false
+ *   - essai épuisé (cycle > FREE_CYCLES, pas d'abonnement)
+ *       → isPaywalled() = true   ET  isSubscriber() = false
+ *   - abonné
+ *       → isPaywalled() = false  ET  isSubscriber() = true
+ *
+ * Autrement dit, un utilisateur d'essai au cycle 3 n'est PAS bloqué, mais il
+ * n'est PAS abonné non plus. Utiliser `!isPaywalled()` comme preuve
+ * d'abonnement lui ouvrirait des fonctions réservées aux abonnés.
+ *
+ * Sert à réserver aux abonnés « Réinitialiser ma progression » (profil.tsx) :
+ * pour un utilisateur d'essai, remettre le compteur à zéro reviendrait à se
+ * redonner FREE_CYCLES cycles gratuits, en boucle (cf. A.3 dans CLAUDE_MASTER).
+ *
+ * FAIL-CLOSED, à l'inverse d'isPaywalled() : en cas d'erreur de lecture on
+ * renvoie `false` (= pas abonné). Ici, se tromper dans le sens permissif
+ * rouvrirait la faille ; dans le sens restrictif, un abonné voit juste une
+ * fonction annexe disparaître le temps d'un rechargement.
+ */
+export async function isSubscriber(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem('subscription_active')) === 'true';
+  } catch {
+    return false; // fail-closed
+  }
+}
+
 export async function isPaywalled(): Promise<boolean> {
   // Court-circuit de debug (tests Expo Go sans payer). Doit être false en prod.
   if (DEBUG_SKIP_PAYWALL) return false;

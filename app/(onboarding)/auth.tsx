@@ -1,8 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { sendSignInLinkToEmail } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Circle, ClipPath, Defs, Ellipse, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { auth } from '../../services/firebase';
@@ -14,8 +13,9 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 export default function Auth() {
   const insets = useSafeAreaInsets();
   const t = useTranslation();
-  const [showEmailInput, setShowEmailInput] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -58,54 +58,81 @@ export default function Auth() {
     }
   };
 
-  const handleEmailSignIn = () => {
-    setShowEmailInput(true);
-  };
-
-  const sendMagicLink = async (emailAddress: string) => {
-    if (Date.now() < cooldownUntil) return;
+  // Reconnexion directe email + mot de passe. C'est l'usage principal de cet
+  // écran : un utilisateur qui revient tape ses identifiants et rentre TOUT DE
+  // SUITE, sans boîte mail. signInWithEmailAndPassword bascule sur le bon UID
+  // (l'anonyme d'essai est abandonné) → useSubscriptionSync purge l'identité
+  // précédente puis restaure subscription_active depuis Firestore. finalizeSignIn
+  // route vers splash (et initialise les clés de cycle si absentes).
+  const handlePasswordSignIn = async () => {
+    if (busy) return;
+    if (Date.now() < cooldownUntil) {
+      showAuthToast(t.auth.erreurTropDeTentatives, 'error');
+      return;
+    }
+    const mail = email.trim().toLowerCase();
+    if (!mail || !password) return;
+    setBusy(true);
     try {
-      // URL de continuation : sur web on renvoie vers l'ORIGINE COURANTE
-      // (localhost:8082 en dev, manifest-mind.app en prod bundlé). Indispensable :
-      // emailForSignIn est stocké dans le localStorage de cette origine, et
-      // localStorage est cloisonné par origine — le lien doit reboucler ici,
-      // sinon signInWithEmailLink ne retrouve pas l'email. Sur natif, deep link
-      // vers le domaine de prod.
-      const continueUrl =
-        Platform.OS === 'web' ? window.location.origin : 'https://manifest-mind.app';
-      // DIAGNOSTIC dev-only (__DEV__ = false en prod → strip automatique).
-      // Affiche l'origine réellement capturée au clic → détecte une dérive de port.
-      if (__DEV__) console.log('[auth] magic link continueUrl =', continueUrl);
-      const actionCodeSettings = {
-        url: continueUrl,
-        handleCodeInApp: true,
-      };
-
-      await sendSignInLinkToEmail(auth, emailAddress, actionCodeSettings);
-      await AsyncStorage.setItem('emailForSignIn', emailAddress);
-
+      await signInWithEmailAndPassword(auth, mail, password);
       setFailedAttempts(0);
-      showAuthToast(`${t.auth.alertEmailSent.titre} — ${t.auth.alertEmailSent.corps}`, 'success');
-
-      setShowEmailInput(false);
-      setEmail('');
-    } catch (error) {
-      console.error('Error sending magic link:', error);
+      setPassword('');
+      await finalizeSignIn();
+    } catch (error: any) {
+      const code: string = error?.code ?? '';
+      if (__DEV__) console.log('[auth] signInWithEmailAndPassword échoué', code);
+      setBusy(false);
+      if (code === 'auth/network-request-failed') {
+        showAuthToast(`${t.auth.alertErreurReseau.titre} — ${t.auth.alertErreurReseau.corps}`, 'error');
+        return;
+      }
+      if (code === 'auth/too-many-requests') {
+        setCooldownUntil(Date.now() + 30_000);
+        setFailedAttempts(0);
+        showAuthToast(t.auth.erreurTropDeTentatives, 'error');
+        return;
+      }
+      // La protection anti-énumération de Firebase regroupe mauvais mot de passe,
+      // e-mail inconnu et compte Google-only sous auth/invalid-credential. Un seul
+      // message honnête, qui oriente vers « mot de passe oublié » ou Google.
       const next = failedAttempts + 1;
       setFailedAttempts(next);
       if (next >= 3) {
         setCooldownUntil(Date.now() + 30_000);
         setFailedAttempts(0);
       }
-      showAuthToast(`${t.auth.alertEmailError.titre} — ${t.auth.alertEmailError.corps}`, 'error');
+      showAuthToast(t.auth.erreurIdentifiants, 'error');
     }
   };
 
-  // NB : l'initialisation des clés de cycle et `onboarding_completed` est gérée
-  // en aval (loadHome dans home.tsx si absentes, ou DeepLinkHandler au 1er
-  // sign-in magic link). L'ancien `handleSkipAccount` / « continuer sans compte »
-  // a été retiré : l'unique chemin "sans compte" est désormais l'essai gratuit
-  // (signInAnonymously) déclenché depuis pricing.tsx.
+  // « Mot de passe oublié ou jamais défini ? » — envoie l'e-mail de définition de
+  // mot de passe. Test décisif validé (2026-07-15) : sur un compte créé par magic
+  // link (sans mot de passe), sendPasswordResetEmail POSE bien un mot de passe,
+  // UID conservé. C'est le pont pour les anciens comptes magic-link.
+  const handlePasswordReset = async () => {
+    const mail = email.trim().toLowerCase();
+    if (!mail) {
+      showAuthToast(t.auth.emailManquantReset, 'error');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, mail);
+    } catch (error: any) {
+      const code: string = error?.code ?? '';
+      if (code === 'auth/invalid-email') {
+        showAuthToast(t.compte.errEmailInvalide, 'error');
+        return;
+      }
+      if (code === 'auth/network-request-failed') {
+        showAuthToast(`${t.auth.alertErreurReseau.titre} — ${t.auth.alertErreurReseau.corps}`, 'error');
+        return;
+      }
+      // Autres cas (dont compte inexistant) : la protection anti-énumération fait
+      // renvoyer un succès sans révéler si l'e-mail existe. On affiche donc le même
+      // message positif que sur un vrai succès.
+    }
+    showAuthToast(`${t.auth.resetEnvoye.titre} — ${t.auth.resetEnvoye.corps}`, 'success');
+  };
 
   return (
     <KeyboardAvoidingView
@@ -230,36 +257,40 @@ export default function Auth() {
             <View style={styles.separatorLine} />
           </View>
 
-          {!showEmailInput ? (
-            <Pressable style={styles.emailButton} onPress={handleEmailSignIn}>
-              <Svg width="14" height="14" viewBox="0 0 16 16">
-                <Rect x="1" y="3" width="14" height="10" rx="2"
-                  stroke="#6B3FA0" strokeWidth="1.2" fill="none"/>
-                <Path d="M1 5l7 5 7-5" stroke="#6B3FA0"
-                  strokeWidth="1.2" strokeLinecap="round"/>
-              </Svg>
-              <Text style={styles.emailButtonText}>{t.auth.email}</Text>
+          <View style={styles.emailContainer}>
+            <TextInput
+              style={styles.emailInput}
+              placeholder={t.auth.placeholder}
+              placeholderTextColor="#A09088"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.emailInput}
+              placeholder={t.auth.passwordPlaceholder}
+              placeholderTextColor="#A09088"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="password"
+              value={password}
+              onChangeText={setPassword}
+            />
+            <Pressable
+              style={[styles.sendButton, (busy || Date.now() < cooldownUntil) && { opacity: 0.4 }]}
+              onPress={handlePasswordSignIn}
+              disabled={busy || !email.trim() || !password || Date.now() < cooldownUntil}
+            >
+              <Text style={styles.sendButtonText}>{t.auth.seConnecter}</Text>
             </Pressable>
-          ) : (
-            <View style={styles.emailContainer}>
-              <TextInput
-                style={styles.emailInput}
-                placeholder={t.auth.placeholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
-              />
-              <Pressable
-                style={[styles.sendButton, (Date.now() < cooldownUntil) && { opacity: 0.4 }]}
-                onPress={() => sendMagicLink(email)}
-                disabled={!email.trim() || Date.now() < cooldownUntil}
-              >
-                <Text style={styles.sendButtonText}>{t.auth.envoyer}</Text>
-              </Pressable>
-            </View>
-          )}
+            <Pressable style={styles.forgotLink} onPress={handlePasswordReset}>
+              <Text style={styles.forgotText}>{t.auth.motDePasseOublie}</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -406,6 +437,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
+  },
+  forgotLink: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  forgotText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    color: '#6B3FA0',
+    textAlign: 'center',
   },
   bottomBlock: {
     alignItems: 'center',

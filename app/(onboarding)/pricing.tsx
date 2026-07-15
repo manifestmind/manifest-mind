@@ -26,6 +26,9 @@ export default function Pricing() {
   const [accountEmail, setAccountEmail] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Email saisi déjà rattaché à un compte : invite honnête « connecte-toi » +
+  // bouton de reconnexion, plutôt qu'un faux « mot de passe incorrect ».
+  const [emailExists, setEmailExists] = useState(false);
   // Réactif à la restauration de session Firebase : formulaire de création de
   // compte affiché seulement si pas (encore) de compte permanent.
   const [mustCreateAccount, setMustCreateAccount] = useState(true);
@@ -152,10 +155,17 @@ export default function Pricing() {
           showAuthToast(t.compte.errPasswordCourt, 'error');
           return;
         }
+        setEmailExists(false);
         setSubmitting(true);
         const res = await convertOrSignIn(email, accountPassword);
         setSubmitting(false);
         if (!res.ok) {
+          // Email connu mais connexion impossible → invite honnête inline + bouton
+          // « Me reconnecter » (auth.tsx). Les autres erreurs restent des toasts.
+          if (res.code === 'mm/email-exists-signin-failed') {
+            setEmailExists(true);
+            return;
+          }
           showAuthToast(mapConversionError(res.code, t.compte), 'error');
           return;
         }
@@ -452,6 +462,18 @@ export default function Pricing() {
               value={accountPassword}
               onChangeText={setAccountPassword}
             />
+            <Text style={styles.accountRappel}>{t.compte.rappelReconnexion}</Text>
+            {emailExists ? (
+              <View style={styles.emailExistsBox}>
+                <Text style={styles.emailExistsText}>{t.compte.errEmailDejaUtilise}</Text>
+                <Pressable
+                  style={styles.emailExistsBtn}
+                  onPress={() => router.push('/(onboarding)/auth')}
+                >
+                  <Text style={styles.emailExistsBtnText}>{t.compte.boutonReconnexion}</Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -721,6 +743,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
     color: '#2A2520',
+  },
+  accountRappel: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#7A7068',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  emailExistsBox: {
+    width: '100%',
+    backgroundColor: '#F5EEFB',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+    alignItems: 'center',
+  },
+  emailExistsText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#3A3530',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  emailExistsBtn: {
+    width: '100%',
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1.2,
+    borderColor: '#6B3FA0',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  emailExistsBtnText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B3FA0',
   },
   btnPrimary: {
     width: '100%',

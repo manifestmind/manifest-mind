@@ -443,6 +443,9 @@ Phases livrées & validées :
 ═══════════════════════════════
 - **PHASE 1 — Publication WEB + PWA**, paiements Paddle, domaine `manifest-mind.app`. Pas de DUNS ni de compte store nécessaire. ← **PRIORITÉ ACTUELLE**
 - **PHASE 2 (plus tard, chantier séparé) — Publication STORES en NOM PROPRE** (compte individuel, évite le DUNS). **NOUVELLE CONSTRUCTION native** de l'app (pas un simple portage). Paiements via **RevenueCat** (Paddle interdit sur stores). **Apple Sign-In obligatoire**. Config native `app.json` (permissions, notifications, deep links). Contraintes stores (test fermé Google 14 j, risque rejet Apple).
+  - 🚨 **FUITE DE CONTENU À CORRIGER EN PHASE 2 — notification d'affirmation** (repérée le 2026-07-14 en vérifiant le périmètre d'A.2). `parametres.tsx` est le **seul écran de la liste blanche** (donc non gaté, à raison : langue, RGPD, légal…) qui importe `getCycleContent` (ligne 11). Il s'en sert ligne 125-131 pour mettre **l'affirmation du cycle courant dans le CORPS de la notification quotidienne**. Conséquence : un non-abonné au cycle 12 active le toggle « Affirmation du cycle » et **reçoit chaque jour l'affirmation du cycle 12** — exactement le contenu que le gate lui refuse à l'écran. Chemin invisible pour la liste blanche.
+    - **Inerte en Phase 1 (web)** : `expo-notifications` ne planifie pas de notification locale récurrente sur le web → le toggle ne produit rien. **Devient RÉELLE en Phase 2 (natif)**, où les notifications fonctionnent.
+    - **Correctif prévu** : vérifier `isPaywalled()` (cf. `services/access.ts`) **avant** de programmer la notif dans `scheduleAffirmationNotif()`, et retomber sur le texte générique `t.notifications.affirmationBody` — le fallback existe **déjà** ligne 130. Ne PAS gater l'écran `parametres` lui-même (RGPD).
 
 ═══════════════════════════════
 **FEUILLE DE ROUTE PHASE 1 (WEB) — dans l'ordre**
@@ -451,7 +454,9 @@ Phases livrées & validées :
 **PHASE A — Sécuriser l'accès payant (CHANTIER N°1, avant tout)**
 1. ✅ **~~Versionner + verrouiller les règles Firestore~~** — **FAIT (2026-07-14)**. Cf. « A.1 » en archive.
 2. ✅ **~~Protéger TOUS les écrans de contenu (gate au niveau du layout `(app)`)~~** — **FAIT (2026-07-14)**. Cf. « A.2 » en archive.
-3. 🔴 **RESTE À FAIRE — Empêcher l'essai gratuit renouvelable à l'infini** (bouton reset / vidage localStorage / réinitialisation profil redonnent 7 cycles ; rien côté serveur ne retient « essai épuisé »). ← **PROCHAIN CHANTIER, dernier point de la Phase A.**
+3. ✅ **~~Empêcher l'essai gratuit renouvelable à l'infini~~** — **TRANCHÉ ET FAIT (2026-07-14)**. Décision : **Option 1 — assumer la fuite, réduire l'attrait**. Cf. « A.3 » en archive pour le raisonnement complet et la liste des fuites ACCEPTÉES.
+
+→ ✅ **PHASE A TERMINÉE (2026-07-14).** Prochaine étape : **PHASE B**.
 
 **PHASE B — Autres points critiques**
 4. 🔴 Débloquer l'utilisateur qui **a payé mais dont le webhook échoue** (`activation.tsx` renvoie en boucle au paywall après 30 s → `home` re-gate) : prévoir un vrai recours.
@@ -497,9 +502,83 @@ Phases livrées & validées :
 
 ---
 
+### 🔐 RECONNEXION DIRECTE email + mot de passe — **CODÉ (2026-07-15), à tester**
+
+**Vision livrée :** un utilisateur qui revient tape **e-mail + mot de passe** et entre **directement**, sans boîte mail ni message confus. La reconnexion par magic link (qui obligeait à quitter l'app pour sa boîte mail) est **retirée de l'UI** de `auth.tsx`.
+
+**✅ Test décisif validé (2026-07-15) — le PIVOT de toute la stratégie :** `sendPasswordResetEmail()` **POSE bien un mot de passe** sur un compte créé par magic link (donc sans mot de passe). Testé sur `duboislyana@hotmail.fr` : e-mail reçu → mot de passe défini → `signInWithPassword` OK → **UID INCHANGÉ `385h51XiwuRw8Akbq3SQmsmipJB2`**. Les anciens comptes magic-link ne sont donc PAS enfermés dehors. (Test console via REST Identity Toolkit ; le cas Google-only n'a pas été testé — décision : inutile, cf. risque 4.)
+
+**Ce qui a été codé :**
+- **`auth.tsx`** devient l'**écran de reconnexion** (plus de création) : titre reformulé (« Ravi de te revoir »), **Google bien visible** (inchangé), **e-mail + mot de passe + « Se connecter »** (`signInWithEmailAndPassword` → `finalizeSignIn`), lien **« Mot de passe oublié ou jamais défini ? »** (`sendPasswordResetEmail` — le mécanisme validé ci-dessus). **Message d'erreur honnête unique** (`t.auth.erreurIdentifiants`) car la protection anti-énumération regroupe mauvais mot de passe / e-mail inconnu / Google-only sous `auth/invalid-credential`. **Limiteur anti-brute-force conservé** (3 échecs → cooldown 30 s) + gestion `auth/too-many-requests`. **UI magic-link retirée**, mais `signInWithEmailAndPassword` en direct (PAS `convertOrSignIn` : sémantique de reconnexion, pas de conversion).
+- **Magic link CONSERVÉ pour le RGPD** : `parametres.sendReauthLink()` (ré-auth `requires-recent-login` avant suppression) + `DeepLinkHandler` (consommation) **non touchés**. La machinerie reste 100 % fonctionnelle.
+- **BUG 2 corrigé** (formulaire de conversion « Créer ton compte pour continuer ») : saisir l'e-mail d'un compte **déjà existant** affichait « mot de passe incorrect » — **trompeur** pour un compte magic-link qui n'a jamais eu de mot de passe. Désormais : `authConversion.ts` renvoie un code dédié **`mm/email-exists-signin-failed`** ; les deux écrans de prix affichent un **message honnête inline** (`t.compte.errEmailDejaUtilise` = « Cet e-mail a déjà un compte. Connecte-toi pour retrouver ta progression. ») + un **bouton « Me reconnecter »** → `auth.tsx`. Les autres erreurs restent des toasts.
+- **Point 7** : ligne de rappel sous le champ mot de passe du formulaire cycle 8 (`t.compte.rappelReconnexion` : « Retiens bien ce mot de passe : il te servira à te reconnecter »), sur `pricing.tsx` ET `pricing-upgrade.tsx`.
+- **i18n** : nouvelles clés `t.auth.*` (passwordPlaceholder, seConnecter, motDePasseOublie, emailManquantReset, resetEnvoye, erreurIdentifiants, erreurTropDeTentatives) + `t.compte.rappelReconnexion` / `boutonReconnexion`, en **FR/EN/ES**. `t.auth.titre`/`sousTitre` reformulés en reconnexion.
+
+**Fichiers touchés :** `app/(onboarding)/auth.tsx`, `services/authConversion.ts`, `app/(app)/pricing-upgrade.tsx`, `app/(onboarding)/pricing.tsx`, `src/i18n/translations.ts`. `tsc --noEmit` **clean**.
+
+**🚨 4 RISQUES SIGNALÉS — à ne pas perdre :**
+1. **Compte anonyme orphelin.** Après `signInWithEmailAndPassword`, l'anonyme de l'essai est abandonné (non supprimé) dans Firebase Auth. **Sans conséquence** (progression = locale, Option A), juste un peu de bruit côté Auth. **Acceptable.**
+2. **Course paywall à la reconnexion sur le MÊME navigateur** (préexistante, PAS introduite par ce chantier) : si un abonné se reconnecte là où `current_cycle ≥ 8` est resté local, le gate de `home` pourrait lire `subscription_active` **avant** que `useSubscriptionSync` l'ait restauré depuis Firestore. **Filet existant** : `finalizeSignIn` route vers `splash` (tap manuel « Commencer ») → le listener a le temps de restaurer. À surveiller, non dégradé.
+3. **Branche NATIVE de `pricing.tsx` (≈ ligne 214)** pousse vers `auth.tsx` en attendant une **création** de compte. `auth.tsx` étant devenu login-only, ce chemin **suppose une création** qu'un écran de login ne fait pas. **Inerte en Phase 1** (`STORES_ACTIVE=false` → jamais atteint) ; **à retraiter en PHASE 2** avec RevenueCat. **Pas une régression web.**
+4. **Compte Google-only + « mot de passe oublié »** : cas non testé (décision assumée). Si `sendPasswordResetEmail` reste silencieux pour un Google-only, l'utilisateur n'est **pas bloqué** : le message honnête l'oriente déjà vers le **bouton Google**. **Couvert par conception.**
+
+---
+
 ### 📦 ARCHIVE — détail technique du travail DÉJÀ RÉALISÉ
 
 > Historique et justifications des décisions (ne pas re-débattre sans raison). Les « ⏳ Reste à faire » ci-dessous sont désormais cadrés par la feuille de route ci-dessus.
+
+#### 🚨🚨 NE PAS TOUCHER AUX BOUTONS DE TEST DE `home.tsx` AVANT LA PHASE F 🚨🚨
+
+Les deux boutons debug de `home.tsx` — **« reset »** et **« ⏭ cycle suivant »** — sont **VOLONTAIREMENT CONSERVÉS**. Ils sont **nécessaires pour tester** A.3 et **toutes les phases suivantes** (B, C, D…) : sans eux, impossible de se placer à un cycle donné pour vérifier un gate, un paywall ou un paiement.
+
+**Retrait UNIQUEMENT en PHASE F** (nettoyage final, juste avant la construction / le déploiement) — cf. point 18 de la feuille de route.
+
+⚠️ **Aucune session ne doit les supprimer « par zèle » en croyant bien faire**, même en croisant une remarque du type « retirer les boutons debug ». Ce n'est PAS une omission, c'est une décision. Tant que la Phase F n'est pas atteinte, ils restent.
+
+#### 📌 INCIDENT À CORRIGER EN PHASE F — casse du nom de `claude_master.md`
+
+Le fichier est **suivi par git sous `claude_master.md` (minuscules)** mais a été édité plusieurs fois sous **`CLAUDE_MASTER.md` (majuscules)**. Windows ne distingue pas les deux casses, **git si**.
+
+- **Conséquence observée le 2026-07-14** : un `git add CLAUDE_MASTER.md` n'a matché **aucun chemin suivi** → la mise à jour du doc est **sortie du commit silencieusement** (rattrapée dans un commit suivant, mais l'erreur était invisible).
+- **Risque réel** : sur un **déploiement / clone Linux** (casse significative), ce seraient **deux fichiers distincts**.
+- **Correctif (Phase F)** : `git mv` en **forçant la casse** pour fixer un nom unique, puis committer le renommage.
+
+#### ✅ A.3 — Essai gratuit renouvelable — **TRANCHÉ ET FAIT (2026-07-14)**
+
+##### La décision : Option 1 — assumer la fuite, réduire l'attrait
+
+**Le constat structurant (ne pas le re-débattre) :** la mémoire de l'essai est **locale** (`current_cycle` en AsyncStorage). Tout ce qui efface ce stockage rend les 7 cycles. On peut condamner les boutons de l'app ; on ne condamnera **jamais** le bouton « Effacer les données de navigation » du navigateur. **Tant que la mémoire de l'essai vit chez le client, elle est effaçable.**
+
+**Et on ne peut PAS la déplacer côté serveur sans exiger une identité réelle.** L'essai démarre par un `signInAnonymously` : l'UID est stable (il survit même à `AsyncStorage.clear()`, la session Firebase vivant dans IndexedDB), mais **rien n'empêche l'utilisateur de le jeter** — effacer les données du site détruit IndexedDB, `AuthBootstrap` recrée un anonyme neuf, vierge. Les comptes anonymes sont **gratuits et illimités** : ce n'est pas une identité, c'est un **jeton jetable**. Un serveur ne peut donc rien mémoriser de durable à son sujet.
+
+→ Il n'y avait que **deux** options réelles (le fingerprinting d'appareil est écarté : fragile, faux positifs qui bloquent des innocents, délicat au RGPD) :
+- **Exiger un compte (e-mail/Google) pour DÉMARRER l'essai** → faille réellement fermée, mais la création de compte passe du cycle 8 au cycle 1.
+- **Option 1 — assumer la fuite** → retenue.
+
+**Le raisonnement (2026-07-14) :** le **zéro-friction à l'entrée est un pilier du modèle** — on démarre ses 7 cycles immédiatement, sans compte ni carte. Et qui vide son navigateur pour rejouer l'essai **perd toute sa progression** (journal, vision board, points, historique) : il ne vole pas 7 cycles, il les **rachète au prix de tout ce qu'il avait construit**. Il peut recommencer indéfiniment, **il ne verra jamais le cycle 8** — il rejoue une démo en boucle, il ne consomme jamais le produit. **Ce n'est pas un abonné perdu : c'est quelqu'un qui n'allait pas payer.** À l'inverse, exiger un compte au cycle 1 ferait payer un prix à **100 % des visiteurs** (dont ceux qui allaient s'abonner) pour empêcher un abus qui ne rapporte rien à celui qui le commet. Mauvais échange sur un produit qui doit d'abord convaincre.
+
+##### 🔓 Fuites EXPLICITEMENT ACCEPTÉES — ce ne sont PAS des bugs
+
+**Ne pas les « redécouvrir » plus tard et se précipiter pour les corriger.** Elles sont la conséquence assumée de l'Option 1 :
+- **Vidage des données de navigation / du site** (détruit AsyncStorage **et** IndexedDB → nouvel anonyme, essai neuf).
+- **Fenêtre de navigation privée.**
+- **Autre navigateur / autre appareil.**
+- **« Supprimer mon compte »** (`parametres.tsx` → `AsyncStorage.clear()`) : **NON BLOQUABLE** — obligation RGPD, et de toute façon fonctionnellement équivalent au vidage du navigateur.
+
+##### Ce qui a été corrigé — le seul chemin utilisateur réel
+
+Après revue de **tous** les chemins accessibles à un vrai utilisateur, **un seul** rembobinait `current_cycle` : le bouton **« Réinitialiser ma progression »** de `profil.tsx`. (Vérifié au passage : **`startFreeTrial()` de `pricing.tsx` ne touche PAS `current_cycle`** — repasser par l'onboarding et recliquer « essai gratuit », y compris via « Nouveau compte » de la modale retour-abonné, laisse l'utilisateur à son cycle, donc toujours paywallé. Ce chemin ne renouvelle rien.)
+
+⚠️ Le problème n'était **pas seulement au cycle 8** : un utilisateur au cycle 3 qui réinitialise repart au cycle 1 et récupère **7 cycles neufs** alors qu'il n'en avait consommé que 3 → boucle infinie. La restriction devait donc viser **tout non-abonné**, pas seulement les paywallés.
+
+**Correctif — le bouton est réservé aux ABONNÉS :**
+- **`services/access.ts`** — ajout de **`isSubscriber()`**. 🚨 **CE N'EST PAS L'INVERSE DE `isPaywalled()`** : il y a **TROIS** états, pas deux. Un utilisateur d'essai au cycle 3 n'est **pas paywallé** MAIS n'est **pas abonné**. Utiliser `!isPaywalled()` comme preuve d'abonnement rouvrirait la faille. `isSubscriber()` est **fail-CLOSED** (erreur de lecture → `false`), à l'inverse d'`isPaywalled()` qui est fail-open : se tromper dans le sens permissif rouvrirait la faille, tandis qu'un abonné ne perd qu'une fonction annexe le temps d'un rechargement.
+- **`profil.tsx`** — la ligne « Recommencer » est **MASQUÉE** (et non désactivée) pour un non-abonné, comme « Restaurer un achat » l'est sur web. Masquée plutôt que grisée : inutile de mettre l'idée de réinitialiser dans la tête d'un utilisateur d'essai. L'état d'abonnement est relu **à chaque focus** (l'abonnement peut arriver pendant la vie de l'écran).
+- **`confirmReset()`** — **revérifie `isSubscriber()` à l'exécution** et sort sans rien faire sinon. Ceinture et bretelles : **masquer un bouton n'est pas une protection, c'est de la présentation.**
+
+**Justification produit (elle tient sans l'argument sécurité) :** recommencer le voyage de 365 jours n'a de sens que pour un abonné au long cours qui a parcouru une vraie distance. Pendant un essai de 7 cycles, il n'y a rien à effacer. C'est une fonctionnalité d'abonné ; le fait que ça ferme aussi la faille est un bonus, pas la justification.
 
 #### ✅ A.1 — Règles Firestore versionnées — **TERMINÉ (2026-07-14)**
 
@@ -531,6 +610,8 @@ Avant : `(app)/_layout.tsx` était un `<Stack>` nu et seul `home.tsx` portait le
 **Portée honnête** : A.2 ferme l'accès **opportuniste** (URL directe, onglet resté ouvert). Les 365 jours de contenu (`assets/content/content_*.json`) restent **embarqués dans le bundle JS** et sont extractibles par quelqu'un de motivé. Une vraie protection supposerait de servir le contenu depuis le serveur contre vérification d'abonnement — chantier d'une autre ampleur, **non retenu** (hors périmètre, non justifié ici).
 
 **Tests validés (2026-07-14)** : activation NON gatée (payeur passe) · paiement sandbox complet OK · URL directe bloquée pour les 7 écrans de contenu · parametres accessible même paywallé · cycles 1-7 intacts · blocage au cycle 8.
+
+**🔧 CORRECTIF GATE (2026-07-15) — `usePathname` → `useSegments`, 4 SORTIES DÉBLOQUÉES.** Le gate lisait `usePathname()`, qui **n'expose pas le groupe** de routes (les parenthèses n'apparaissent pas dans l'URL : `(app)/journal` → `/journal` ; `(onboarding)/auth` → `/auth`). Impossible d'y distinguer un écran `(app)` d'un écran `(onboarding)`. Or ce layout **reste monté** quand on quitte `(app)` et son effet se redéclenche avec la route de destination : une sortie vers `(onboarding)` était vue comme « écran inconnu → protégé » → `isPaywalled()` → **renvoi sur le paywall au moment même où l'utilisateur tentait de sortir**. Résultat : **4 chemins coincés derrière le paywall** — les deux liens « Me reconnecter » (`pricing`/`pricing-upgrade` → `auth`), la **déconnexion** et la **suppression de compte RGPD** (`parametres` → `welcome`). Correctif : lire `useSegments()` (`['(app)','pricing-upgrade']` vs `['(onboarding)','auth']`) et **ne rien décider hors du groupe `(app)`** (`if (group !== '(app)') { setChecking(false); return; }`). L'effet porte sur deux chaînes dérivées (`group`, `screen`) et non sur le tableau `segments` (nouvelle référence à chaque rendu → sinon relance en boucle). La liste blanche ne décrit QUE `(app)` : tout autre groupe en est absent **par nature**, pas par oubli.
 
 #### ✅ PRIORITÉ 1 — Finition du modèle d'accès — **TERMINÉE (2026-07-13)**
 
@@ -642,7 +723,8 @@ Les deux pipelines partagent le même code source Expo. Le routing par `Platform
 - **Fichiers natifs** : `google-services.json` (Android) + `GoogleService-Info.plist` (iOS) à la racine — dans `.gitignore`
 - **Auth** : `getReactNativePersistence(AsyncStorage)` via `@firebase/auth` (Metro résout vers build RN)
 - **Auth flows actifs** :
-  - Magic link email — envoi (`auth.tsx`) + réception deep link (`_layout.tsx` → `DeepLinkHandler`)
+  - **Reconnexion email + mot de passe** (`auth.tsx`) — `signInWithEmailAndPassword` + « mot de passe oublié/jamais défini » via `sendPasswordResetEmail`. **Voie principale de reconnexion** (cf. section 🔐 Reconnexion directe).
+  - Magic link email — **envoi désormais réservé au RGPD** (`parametres.sendReauthLink`, ré-auth avant suppression) + réception deep link (`_layout.tsx` → `DeepLinkHandler`). L'UI d'envoi magic-link d'`auth.tsx` a été retirée.
   - Sign Out — `signOut(auth)` + `AsyncStorage.multiRemove` (conserve `user_language`) → `parametres.tsx`
   - Delete Account — `deleteUser(auth.currentUser)` + `AsyncStorage.clear()` → `parametres.tsx`
   - `auth/requires-recent-login` → renvoi magic link automatique avant suppression

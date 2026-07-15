@@ -18,6 +18,7 @@ import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { shareProgress } from '../../hooks/useShare';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { isSubscriber } from '../../services/access';
 
 type StepStatus = {
   opening: boolean;
@@ -37,6 +38,11 @@ export default function Profil() {
 
   const [userName, setUserName] = useState('');
   const [showResetDialog, setShowResetDialog] = useState(false);
+  // « Réinitialiser ma progression » est réservé aux ABONNÉS (cf. A.3).
+  // Pour un utilisateur d'essai, le bouton reviendrait à se redonner 7 cycles
+  // gratuits en deux clics, en boucle. Défaut `false` : on n'affiche jamais la
+  // ligne avant d'avoir vérifié (elle apparaît une fois l'état lu).
+  const [subscriber, setSubscriber] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(1);
   const [themeName, setThemeName] = useState('');
@@ -69,6 +75,11 @@ export default function Profil() {
       async function load() {
         const name = await AsyncStorage.getItem('user_name') || '';
         setUserName(name);
+
+        // Relu à CHAQUE focus (et non une seule fois au montage) : l'abonnement
+        // peut arriver pendant la vie de l'écran — useSubscriptionSync pose
+        // subscription_active dès que le webhook a répondu.
+        setSubscriber(await isSubscriber());
 
         const photo = await AsyncStorage.getItem('profile_photo');
         if (photo) setProfilePhoto(photo);
@@ -181,6 +192,17 @@ export default function Profil() {
   // réinitialisation ne s'exécutait pas du tout.
   async function confirmReset() {
     setShowResetDialog(false);
+
+    // Ceinture et bretelles (A.3) : masquer un bouton n'est PAS une protection.
+    // On revérifie à l'exécution, pour que la remise à zéro reste impossible
+    // même si la ligne réapparaissait par un chemin imprévu (état obsolète,
+    // appel direct). Un non-abonné qui rembobinerait current_cycle se
+    // redonnerait FREE_CYCLES cycles gratuits.
+    if (!(await isSubscriber())) {
+      if (__DEV__) console.warn('[profil] reset refusé — non abonné');
+      return;
+    }
+
     try {
       const keys = [
         'points_total', 'current_cycle', 'current_theme',
@@ -397,20 +419,28 @@ export default function Profil() {
           </Svg>
         </Pressable>
 
-        {/* 7. Recommencer */}
-        <Pressable style={styles.resetRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowResetDialog(true); }}>
-          <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
-            <Path d="M4 10a6 6 0 1 0 1-3.5" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" />
-            <Path d="M4 4v3h3" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.resetText}>{t.profil.recommencer}</Text>
-            <Text style={styles.resetSub}>{t.profil.recommencerSub}</Text>
-          </View>
-          <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
-            <Path d="M4 2l4 4-4 4" stroke="#A0C890" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-          </Svg>
-        </Pressable>
+        {/* 7. Recommencer — ABONNÉS UNIQUEMENT (A.3).
+            Masquée (et non désactivée) pour un non-abonné : inutile de mettre
+            l'idée de réinitialiser dans la tête d'un utilisateur d'essai, chez
+            qui l'action reviendrait à se redonner 7 cycles gratuits en boucle.
+            Même traitement que « Restaurer un achat » masqué sur web.
+            Recommencer le parcours de 365 jours n'a de sens que pour un abonné
+            au long cours — la règle se justifie produit, pas seulement sécurité. */}
+        {subscriber ? (
+          <Pressable style={styles.resetRow} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setShowResetDialog(true); }}>
+            <Svg width={13} height={13} viewBox="0 0 20 20" fill="none">
+              <Path d="M4 10a6 6 0 1 0 1-3.5" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" />
+              <Path d="M4 4v3h3" stroke="#2A6A20" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.resetText}>{t.profil.recommencer}</Text>
+              <Text style={styles.resetSub}>{t.profil.recommencerSub}</Text>
+            </View>
+            <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
+              <Path d="M4 2l4 4-4 4" stroke="#A0C890" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </Pressable>
+        ) : null}
         </Animated.View>
 
       </ScrollView>

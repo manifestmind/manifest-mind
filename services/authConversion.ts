@@ -36,6 +36,11 @@ export function mapConversionError(code: string, msg: ConversionMessages): strin
       return msg.errEmailInvalide;
     case 'auth/weak-password':
       return msg.errPasswordCourt;
+    // Email connu mais connexion impossible avec ce mot de passe. Pour un compte
+    // créé par magic link (jamais de mot de passe), il n'y a AUCUN mot de passe à
+    // se rappeler — l'ancien message « mot de passe incorrect » envoyait chercher
+    // une chose qui n'existe pas. Message honnête : « connecte-toi ».
+    case 'mm/email-exists-signin-failed':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
       return msg.errEmailDejaUtilise;
@@ -83,7 +88,15 @@ export async function convertOrSignIn(
         const res = await signInWithEmailAndPassword(auth, email, password);
         return { ok: true, user: res.user };
       } catch (signInErr: any) {
-        return { ok: false, code: signInErr?.code ?? 'auth/unknown' };
+        const sc: string = signInErr?.code ?? '';
+        // Le réseau reste distingué (message « réessaie »).
+        if (sc === 'auth/network-request-failed') return { ok: false, code: sc };
+        // Tout autre échec ici = l'email a bien un compte, mais on n'a pas pu s'y
+        // connecter avec ce mot de passe (mauvais mot de passe, OU compte magic
+        // link sans mot de passe, OU compte Google-only). Code dédié → l'appelant
+        // affiche « cet e-mail a déjà un compte, connecte-toi » + bouton de
+        // reconnexion, au lieu du trompeur « mot de passe incorrect ».
+        return { ok: false, code: 'mm/email-exists-signin-failed' };
       }
     }
     return { ok: false, code: code || 'auth/unknown' };

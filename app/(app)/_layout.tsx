@@ -14,7 +14,7 @@
 // laisserait un nouvel écran ouvert par oubli — une faille invisible. Ici, un
 // oubli se voit immédiatement : l'écran est bloqué au premier test.
 
-import { Stack, usePathname, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { isPaywalled } from '../../services/access';
@@ -41,7 +41,19 @@ const ALWAYS_ALLOWED = new Set([
 
 export default function AppLayout() {
   const router = useRouter();
-  const pathname = usePathname();
+
+  // On lit les SEGMENTS et non le pathname. Le pathname ne contient pas le
+  // groupe (les parenthèses n'apparaissent pas dans l'URL : (app)/journal.tsx
+  // → '/journal'), donc il est impossible d'y distinguer un écran de (app)
+  // d'un écran de (onboarding). useSegments() les expose :
+  //   ['(app)', 'pricing-upgrade']   vs   ['(onboarding)', 'auth']
+  const segments = useSegments();
+
+  // On dérive DEUX CHAÎNES et on fait porter l'effet dessus, plutôt que sur le
+  // tableau : `useSegments()` renvoie une nouvelle référence à chaque rendu, ce
+  // qui relancerait l'effet (et une lecture AsyncStorage) en continu.
+  const group = segments[0] ?? '';
+  const screen = segments[segments.length - 1] ?? '';
 
   // `true` tant qu'on n'a pas tranché pour la route courante. On masque alors
   // l'écran (voile opaque) pour qu'aucun contenu payant n'apparaisse, même une
@@ -51,9 +63,24 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
 
-    // Les groupes expo-router entre parenthèses n'apparaissent pas dans l'URL :
-    // app/(app)/affirmation.tsx → pathname '/affirmation'. On isole le segment.
-    const screen = pathname.split('/').filter(Boolean).pop() ?? '';
+    // 🚨 CE LAYOUT NE GARDE QUE SON PROPRE GROUPE.
+    //
+    // Il reste MONTÉ quand on navigue vers un autre groupe (la route sort de
+    // (app) mais le layout survit sous la nouvelle route dans la pile). Son
+    // effet se redéclenche alors avec la route de destination.
+    //
+    // Sans ce test, une sortie vers (onboarding) était vue comme « écran
+    // inconnu, donc protégé » → isPaywalled() → renvoi sur le paywall. Le gate
+    // rattrapait l'utilisateur AU MOMENT MÊME où il tentait de sortir : le lien
+    // « J'ai déjà un abonnement — Me reconnecter » semblait mort, et la
+    // déconnexion comme la suppression de compte (RGPD) étaient coincées
+    // derrière le paywall. La liste blanche ci-dessus ne décrit QUE le groupe
+    // (app) : tout écran d'un autre groupe en est absent par nature, pas par
+    // oubli. Hors de (app), on ne décide rien.
+    if (group !== '(app)') {
+      setChecking(false);
+      return;
+    }
 
     if (ALWAYS_ALLOWED.has(screen)) {
       setChecking(false);
@@ -79,7 +106,7 @@ export default function AppLayout() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [group, screen, router]);
 
   // Le <Stack> reste TOUJOURS monté : le démonter à chaque vérification
   // relancerait les écrans à zéro (perte d'état, animations rejouées). On se

@@ -199,13 +199,23 @@ export const translations = {
 
     // ── Onboarding : auth ─────────────────────────────────────────────────────
     auth: {
-      titre: 'Rejoins-nous',
-      sousTitre: 'Crée ton compte pour sauvegarder\nta progression',
+      titre: 'Ravi de te revoir',
+      sousTitre: 'Reconnecte-toi pour retrouver\nta progression',
       apple: 'Continuer avec Apple',
       google: 'Continuer avec Google',
       email: 'Continuer avec e-mail',
       placeholder: 'Ton adresse e-mail',
       envoyer: 'Envoyer le lien →',
+      passwordPlaceholder: 'Ton mot de passe',
+      seConnecter: 'Se connecter',
+      motDePasseOublie: 'Mot de passe oublié ou jamais défini ?',
+      emailManquantReset: 'Saisis d\'abord ton adresse e-mail.',
+      resetEnvoye: {
+        titre: 'E-mail envoyé',
+        corps: 'Si un compte existe pour cette adresse, un e-mail pour définir ton mot de passe vient d\'être envoyé. Vérifie ta boîte mail ✉️',
+      },
+      erreurIdentifiants: 'E-mail ou mot de passe incorrect. Si tu n\'as jamais défini de mot de passe, utilise « Mot de passe oublié ». Si tu t\'es inscrit avec Google, utilise le bouton Google.',
+      erreurTropDeTentatives: 'Trop de tentatives. Patiente quelques instants avant de réessayer.',
       alertApple: {
         titre: 'Disponible prochainement',
         corps: 'La connexion Apple sera disponible dans une prochaine version.',
@@ -518,9 +528,11 @@ export const translations = {
       passwordPlaceholder: 'Mot de passe (min. 6 caractères)',
       errEmailInvalide: 'Adresse email invalide.',
       errPasswordCourt: 'Le mot de passe doit faire au moins 6 caractères.',
-      errEmailDejaUtilise: 'Cet email a déjà un compte, mais le mot de passe est incorrect.',
+      errEmailDejaUtilise: 'Cet e-mail a déjà un compte. Connecte-toi pour retrouver ta progression.',
       errReseau: 'Problème de connexion. Réessaie.',
       errGenerique: 'Impossible de créer le compte. Réessaie.',
+      rappelReconnexion: 'Retiens bien ce mot de passe : il te servira à te reconnecter.',
+      boutonReconnexion: 'Me reconnecter',
     },
 
     // ── Notifications ─────────────────────────────────────────────────────────
@@ -725,13 +737,23 @@ export const translations = {
     },
 
     auth: {
-      titre: 'Join us',
-      sousTitre: 'Create your account to save\nyour progress',
+      titre: 'Good to see you again',
+      sousTitre: 'Log back in to pick up\nwhere you left off',
       apple: 'Continue with Apple',
       google: 'Continue with Google',
       email: 'Continue with email',
       placeholder: 'Your email address',
       envoyer: 'Send link →',
+      passwordPlaceholder: 'Your password',
+      seConnecter: 'Log in',
+      motDePasseOublie: 'Forgot or never set a password?',
+      emailManquantReset: 'Enter your e-mail address first.',
+      resetEnvoye: {
+        titre: 'E-mail sent',
+        corps: 'If an account exists for this address, an e-mail to set your password has just been sent. Check your inbox ✉️',
+      },
+      erreurIdentifiants: 'Incorrect e-mail or password. If you never set a password, use “Forgot password”. If you signed up with Google, use the Google button.',
+      erreurTropDeTentatives: 'Too many attempts. Please wait a moment before trying again.',
       alertApple: {
         titre: 'Coming soon',
         corps: 'Apple sign-in will be available in a future version.',
@@ -1031,9 +1053,11 @@ export const translations = {
       passwordPlaceholder: 'Password (min. 6 characters)',
       errEmailInvalide: 'Invalid email address.',
       errPasswordCourt: 'Password must be at least 6 characters.',
-      errEmailDejaUtilise: 'This email already has an account, but the password is incorrect.',
+      errEmailDejaUtilise: 'This e-mail already has an account. Log in to pick up your progress.',
       errReseau: 'Connection problem. Please try again.',
       errGenerique: 'Could not create the account. Please try again.',
+      rappelReconnexion: 'Remember this password — you\'ll use it to log back in.',
+      boutonReconnexion: 'Log in',
     },
 
     notifications: {
@@ -1236,13 +1260,23 @@ export const translations = {
     },
 
     auth: {
-      titre: 'Únete',
-      sousTitre: 'Crea tu cuenta para guardar\ntu progreso',
+      titre: 'Qué bueno verte otra vez',
+      sousTitre: 'Vuelve a entrar y retoma\ndonde lo dejaste',
       apple: 'Continuar con Apple',
       google: 'Continuar con Google',
       email: 'Continuar con e-mail',
       placeholder: 'Tu dirección de e-mail',
       envoyer: 'Enviar enlace →',
+      passwordPlaceholder: 'Tu contraseña',
+      seConnecter: 'Iniciar sesión',
+      motDePasseOublie: '¿Olvidaste o nunca definiste tu contraseña?',
+      emailManquantReset: 'Introduce primero tu correo.',
+      resetEnvoye: {
+        titre: 'Correo enviado',
+        corps: 'Si existe una cuenta para esta dirección, acabamos de enviar un correo para definir tu contraseña. Revisa tu bandeja ✉️',
+      },
+      erreurIdentifiants: 'Correo o contraseña incorrectos. Si nunca definiste una contraseña, usa «¿Olvidaste tu contraseña?». Si te registraste con Google, usa el botón de Google.',
+      erreurTropDeTentatives: 'Demasiados intentos. Espera un momento antes de volver a intentarlo.',
       alertApple: {
         titre: 'Próximamente',
         corps: 'El acceso con Apple estará disponible en una versión futura.',
@@ -1542,9 +1576,11 @@ export const translations = {
       passwordPlaceholder: 'Contraseña (mín. 6 caracteres)',
       errEmailInvalide: 'Correo electrónico no válido.',
       errPasswordCourt: 'La contraseña debe tener al menos 6 caracteres.',
-      errEmailDejaUtilise: 'Este correo ya tiene una cuenta, pero la contraseña es incorrecta.',
+      errEmailDejaUtilise: 'Este correo ya tiene una cuenta. Inicia sesión para retomar tu progreso.',
       errReseau: 'Problema de conexión. Inténtalo de nuevo.',
       errGenerique: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
+      rappelReconnexion: 'Recuerda esta contraseña: la necesitarás para volver a entrar.',
+      boutonReconnexion: 'Iniciar sesión',
     },
 
     notifications: {
