@@ -446,7 +446,45 @@ Phases livrées & validées :
   - ✅ **~~FUITE DE CONTENU — notification d'affirmation~~** — **CORRIGÉ le 2026-07-15** (traité en Phase B point 6, par anticipation, en ouvrant l'accès à `parametres` depuis le paywall). `scheduleAffirmationNotif()` fait désormais `const cycleContent = (await isPaywalled()) ? null : getCycleContent(...)` → un non-abonné paywallé reçoit le texte générique `t.notifications.affirmationBody`, jamais l'affirmation réelle. Sûr web ET natif. L'écran `parametres` n'est **pas** gaté (RGPD). *(Historique : repérée le 2026-07-14 en vérifiant le périmètre d'A.2 — `parametres.tsx` était le seul écran whitelisté à importer `getCycleContent` et mettait l'affirmation du cycle courant dans le corps de la notif quotidienne ; inerte sur web mais réelle sur natif.)*
 
 ═══════════════════════════════
-**FEUILLE DE ROUTE PHASE 1 (WEB) — dans l'ordre**
+**🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ (2026-07-15) — FAIT AUTORITÉ**
+═══════════════════════════════
+
+> **CET ORDRE REMPLACE la lecture linéaire A→H ci-dessous** (qui reste le DÉTAIL de chaque point). **Décision : AUCUN déploiement public tant que tout n'est pas testé ET nettoyé.** Les tests mobiles se font via un **tunnel HTTPS privé** (URL temporaire, obscure — **PAS une publication** ; `manifest-mind.app` reste vierge jusqu'au vrai déploiement).
+
+**✅ DÉJÀ FAIT :** PHASE A · PHASE B · PHASE C (Google complet) · Points **9** + **11** (Phase D) codés, validés, commités.
+
+**RESTE À FAIRE, STRICTEMENT DANS CET ORDRE :**
+1. **PHASE D — finir la robustesse paiement** : point **12** (désactivation à l'annulation), puis **10** (remboursement lifetime), puis **13** (prix EUR→USD centralisés). 🚨 **UN POINT À LA FOIS pour 10 et 12 (webhook = argent + accès), avec un TEST entre chaque — NE PAS les regrouper.**
+2. **PHASE E — légal** : **14** (CGU/confidentialité « 7 cycles » + essai sans carte) · **15** (export RGPD) · **16** (bannière consentement) · **17** (mentions Paddle).
+3. **PHASE H-partie-1 — configurer la PWA** : **25** (manifest, service worker, icônes 192/512/maskable, robots.txt). *(La PWA doit EXISTER avant de pouvoir la tester sur mobile.)*
+4. **🧪 TESTS MOBILES via TUNNEL HTTPS** : parcours complet, **PWA/installation**, **Google Sign-In**, **Paddle sandbox**, **Safari/iPhone**, responsive, **clavier mobile**. ⚠️ **AVEC les boutons debug ENCORE PRÉSENTS** (indispensables pour atteindre le cycle 8 sur mobile). Cf. encadrés « TUNNEL » et « SAFARI/IPHONE » ci-dessous.
+5. **PHASE F — nettoyage complet, APRÈS les tests** : **18** (retirer boutons debug) · **19** (code mort/logs — **sauf** diagnostics `paddle.ts`) · **20** (`app.json` plugin `expo-font` double) · **renommage `claude_master.md`** (casse git, cf. ARCHIVE) · **21** (`DEBUG_SKIP_PAYWALL = false`).
+6. **PHASE G — config production** : **22** (Paddle sandbox→prod + catalogue + webhook prod) · **23** ✅ (domaine approuvé) · **23-bis** (détails de paiement bancaire) · **24** (config Google prod + restriction clé API).
+7. **PHASE H-partie-2 — build + déploiement** : **26** (`npx expo export --platform web`) · **27** (déployer sur `manifest-mind.app`) · **28** (tests finaux réels + reçu Paddle au client).
+8. 🚀 **PUBLICATION WEB.**
+
+═══════════════════════════════
+🚨 **NE PAS RETIRER LES BOUTONS DEBUG AVANT L'ÉTAPE 5**
+═══════════════════════════════
+Les boutons debug de `home.tsx` (**« reset »** et **« ⏭ cycle suivant »**) restent **JUSQU'À l'étape 5 (Phase F), APRÈS les tests mobiles** — ils sont **indispensables** pour atteindre le cycle 8 sur téléphone pendant les tests (étape 4). **AUCUNE session future ne doit les retirer « par zèle »**, même en croisant une remarque du type « nettoyer les boutons debug ». Ce n'est PAS une omission, c'est une décision d'ordonnancement. (Avertissement identique dans l'ARCHIVE.)
+
+═══════════════════════════════
+🧪 **PROCÉDURE TUNNEL HTTPS (tests mobiles — étape 4)**
+═══════════════════════════════
+1. `npx expo start --tunnel` → URL HTTPS temporaire (ex. `https://xxxx.exp.direct`, via ngrok intégré).
+2. Ajouter cette URL **aux domaines autorisés Firebase** (Console Firebase → Authentication → Settings → Authorized domains) — sinon **Google Sign-In + magic link** échouent (`auth/unauthorized-domain`).
+3. Ajouter cette URL **aux « approved domains » Paddle SANDBOX** (dashboard Paddle → Checkout settings) — sinon le **checkout Paddle ne s'ouvre pas**.
+4. Ouvrir l'URL du tunnel depuis le **navigateur du téléphone** (dont **Safari/iPhone**).
+⚠️ **L'URL du tunnel CHANGE à chaque relance → REFAIRE les étapes 2 et 3** à chaque nouvelle URL.
+- Rappel : sans tunnel (IP locale HTTP `192.168.x.x:8081`) → OK pour écrans/responsive/**email+password**, mais **Google, magic link, PWA et Paddle NE marchent PAS** (domaine autorisé + HTTPS requis).
+
+═══════════════════════════════
+📱 **VIGILANCE SAFARI/IPHONE (à valider à l'étape 4)**
+═══════════════════════════════
+Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par `manifestmind.firebaseapp.com`, un **domaine tiers** → **cassé par le blocage des cookies tiers de Safari/ITP** (et Chrome qui s'y met). **Invisible en localhost** (le popup passe), donc **à tester EXPLICITEMENT sur un vrai iPhone via le tunnel**. Correctif prévu au point **24** (servir le handler d'auth depuis notre domaine : `authDomain` + rewrite Firebase Hosting) — mais le **diagnostic** se fait à l'étape 4.
+
+═══════════════════════════════
+**DÉTAIL DES PHASES (référence — exécution selon l'ORDRE ci-dessus)**
 ═══════════════════════════════
 
 **PHASE A — Sécuriser l'accès payant (CHANTIER N°1, avant tout)**
@@ -487,7 +525,11 @@ Phases livrées & validées :
     - **Cœur extrait en `runPurchase()` (sans verrou)** — appelé par les 2 boutons (`handlePurchase` « Confirmer » + `handleGooglePurchase`), qui tiennent le verrou via **`try/finally`**. Le garde-fou anti double-paiement reste en **UNE seule copie** (dans `runPurchase`). `handleGooglePurchase` tient le verrou pendant popup + checkout et appelle **directement `runPurchase`** (pas de dance release/re-acquire).
     - **`finally` garantit la réactivation** sur TOUT chemin de sortie (validation KO, `emailExists`, restauration, **échec du checkout point 9 `{ok:false}`**, exception) → **jamais de bouton mort**.
     - i18n `t.paiement.chargement` (FR/EN/ES). ⚠️ `auth.tsx` (reconnexion) garde son `googleBusy` local — **hors périmètre** (pas un flux d'achat). `tsc` clean + app bootée.
-12. 🟠 **Vérifier la désactivation à l'annulation** (`firebase_uid` peut-être absent des événements lifecycle Paddle → annulation jamais propagée) — **tester sur vrai payload**.
+12. 🟠 **Vérifier la désactivation à l'annulation** — **⏳ EN ATTENTE DU TEST SANDBOX (ne rien coder avant le résultat).** Diagnostic fait (2026-07-15).
+    - **Le risque** : le webhook lit `event.data.custom_data.firebase_uid` ; s'il est **absent**, il **ack 200 sans rien désactiver** (`functions/src/index.ts` l. 247-255) → un résilié **garderait l'accès**. ⚠️ **Branche de défaillance CERTAINE côté code**, mais **déclenchement NON vérifié côté Paddle** (dépend de si Paddle propage `custom_data` du checkout aux événements lifecycle — ça marche pour l'activation `transaction.paid`/`subscription.activated`, mais rien ne garantit que ça ressorte sur un `subscription.canceled` émis plus tard). Nature du risque : **fuite de revenu** (résilié gardant l'accès), PAS « payeur enfermé dehors ».
+    - **Protocole de test sandbox** : (1) créer un abo de test (carte test → `firebase_uid` bien posé) ; (2) l'**annuler avec « cancel immediately »** ⚠️ *car `subscription.canceled` fire à la FIN de période, pas au clic — au clic on reçoit d'abord un `subscription.updated` (status encore `active`) ; « cancel immediately » force le `canceled`* ; (3) regarder **Google Cloud Logging** (fonction `paddleWebhook`) **+** le payload dans **Paddle → Developer Tools → Notifications**.
+    - **Ce qu'on cherche** : `[paddle] event … (subscription.canceled) missing custom_data.firebase_uid` → **problème CONFIRMÉ** · `[paddle] users/{uid} updated: subscription_active=false (subscription.canceled)` → **PAS de problème** (UID présent).
+    - **Solution de repli SI l'UID manque** (à coder seulement alors) : **recherche inverse** sur `users` par **`paddle_subscription_id`** (le plus précis) ou **`paddle_customer_id`** (repli) — champs **DÉJÀ persistés à l'activation** (`functions/src/index.ts` l. 276-277). 🔑 **Finesse** : `data.id` = **subscription id** pour les `subscription.*`, mais = **transaction id** pour les `transaction.*` → dans ce dernier cas utiliser `data.subscription_id`. `paddle_customer_id`/`paddle_subscription_id` auto-indexés par Firestore (index simple, pas de config). L'email serait un moins bon choix (change, partageable).
 13. 🟠 **Prix : passer d'EUROS à DOLLARS + centraliser** — **DÉCISION (2026-07-15).** 🚨 **BUG signalé par l'audit : l'app affiche des EUROS alors que Paddle facture en DOLLARS** (prod ET sandbox déjà configurés en USD, devise unique quel que soit le pays). Prix officiels : **Lifetime 149 $ · Mensuel 12,99 $ · Annuel 79 $** (soit 6,58 $/mois si affiché mensualisé).
     - **Où c'est écrit en dur** : montants dans le JSX de `pricing.tsx` (l. ~400/427/452) **ET** `pricing-upgrade.tsx` (l. ~294/321/346) = `149€`, `6,58€`, `12,99€` (dupliqués sur 2 écrans). + i18n `t.pricing.plans.annuel.sousTitre` (« 79€/an · soit 0,21€/cycle ») et `t.pricing.bottomText` (« Moins de 0,50€… ») en **FR/EN/ES**. Les clés `unite` (`/mois`, `une fois`) sont **neutres** (OK).
     - **Approche retenue (à coder en Phase D)** : **Option A — dollars EN DUR, mais CENTRALISÉS** en une source unique (constante `PRICES` + helper `formatUSD(montant, lang)`), utilisée par les 2 écrans + interpolée dans l'i18n. **PAS de fetch dynamique Paddle** (Option B) : sur-dimensionné pour une devise unique + rares changements, et ça coupleraient l'affichage du prix à la dispo de Paddle.js (bloqueur de pub → prix invisibles, ironique vu le point 9). ⚠️ Contrepartie assumée : garder `PRICES` en phase avec Paddle manuellement (rappel : le **vrai** montant facturé s'affiche de toute façon dans l'overlay Paddle au checkout).
@@ -525,7 +567,7 @@ Phases livrées & validées :
     - 📧 **Vérifier le destinataire du reçu Paddle.** Au **premier VRAI paiement en prod**, confirmer que le **reçu/la confirmation Paddle part bien au CLIENT** (e-mail saisi/utilisé au checkout), **pas à moi**. ⚠️ En **sandbox**, les confirmations arrivent sur MON e-mail vendeur — **comportement normal du sandbox** ; l'e-mail client est bien enregistré sur la transaction. À revalider en prod car un reçu manquant côté client = source de litiges/chargebacks.
 → 🚀 **PUBLICATION WEB**
 
-**Notes :** Phases **A et B non négociables** avant lancement (✅ faites). **Domaine `manifest-mind.app` approuvé par Paddle (23 ✅, 2026-07-15) → plus aucun délai externe.** Reste **23-bis** (détails de paiement bancaire) à finaliser une fois le catalogue prod configuré. **On suit la feuille de route dans l'ordre** (pas de re-séquençage). Après lancement web → **PHASE 2 stores**.
+**Notes :** Phases **A, B, C** ✅ faites ; points **9 + 11** (D) ✅ codés, validés, commités. **⚠️ L'ORDRE D'EXÉCUTION du reste = le bloc « 🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ » EN TÊTE de cette roadmap** (D → E → PWA → **tests mobiles tunnel** → F nettoyage → G prod → build/deploy → 🚀), et NON la lecture linéaire A→H. **Boutons debug conservés jusqu'à l'étape 5 (après tests mobiles).** Domaine Paddle approuvé (23 ✅). **Aucun déploiement public avant que tout soit testé ET nettoyé.** Après lancement web → **PHASE 2 stores**.
 
 ---
 
