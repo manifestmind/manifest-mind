@@ -167,7 +167,8 @@ export const translations = {
         annuel: {
           badge: '⭐ Recommandé · Économise 50%',
           titre: 'Annuel',
-          sousTitre: '79€/an · soit 0,21€/cycle',
+          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          sousTitre: 'Facturé {prixAn}/an · soit {prixCycle}/cycle',
           unite: '/mois',
         },
         mensuel: {
@@ -184,7 +185,7 @@ export const translations = {
         'Disponible en FR, EN & ES',
       ],
       cta: 'Je transforme ma vie maintenant →',
-      bottomText: 'Moins de 0,50€ pour changer ta vie',
+      bottomText: 'Moins de 0,50 $ pour changer ta vie',
       dejaCompte: 'J\'ai déjà un abonnement — Me reconnecter',
       restaurer: 'Restaurer un achat',
       // Question posée au clic « essai gratuit » quand l'appareil porte le
@@ -727,7 +728,8 @@ export const translations = {
         annuel: {
           badge: '⭐ Recommended · Save 50%',
           titre: 'Annual',
-          sousTitre: '€79/year · €0.21/cycle',
+          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          sousTitre: 'Billed {prixAn}/year · {prixCycle}/cycle',
           unite: '/mo',
         },
         mensuel: {
@@ -744,7 +746,7 @@ export const translations = {
         'Available in FR, EN & ES',
       ],
       cta: 'Transform my life now →',
-      bottomText: 'Less than €0.50 to change your life',
+      bottomText: 'Less than $0.50 to change your life',
       dejaCompte: 'I already have a subscription — Log in',
       restaurer: 'Restore a purchase',
       retourAbonne: {
@@ -1265,7 +1267,8 @@ export const translations = {
         annuel: {
           badge: '⭐ Recomendado · Ahorra 50%',
           titre: 'Anual',
-          sousTitre: '79€/año · 0,21€/ciclo',
+          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          sousTitre: 'Facturado {prixAn}/año · {prixCycle}/ciclo',
           unite: '/mes',
         },
         mensuel: {
@@ -1282,7 +1285,7 @@ export const translations = {
         'Disponible en FR, EN & ES',
       ],
       cta: 'Transformar mi vida ahora →',
-      bottomText: 'Menos de 0,50€ para cambiar tu vida',
+      bottomText: 'Menos de 0,50 $ para cambiar tu vida',
       dejaCompte: 'Ya tengo una suscripción — Iniciar sesión',
       restaurer: 'Restaurar una compra',
       retourAbonne: {

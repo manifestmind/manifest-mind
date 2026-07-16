@@ -6,12 +6,14 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signInAnonymously, signOut } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { canPay, PADDLE_ACTIVE } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
+import { PRICES, formatUSD } from '../../services/prices';
 import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,6 +22,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function Pricing() {
   const router = useRouter();
   const t = useTranslation();
+  const { lang } = useLanguage();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
   // Conversion inline pour un plan payant choisi directement à l'onboarding
@@ -423,7 +426,7 @@ export default function Pricing() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>149€</Text>
+                <Text style={styles.priceAmount}>{formatUSD(PRICES.lifetime, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
@@ -447,10 +450,14 @@ export default function Pricing() {
               </View>
               <View style={styles.planInfo}>
                 <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
-                <Text style={styles.planSubtitle}>{t.pricing.plans.annuel.sousTitre}</Text>
+                <Text style={styles.planSubtitle}>
+                  {t.pricing.plans.annuel.sousTitre
+                    .replace('{prixAn}', formatUSD(PRICES.annuel, lang))
+                    .replace('{prixCycle}', formatUSD(PRICES.annuelParCycle, lang))}
+                </Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>6,58€</Text>
+                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{formatUSD(PRICES.annuelParMois, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
@@ -475,7 +482,7 @@ export default function Pricing() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>12,99€</Text>
+                <Text style={styles.priceAmount}>{formatUSD(PRICES.mensuel, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>

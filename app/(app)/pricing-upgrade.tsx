@@ -5,6 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
 import { canPay, FREE_CYCLES, PADDLE_ACTIVE } from '../../services/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../services/firebase';
@@ -12,12 +13,14 @@ import { convertOrSignIn, mapConversionError, needsAccount } from '../../service
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
+import { PRICES, formatUSD } from '../../services/prices';
 import { hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function PricingUpgrade() {
   const t = useTranslation();
+  const { lang } = useLanguage();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
   const [isFreemiumExpired, setIsFreemiumExpired] = useState(false);
@@ -322,7 +325,7 @@ export default function PricingUpgrade() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>149€</Text>
+                <Text style={styles.priceAmount}>{formatUSD(PRICES.lifetime, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
@@ -346,10 +349,14 @@ export default function PricingUpgrade() {
               </View>
               <View style={styles.planInfo}>
                 <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
-                <Text style={styles.planSubtitle}>{t.pricing.plans.annuel.sousTitre}</Text>
+                <Text style={styles.planSubtitle}>
+                  {t.pricing.plans.annuel.sousTitre
+                    .replace('{prixAn}', formatUSD(PRICES.annuel, lang))
+                    .replace('{prixCycle}', formatUSD(PRICES.annuelParCycle, lang))}
+                </Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>6,58€</Text>
+                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{formatUSD(PRICES.annuelParMois, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
@@ -374,7 +381,7 @@ export default function PricingUpgrade() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>12,99€</Text>
+                <Text style={styles.priceAmount}>{formatUSD(PRICES.mensuel, lang)}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>
