@@ -15,6 +15,7 @@ export const translations = {
       partager: 'Partager',
       ou: 'ou',
       annuler: 'Annuler',
+      photoNonSauvee: 'La photo n\'a pas pu être sauvegardée. Réessaie avec une image plus légère.',
       confirmer: 'Confirmer',
       supprimer: 'Supprimer',
       suivant: 'Suivant →',
@@ -455,6 +456,9 @@ export const translations = {
       },
       compte: {
         deconnecter: 'Se déconnecter',
+        exporter: 'Exporter mes données',
+        exportOk: 'Tes données ont été exportées',
+        exportErreur: 'L\'export a échoué. Réessaie dans un instant.',
         supprimer: 'Supprimer mon compte',
       },
       legalLinks: {
@@ -584,6 +588,7 @@ export const translations = {
       partager: 'Share',
       ou: 'or',
       annuler: 'Cancel',
+      photoNonSauvee: 'The photo could not be saved. Try again with a lighter image.',
       confirmer: 'Confirm',
       supprimer: 'Delete',
       suivant: 'Next →',
@@ -1002,6 +1007,9 @@ export const translations = {
       },
       compte: {
         deconnecter: 'Sign out',
+        exporter: 'Export my data',
+        exportOk: 'Your data has been exported',
+        exportErreur: 'Export failed. Please try again in a moment.',
         supprimer: 'Delete my account',
       },
       legalLinks: {
@@ -1123,6 +1131,7 @@ export const translations = {
       partager: 'Compartir',
       ou: 'o',
       annuler: 'Cancelar',
+      photoNonSauvee: 'No se pudo guardar la foto. Inténtalo de nuevo con una imagen más ligera.',
       confirmer: 'Confirmar',
       supprimer: 'Eliminar',
       suivant: 'Siguiente →',
@@ -1541,6 +1550,9 @@ export const translations = {
       },
       compte: {
         deconnecter: 'Cerrar sesión',
+        exporter: 'Exportar mis datos',
+        exportOk: 'Tus datos han sido exportados',
+        exportErreur: 'La exportación falló. Inténtalo de nuevo en un momento.',
         supprimer: 'Eliminar mi cuenta',
       },
       legalLinks: {

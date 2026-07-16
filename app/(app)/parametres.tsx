@@ -5,6 +5,7 @@ import { deleteUser, sendSignInLinkToEmail, signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { isPaywalled } from '../../services/access';
+import { exporterDonnees } from '../../services/dataExport';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
@@ -257,6 +258,26 @@ export default function Parametres() {
       // fallback silencieux — on route quand même
     }
     router.replace('/(onboarding)/welcome' as any);
+  }
+
+  // Export RGPD (portabilité) — lecture seule, non destructif, pas de dialogue
+  // de confirmation. Accessible à TOUS (essai anonyme et paywallé inclus) : les
+  // données locales appartiennent à l'utilisateur. Verrou anti double-clic
+  // synchrone (même motif que busyRef des écrans de prix).
+  const exportingRef = useRef(false);
+  async function handleExport() {
+    if (exportingRef.current) return;
+    exportingRef.current = true;
+    try {
+      const res = await exporterDonnees(lang);
+      if (res.ok) {
+        showAuthToast(t.parametres.compte.exportOk, 'success');
+      } else {
+        showAuthToast(t.parametres.compte.exportErreur, 'error');
+      }
+    } finally {
+      exportingRef.current = false;
+    }
   }
 
   // Envoi du lien de reconnexion quand Firebase exige une session récente avant
@@ -536,7 +557,18 @@ export default function Parametres() {
             <Chevron />
           </Pressable>
 
-          {/* Ligne 2 — Supprimer mon compte */}
+          {/* Ligne 2 — Exporter mes données (RGPD portabilité, point 15).
+              Placée juste au-dessus de la suppression : les deux droits RGPD
+              côte à côte. Non destructif → pas de ConfirmDialog. */}
+          <Pressable style={[styles.rowBase, styles.rowMiddle]} onPress={handleExport}>
+            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+              <Path d="M10 3v9M6 8l4 4 4-4M4 16h12" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.compte.exporter}</Text>
+            <Chevron />
+          </Pressable>
+
+          {/* Ligne 3 — Supprimer mon compte */}
           <Pressable style={[styles.rowBase, styles.rowLast]} onPress={() => setDialog('delete')}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M5 5l10 10M15 5L5 15" stroke="#C04040" strokeWidth="1.2" strokeLinecap="round" />

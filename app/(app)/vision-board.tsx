@@ -5,6 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
+import { toPersistentPhotoUri } from '../../services/imagePersist';
+import { showAuthToast } from '../../components/ui/AuthToast';
 import {
   Alert,
   Animated,
@@ -155,10 +157,21 @@ export default function VisionBoard() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      const updatedPhotos = { ...photos, [category]: uri };
-      setPhotos(updatedPhotos);
-      await AsyncStorage.setItem('vision_board_photos', JSON.stringify(updatedPhotos));
+      try {
+        // 🔴 Conversion OBLIGATOIRE avant stockage (bug 2026-07-16) : sur web le
+        // picker retourne une blob: URL qui MEURT à la fermeture du navigateur.
+        // toPersistentPhotoUri → data-URI base64 redimensionnée (~100-200 Ko).
+        const uri = await toPersistentPhotoUri(result.assets[0]);
+        const updatedPhotos = { ...photos, [category]: uri };
+        // Écriture D'ABORD, état ensuite : si le stockage refuse (quota plein),
+        // on n'affiche pas une photo qui ne survivrait pas à la session.
+        await AsyncStorage.setItem('vision_board_photos', JSON.stringify(updatedPhotos));
+        setPhotos(updatedPhotos);
+      } catch {
+        // Conversion impossible OU QuotaExceededError : l'échec devient VISIBLE
+        // (défaillance silencieuse historique corrigée au passage).
+        showAuthToast(t.commun.photoNonSauvee, 'error');
+      }
     }
   }
 

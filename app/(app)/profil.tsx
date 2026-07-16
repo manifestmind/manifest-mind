@@ -3,6 +3,8 @@ import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { toPersistentPhotoUri } from '../../services/imagePersist';
+import { showAuthToast } from '../../components/ui/AuthToast';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -172,9 +174,15 @@ export default function Profil() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
-      setProfilePhoto(uri);
-      await AsyncStorage.setItem('profile_photo', uri);
+      try {
+        // 🔴 Même bug que le vision board (2026-07-16) : blob: URL web mortelle
+        // → conversion en data-URI persistante avant stockage.
+        const uri = await toPersistentPhotoUri(result.assets[0]);
+        await AsyncStorage.setItem('profile_photo', uri);
+        setProfilePhoto(uri);
+      } catch {
+        showAuthToast(t.commun.photoNonSauvee, 'error');
+      }
     }
   }
 

@@ -104,6 +104,19 @@ export default function Journal() {
           if (status.journal) setValidated(true);
         }
 
+        // 🔴 Recharger l'entrée du CYCLE COURANT (bug d'affichage corrigé le
+        // 2026-07-16) : sans ça, le champ repart vide à chaque montage et
+        // l'entrée du jour SEMBLE perdue (elle est pourtant bien stockée).
+        // Les entrées « passées » (skipped) n'ont pas de texte à restaurer.
+        const todayRaw = await AsyncStorage.getItem('journal_cycle_' + cycle);
+        if (todayRaw) {
+          const today = JSON.parse(todayRaw);
+          if (today.text && !today.skipped) {
+            setJournalText(today.text);
+            setWordCount(today.text.trim() === '' ? 0 : today.text.trim().split(/\s+/).length);
+          }
+        }
+
         const entries: PreviousEntry[] = [];
         if (cycle > 1) {
           const keys = Array.from({ length: cycle - 1 }, (_, i) => 'journal_cycle_' + (cycle - 1 - i));
@@ -291,6 +304,12 @@ export default function Journal() {
               placeholderTextColor="#A09088"
               textAlignVertical="top"
               editable={!validated}
+              // Ceinture en CARACTÈRES par-dessus la garde des 150 mots : celle-ci
+              // compte les mots séparés par des espaces, donc un COLLAGE massif
+              // sans espace (1 seul « mot ») la traverserait et pourrait saturer
+              // le quota localStorage (~5 Mo). 2000 caractères absorbent
+              // confortablement 150 vrais mots — jamais atteint en usage légitime.
+              maxLength={2000}
             />
           </View>
 
