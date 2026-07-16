@@ -70,7 +70,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     </div>
     <h1>Politique de confidentialité</h1>
     <p class="subtitle">Tes données t'appartiennent</p>
-    <span class="update-badge">Dernière mise à jour : avril 2026</span>
+    <span class="update-badge">Dernière mise à jour : juillet 2026</span>
   </div>
 </div>
 
@@ -83,7 +83,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">01</div>
     <h2>Qui sommes-nous ?</h2>
-    <p>ManifestMind est une application mobile de bien-être et de développement personnel basée sur un parcours de 365 cycles thématiques. Pour toute question relative à la confidentialité, tu peux nous contacter à l'adresse indiquée en bas de cette page.</p>
+    <p>ManifestMind est une application de bien-être et de développement personnel, accessible sur le web et sur mobile, basée sur un parcours de 365 cycles thématiques. Pour toute question relative à la confidentialité, tu peux nous contacter à l'adresse indiquée en bas de cette page.</p>
   </section>
 
   <section>
@@ -91,10 +91,11 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <h2>Données que nous collectons</h2>
     <p>Nous collectons uniquement les données strictement nécessaires au fonctionnement de l'application :</p>
     <ul>
-      <li><strong>Données de compte :</strong> adresse e-mail, nom d'affichage (via connexion Google, Apple ou Magic Link)</li>
+      <li><strong>Données de compte :</strong> adresse e-mail et méthode de connexion (e-mail + mot de passe, ou Google — Apple sur nos futures applications mobiles)</li>
+      <li><strong>Espace d'essai anonyme :</strong> avant la création de ton compte, l'essai gratuit repose sur un identifiant technique anonyme, sans aucune donnée personnelle</li>
       <li><strong>Prénom :</strong> saisi lors de la configuration initiale, modifiable depuis le Profil</li>
       <li><strong>Photo de profil :</strong> choisie depuis ta galerie — stockée uniquement sur ton appareil</li>
-      <li><strong>Données de progression :</strong> cycles complétés, points accumulés, niveau atteint (Éveillé, Floraison, Rayonnant, Manifestant)</li>
+      <li><strong>Données de progression :</strong> cycles complétés, points accumulés, niveau atteint (Éveil, Ancrage, Expansion, Manifestation)</li>
       <li><strong>Contenu du journal :</strong> textes rédigés dans la section journal — stockés uniquement sur ton appareil</li>
       <li><strong>Photos du Vision Board :</strong> images choisies depuis ta galerie — stockées uniquement sur ton appareil</li>
       <li><strong>Préférences :</strong> langue choisie (FR/EN/ES), heure de notification, paramètres de l'app</li>
@@ -113,7 +114,6 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
       <li>Sauvegarder ta progression et tes cycles</li>
       <li>Personnaliser ton expérience (prénom, langue, affirmation du cycle en cours)</li>
       <li>Envoyer des notifications locales si tu les as activées : affirmation de ton cycle chaque matin à l'heure choisie, et rappel si ton cycle est incomplet à 20h</li>
-      <li>Améliorer l'application de façon anonyme et agrégée</li>
     </ul>
     <p>Nous ne vendons jamais tes données à des tiers. Nous ne les utilisons jamais à des fins publicitaires.</p>
   </section>
@@ -123,8 +123,8 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <h2>Stockage et sécurité</h2>
     <p>Tes données sont stockées de deux façons :</p>
     <ul>
-      <li><strong>En local sur ton appareil uniquement</strong> : progression, points, cycles, entrées de journal, photos du Vision Board, photo de profil — ces données ne quittent jamais ton téléphone</li>
-      <li><strong>Sur nos serveurs sécurisés</strong> (Firebase / Google Cloud) : uniquement les données de compte (e-mail, nom d'affichage) pour l'authentification si tu es connecté·e</li>
+      <li><strong>En local sur ton appareil uniquement</strong> : progression, points, cycles, entrées de journal, photos du Vision Board, photo de profil — ces données ne quittent jamais ton appareil (téléphone ou navigateur)</li>
+      <li><strong>Sur nos serveurs sécurisés</strong> (Firebase / Google Cloud, chiffrement HTTPS) : ton e-mail et ta méthode de connexion, ainsi que le statut de ton abonnement et les identifiants techniques de facturation (références client et abonnement Paddle) — nécessaires pour te reconnaître comme abonné·e. Jamais tes informations bancaires, que nous ne voyons jamais.</li>
     </ul>
     <p>Toutes les transmissions sont chiffrées via HTTPS. Nous appliquons les mesures de sécurité standard de l'industrie pour protéger tes données.</p>
   </section>
@@ -132,12 +132,28 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">05</div>
     <h2>Connexion via services tiers</h2>
-    <p>Si tu choisis de te connecter via Google ou Apple, nous recevons uniquement les informations que ces services nous transmettent : ton adresse e-mail et ton nom d'affichage. Nous n'avons pas accès à tes mots de passe ni à d'autres données de ton compte Google ou Apple.</p>
+    <p>Si tu choisis de te connecter via Google (ou Apple sur nos futures applications mobiles), nous recevons uniquement les informations que ces services nous transmettent : ton adresse e-mail et ton nom d'affichage. Nous n'avons pas accès à tes mots de passe ni à d'autres données de ton compte Google ou Apple.</p>
+    <p><strong>Paddle (paiements, version web)</strong> : lorsque tu t'abonnes sur le web, ton paiement est traité par Paddle.com, notre marchand officiel (« Merchant of Record »). Paddle reçoit les informations nécessaires à la transaction (e-mail, données de paiement, pays pour la TVA) et les traite conformément à sa propre politique de confidentialité. Nous ne recevons jamais tes données bancaires.</p>
     <p>Les politiques de confidentialité de ces services s'appliquent également à leurs propres traitements de données.</p>
   </section>
 
   <section>
     <div class="section-number">06</div>
+    <h2>Stockage local et cookies</h2>
+    <p>ManifestMind n'utilise <strong>aucun cookie publicitaire, aucun traceur, aucun outil d'analyse d'audience</strong>. Voici, en toute transparence, ce que l'application enregistre dans ton navigateur ou ton appareil :</p>
+    <ul>
+      <li><strong>Stockage local :</strong> ta progression, tes préférences, ton journal et tes photos — le fonctionnement même de l'app</li>
+      <li><strong>Session de connexion</strong> (IndexedDB) : ce qui te garde connecté·e entre deux visites</li>
+      <li><strong>Cookies de paiement Paddle :</strong> déposés uniquement pendant le paiement, nécessaires à la transaction et à la prévention de la fraude</li>
+      <li><strong>Cookies Google :</strong> lors d'une connexion avec Google, sur le domaine de Google</li>
+    </ul>
+    <div class="highlight">
+      Tous ces stockages sont strictement nécessaires au service que tu demandes — c'est pourquoi l'application n'affiche pas de bannière de consentement.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">07</div>
     <h2>Notifications</h2>
     <p>Si tu actives les notifications, deux types sont disponibles :</p>
     <ul>
@@ -148,11 +164,11 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   </section>
 
   <section>
-    <div class="section-number">07</div>
+    <div class="section-number">08</div>
     <h2>Suppression et réinitialisation de tes données</h2>
     <p>Tu as le contrôle total sur tes données directement depuis l'application :</p>
     <ul>
-      <li><strong>Réinitialisation du parcours :</strong> depuis ton Profil, tu peux remettre ton parcours à zéro (Cycle 1). Cette action efface définitivement tous tes points, cycles complétés, entrées de journal et photos. Ton compte et ton abonnement restent actifs.</li>
+      <li><strong>Réinitialisation du parcours</strong> <em>(réservée aux abonnés)</em> : depuis ton Profil, tu peux remettre ton parcours à zéro (Cycle 1). Cette action efface définitivement tous tes points, cycles complétés, entrées de journal et photos. Ton compte et ton abonnement restent actifs.</li>
       <li><strong>Suppression du compte :</strong> depuis les Paramètres, tu peux supprimer définitivement ton compte. Cette action efface toutes tes données y compris ton compte Firebase. Elle est irréversible.</li>
     </ul>
     <div class="highlight">
@@ -161,27 +177,27 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   </section>
 
   <section>
-    <div class="section-number">08</div>
+    <div class="section-number">09</div>
     <h2>Tes droits</h2>
     <p>Conformément au RGPD et aux lois applicables, tu disposes des droits suivants :</p>
     <ul>
       <li><strong>Accès :</strong> obtenir une copie de tes données personnelles</li>
       <li><strong>Rectification :</strong> corriger des données inexactes (prénom modifiable depuis le Profil)</li>
       <li><strong>Suppression :</strong> supprimer ton compte et toutes tes données depuis les Paramètres de l'app</li>
-      <li><strong>Portabilité :</strong> recevoir tes données dans un format lisible</li>
+      <li><strong>Portabilité :</strong> depuis les Paramètres, le bouton « Exporter mes données » télécharge l'intégralité de tes données dans un fichier structuré et lisible (JSON) — progression, journal, photos, informations de compte et d'abonnement</li>
       <li><strong>Opposition :</strong> t'opposer à certains traitements</li>
     </ul>
     <p>Pour exercer ces droits, utilise les fonctions disponibles dans l'application (Profil et Paramètres), ou contacte-nous directement.</p>
   </section>
 
   <section>
-    <div class="section-number">09</div>
+    <div class="section-number">10</div>
     <h2>Données des mineurs</h2>
     <p>ManifestMind n'est pas destinée aux personnes de moins de 13 ans. Nous ne collectons pas sciemment de données personnelles concernant des mineurs de moins de 13 ans. Si tu penses qu'un mineur nous a fourni des données personnelles, contacte-nous immédiatement.</p>
   </section>
 
   <section>
-    <div class="section-number">10</div>
+    <div class="section-number">11</div>
     <h2>Modifications de cette politique</h2>
     <p>Nous pouvons mettre à jour cette politique occasionnellement. En cas de modification significative, nous t'en informerons via une notification dans l'application ou par e-mail. La date de dernière mise à jour est toujours indiquée en haut de cette page.</p>
     <p>L'utilisation continue de l'application après modification vaut acceptation de la nouvelle politique.</p>

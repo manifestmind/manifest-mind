@@ -66,7 +66,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     </div>
     <h1>Privacy Policy</h1>
     <p class="subtitle">Your data belongs to you</p>
-    <span class="update-badge">Last updated: April 2026</span>
+    <span class="update-badge">Last updated: July 2026</span>
   </div>
 </div>
 
@@ -79,7 +79,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">01</div>
     <h2>Who are we?</h2>
-    <p>ManifestMind is a mobile wellness and personal development application based on a structured journey of 365 thematic cycles. For any privacy-related questions, you can contact us at the address provided at the bottom of this page.</p>
+    <p>ManifestMind is a wellness and personal development application, accessible on the web and on mobile, based on a structured journey of 365 thematic cycles. For any privacy-related questions, you can contact us at the address provided at the bottom of this page.</p>
   </section>
 
   <section>
@@ -87,10 +87,11 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <h2>Data we collect</h2>
     <p>We only collect data strictly necessary for the application to function:</p>
     <ul>
-      <li><strong>Account data:</strong> email address, display name (via Google, Apple or Magic Link sign-in)</li>
+      <li><strong>Account data:</strong> email address and sign-in method (email + password, or Google — Apple on our future mobile applications)</li>
+      <li><strong>Anonymous trial space:</strong> before you create your account, the free trial relies on an anonymous technical identifier, with no personal data whatsoever</li>
       <li><strong>First name:</strong> entered during initial setup, editable from your Profile</li>
       <li><strong>Profile photo:</strong> chosen from your gallery — stored only on your device</li>
-      <li><strong>Progress data:</strong> completed cycles, accumulated points, level reached (Awakened, Blossoming, Radiant, Manifesting)</li>
+      <li><strong>Progress data:</strong> completed cycles, accumulated points, level reached (Awakening, Grounding, Expansion, Manifestation)</li>
       <li><strong>Journal content:</strong> texts written in the journal section — stored only on your device</li>
       <li><strong>Vision Board photos:</strong> images chosen from your gallery — stored only on your device</li>
       <li><strong>Preferences:</strong> chosen language (FR/EN/ES), notification time, app settings</li>
@@ -109,7 +110,6 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
       <li>Save your progress and cycles</li>
       <li>Personalize your experience (first name, language, current cycle affirmation)</li>
       <li>Send local notifications if you have enabled them: your cycle affirmation every morning at the time you choose, and a reminder if your cycle is incomplete at 8pm</li>
-      <li>Improve the application in an anonymous and aggregated way</li>
     </ul>
     <p>We never sell your data to third parties. We never use it for advertising purposes.</p>
   </section>
@@ -119,8 +119,8 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <h2>Storage and security</h2>
     <p>Your data is stored in two ways:</p>
     <ul>
-      <li><strong>Locally on your device only:</strong> progress, points, cycles, journal entries, Vision Board photos, profile photo — this data never leaves your phone</li>
-      <li><strong>On our secure servers</strong> (Firebase / Google Cloud): only account data (email, display name) for authentication if you are signed in</li>
+      <li><strong>Locally on your device only:</strong> progress, points, cycles, journal entries, Vision Board photos, profile photo — this data never leaves your device (phone or browser)</li>
+      <li><strong>On our secure servers</strong> (Firebase / Google Cloud, HTTPS encryption): your email and sign-in method, as well as your subscription status and technical billing identifiers (Paddle customer and subscription references) — needed to recognize you as a subscriber. Never your banking information, which we never see.</li>
     </ul>
     <p>All transmissions are encrypted via HTTPS. We apply industry standard security measures to protect your data.</p>
   </section>
@@ -128,12 +128,28 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">05</div>
     <h2>Sign-in via third-party services</h2>
-    <p>If you choose to sign in via Google or Apple, we only receive the information these services transmit to us: your email address and display name. We do not have access to your passwords or other data from your Google or Apple account.</p>
+    <p>If you choose to sign in via Google (or Apple on our future mobile applications), we only receive the information these services transmit to us: your email address and display name. We do not have access to your passwords or other data from your Google or Apple account.</p>
+    <p><strong>Paddle (payments, web version)</strong>: when you subscribe on the web, your payment is processed by Paddle.com, our Merchant of Record. Paddle receives the information necessary for the transaction (email, payment details, country for VAT purposes) and processes it in accordance with its own privacy policy. We never receive your banking details.</p>
     <p>The privacy policies of these services also apply to their own data processing.</p>
   </section>
 
   <section>
     <div class="section-number">06</div>
+    <h2>Local storage and cookies</h2>
+    <p>ManifestMind uses <strong>no advertising cookies, no trackers, no audience analytics tools</strong>. Here, in full transparency, is what the application stores in your browser or on your device:</p>
+    <ul>
+      <li><strong>Local storage:</strong> your progress, preferences, journal and photos — the very functioning of the app</li>
+      <li><strong>Sign-in session</strong> (IndexedDB): what keeps you signed in between visits</li>
+      <li><strong>Paddle payment cookies:</strong> set only during checkout, necessary for the transaction and fraud prevention</li>
+      <li><strong>Google cookies:</strong> when signing in with Google, on Google's own domain</li>
+    </ul>
+    <div class="highlight">
+      All of this storage is strictly necessary for the service you request — which is why the application does not display a consent banner.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">07</div>
     <h2>Notifications</h2>
     <p>If you enable notifications, two types are available:</p>
     <ul>
@@ -144,11 +160,11 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   </section>
 
   <section>
-    <div class="section-number">07</div>
+    <div class="section-number">08</div>
     <h2>Deletion and reset of your data</h2>
     <p>You have full control over your data directly from the application:</p>
     <ul>
-      <li><strong>Journey reset:</strong> accessible from your Profile. Resets your journey to Cycle 1 and permanently deletes all your points, completed cycles, journal entries and photos. Your account and subscription remain active.</li>
+      <li><strong>Journey reset</strong> <em>(subscribers only)</em>: accessible from your Profile. Resets your journey to Cycle 1 and permanently deletes all your points, completed cycles, journal entries and photos. Your account and subscription remain active.</li>
       <li><strong>Account deletion:</strong> accessible from Settings. Permanently deletes your account and all your data. This action is irreversible.</li>
     </ul>
     <div class="highlight">
@@ -157,27 +173,27 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   </section>
 
   <section>
-    <div class="section-number">08</div>
+    <div class="section-number">09</div>
     <h2>Your rights</h2>
     <p>In accordance with applicable laws, you have the following rights:</p>
     <ul>
       <li><strong>Access:</strong> obtain a copy of your personal data</li>
       <li><strong>Rectification:</strong> correct inaccurate data (first name editable from Profile)</li>
       <li><strong>Deletion:</strong> delete your account and all your data from the app Settings</li>
-      <li><strong>Portability:</strong> receive your data in a readable format</li>
+      <li><strong>Portability:</strong> from Settings, the "Export my data" button downloads all of your data in a structured, readable file (JSON) — progress, journal, photos, account and subscription information</li>
       <li><strong>Objection:</strong> object to certain processing</li>
     </ul>
     <p>To exercise these rights, use the functions available in the app (Profile and Settings), or contact us directly.</p>
   </section>
 
   <section>
-    <div class="section-number">09</div>
+    <div class="section-number">10</div>
     <h2>Children's data</h2>
     <p>ManifestMind is not intended for persons under 13 years of age. We do not knowingly collect personal data from children under 13. If you believe a minor has provided us with personal data, please contact us immediately.</p>
   </section>
 
   <section>
-    <div class="section-number">10</div>
+    <div class="section-number">11</div>
     <h2>Changes to this policy</h2>
     <p>We may update this policy occasionally. In the event of a significant change, we will notify you via an in-app notification or by email. The date of the last update is always shown at the top of this page.</p>
     <p>Continued use of the application after modification constitutes acceptance of the new policy.</p>
