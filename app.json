@@ -4,7 +4,7 @@
     "slug": "manifestmind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icons/icon-1024.png",
     "scheme": "manifestmind",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -26,17 +26,15 @@
         }
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#6B3FA0",
+        "foregroundImage": "./assets/icons/adaptive-foreground-1024.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./public/icons/favicon-32.png"
     },
     "plugins": [
       "expo-router",

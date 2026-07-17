@@ -1,0 +1,19 @@
+<!-- ManifestMind — icône source (identité définitive 2026-07-17)
+     M : CormorantGaramond SemiBold, glyphe converti en chemin (opentype.js)
+     Œil : état final des animations de la charte, paupières #2A1840, sans halo
+     Régénération PNG : voir assets/icons/README (pipeline sharp, raster mask) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs><clipPath id="eyeclip"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath></defs>
+  <rect width="1024" height="1024" fill="#6B3FA0"/>
+  <g transform="translate(119.30828799999995 798.72) scale(0.9175040000000001)"><path d="M118-121L128-602L155-600L144-121Q143-68 164.500-40Q186-12 229-12Q232-12 232-6Q232 0 229 0Q207 0 184-1Q161-2 132-2Q102-2 77.500-1Q53 0 31 0Q28 0 28-6Q28-12 31-12Q72-12 94.500-40Q117-68 118-121M826-12Q828-12 828-6Q828 0 826 0Q800 0 768-1Q736-2 701-2Q666-2 635.500-1Q605 0 580 0Q578 0 578-6Q578-12 580-12Q628-12 642-25Q656-38 653-81L632-538L676-607L420-7Q419-3 412-3Q405-3 403-7L132-542Q96-613 38-613Q35-613 35-619Q35-625 38-625Q57-625 78.500-624Q100-623 115-623Q137-623 154.500-624Q172-625 182-625Q196-625 203.500-615.500Q211-606 228-573L453-132L410-56L647-600Q653-613 660-619Q667-625 677-625Q686-625 696.500-624Q707-623 722-623Q752-623 773-624Q794-625 814-625Q817-625 817-619Q817-613 814-613Q768-613 746-596Q724-579 726-538L748-81Q750-52 755.500-37Q761-22 777.500-17Q794-12 826-12" fill="#F0EAE0"/></g>
+  <g transform="translate(167.93599999999998 241.664) scale(12.288)"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/><g clip-path="url(#eyeclip)">
+  <circle cx="28" cy="22" r="10.5" fill="#DDD0F8"/>
+  <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75"/>
+  <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9"/>
+  <circle cx="28" cy="22" r="3" fill="#1A0E30"/>
+  <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9"/>
+  <circle cx="28" cy="15.5" r="1.8" fill="#EAC870"/>
+  <circle cx="28" cy="15.5" r=".8" fill="#C89A30"/></g>
+  <path d="M8 22 Q28 6 48 22" fill="none" stroke="#2A1840" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M8 22 Q28 38 48 22" fill="none" stroke="#2A1840" stroke-width=".9" stroke-linecap="round" opacity=".6"/></g>
+</svg>

@@ -458,7 +458,7 @@ Phases livrées & validées :
 **RESTE À FAIRE, STRICTEMENT DANS CET ORDRE :**
 1. ✅ **~~PHASE D — robustesse paiement~~** — **TERMINÉE (2026-07-16)** : points 9 ✅ · 11 ✅ · 12 ✅ (config Paddle) · 10 ⏸️ (reporté V1.5, runbook manuel) · 13 ✅ (prix USD centralisés). → **Prochaine étape : PHASE E.**
 2. ✅ **~~PHASE E — légal~~ — TERMINÉE (2026-07-16)** : **15** ✅ export RGPD (`services/dataExport.ts` + rangée parametres) · **16** ✅ qualifié (pas de bannière — transparence seule ; 🚨 **DÉCLENCHEUR** : tout futur analytics/monitoring = bannière obligatoire AVANT activation) · **14+17** ✅ les 9 documents légaux réécrits et PUBLIÉS (dual-plateforme web Paddle MoR + stores ; cf. détail au point 14, dont la note anti-steering Phase 2).
-3. **PHASE H-partie-1 — configurer la PWA** : **25** (manifest, service worker, icônes 192/512/maskable, robots.txt). *(La PWA doit EXISTER avant de pouvoir la tester sur mobile.)*
+3. ✅ **~~PHASE H-partie-1 — configurer la PWA~~ — FAIT (2026-07-17)** : point 25 ✅ (identité définitive M+œil sur violet, 10 fichiers d'icônes web+stores, manifest, SW minimal 3-règles, robots.txt — détail au point 25). → **Prochaine étape : 🧪 TESTS MOBILES via TUNNEL (étape 4).**
 4. **🧪 TESTS MOBILES via TUNNEL HTTPS** : parcours complet, **PWA/installation**, **Google Sign-In**, **Paddle sandbox**, **Safari/iPhone**, responsive, **clavier mobile**, **🔴 PERSISTANCE après fermeture COMPLÈTE du navigateur** (photos vision board + journal + progression — leçon du bug du 2026-07-16). ⚠️ **AVEC les boutons debug ENCORE PRÉSENTS** (indispensables pour atteindre le cycle 8 sur mobile) — **MAIS ATTENTION : le bouton « reset » fait un `AsyncStorage.clear()` TOTAL en UN TAP sans confirmation** (home.tsx, coin haut-droit) : un tap accidentel pendant les tests efface tout. Cf. encadrés « TUNNEL » et « SAFARI/IPHONE » ci-dessous.
 5. **PHASE F — nettoyage complet, APRÈS les tests** : **18** (retirer boutons debug) · **19** (code mort/logs — **sauf** diagnostics `paddle.ts`) · **20** (`app.json` plugin `expo-font` double) · **renommage `claude_master.md`** (casse git, cf. ARCHIVE) · **21** (`DEBUG_SKIP_PAYWALL = false`).
 6. **PHASE G — config production** : **22** (Paddle sandbox→prod + catalogue + webhook prod) · **23** ✅ (domaine approuvé) · **23-bis** (détails de paiement bancaire) · **24** (config Google prod + restriction clé API).
@@ -624,7 +624,17 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
       - ⚠️ **Phase 2 native** : la restriction par référent bloquerait l'app native (pas de referrer) → **clé distincte** avec restriction Android (SHA-256) / iOS (bundle ID).
 
 **PHASE H — PWA & déploiement**
-25. **PWA** (manifest, service worker, icônes 192/512/maskable, robots.txt).
+25. ✅ **~~PWA~~ — FAIT (2026-07-17).** 
+    - **🎨 IDENTITÉ VISUELLE DÉFINITIVE (décision utilisateur, web ET stores)** : fond **violet `#6B3FA0`** + **M Cormorant Garamond SemiBold crème `#F0EAE0`** + **l'œil** (état final des animations, paupières assombries `#2A1840`, sans halo) niché au creux du M. **Deux niveaux** (pratique standard) : M+œil détaillé pour ≥48 px (écrans d'accueil 120-192 px physiques, stores) ; **œil SIMPLIFIÉ** pour les favicons 16/32 (traits épaissis, 3 formes pleines — le M y serait illisible, vérifié au pixel).
+    - **Fichiers** : `public/icons/` (7 PWA : 192, 512, maskable-192/512, apple-touch-180, favicon-32/16) · `assets/icons/` (`icon-1024.png` **3 canaux sans alpha — exigence Apple vérifiée**, `adaptive-foreground-1024.png` transparent, `icon-source.svg` = source vectorielle canonique, M en CHEMIN extrait de la police par opentype.js — régénérable à toute taille).
+    - **Zones sûres VÉRIFIÉES AU PIXEL** (scan programmatique du rayon de contenu) : maskable 39,5 % ≤ 40 % ✅ · adaptatif 32,0 % ≤ 33 % ✅. Le contenu plein format atteint Ø90,8 % → maskable = composition ×0,87, adaptatif = ×0,705 (même design, échelles adaptées).
+    - **`public/manifest.webmanifest`** : short_name « ManifestMind » (12 car.), display standalone, theme/background `#F0EAE0` (crème — l'UI de l'APP est crème ; l'icône est violette, c'est voulu), icônes any + maskable.
+    - **`public/sw.js` — SW MINIMAL 3 RÈGLES (contrat de sécurité en tête de fichier, NE PAS « améliorer »)** : (1) navigations = RÉSEAU d'abord (cache = secours hors-ligne uniquement → jamais coincé sur une vieille version) ; (2) cache-first UNIQUEMENT `/_expo/`+`/assets/`+`/icons/` (noms hashés = immuables par construction) ; (3) **cross-origin et non-GET JAMAIS interceptés** (Paddle/Firestore/Google Auth ne voient pas le SW). Pas de skipWaiting. Enregistré par `app/+html.tsx` **sauf port 8081** (dev Expo protégé).
+    - **`app/+html.tsx`** (nouveau, coquille HTML officielle expo-router) : manifest, favicons, apple-touch-icon, theme-color, meta iOS, enregistrement SW.
+    - **`app.json`** : `icon` → 1024 · `android.adaptiveIcon` → foreground + fond `#6B3FA0` (**câblage Phase 2 fait, inerte sur web** ; les refs template `android-icon-*` retirées — dont `monochromeImage` : une icône monochrome propre pour Android 13 est à créer en Phase 2, cf. 🎨 DESIGN) · `web.favicon` → favicon-32. ⚠️ Doublon `expo-font` NON touché (point 20).
+    - **Vérifié** : `tsc` 0 erreur · `expo export` OK · `dist/` contient manifest + sw.js + robots.txt + icons/ + head complet (liens vérifiés au grep).
+    - 📎 Les assets template devenus orphelins (`assets/images/icon.png`, `android-icon-*`, `favicon.png`) → **à supprimer au point 19 (Phase F)**.
+    - **🚩 POINT 27 — COHABITATION DOMAINE À TRANCHER** : `manifest-mind.app` sert AUJOURD'HUI les documents légaux via GitHub Pages (branche `main` + CNAME). Le déploiement de l'app sur ce domaine devra préserver les 9 URLs légales (option probable : copier les 9 HTML dans `public/` de l'app → servis aux mêmes URLs par le même déploiement, et retirer le CNAME de Pages). Décision au point 27.
 26. Build : `npx expo export --platform web`.
 27. Déployer sur `manifest-mind.app`.
 28. **Tests finaux réels** (vrai paiement, multi-navigateurs dont **Safari/iPhone**).
@@ -663,6 +673,9 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
 > Regroupe tout ce qui touche à l'APPARENCE et n'est pas bloquant fonctionnellement. **Ne pas traiter au fil de l'eau** — accumuler ici, puis une passe dédiée.
 
 1. **Page « Politique de remboursement » (×3 langues) à harmoniser avec les 2 autres documents légaux** : pas d'œil animé SVG, pas de hero, style « brut » (Georgia, page simple) vs la charte complète (Cormorant Garamond + Jost, orbes animées, sections numérotées). Constaté à l'audit du 2026-07-16 — choix délibéré de ne PAS le traiter pendant la passe légale (contenu ≠ design).
+2. **Feature graphic Google Play 1024×500 (Phase 2)** : bannière marketing exigée par la fiche Play Store — à créer à partir de l'identité définitive (M+œil sur violet). Noté le 2026-07-17.
+3. **Icône monochrome Android 13 (Phase 2)** : pour les « themed icons » du launcher — version monochrome du M+œil (ou de l'œil simplifié) en blanc sur transparent, à câbler dans `android.adaptiveIcon.monochromeImage` (la ref template a été retirée au point 25). Noté le 2026-07-17.
+4. **Splash screen natif (Phase 2)** : `expo-splash-screen` dans `app.json` référence encore l'image template (`splash-icon.png`, fond blanc) — à remplacer par l'identité définitive au chantier natif.
 
 ### 🔴 BUG PERSISTANCE WEB — photos blob: + journal non rechargé — CORRIGÉ (2026-07-16)
 
