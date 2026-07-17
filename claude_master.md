@@ -452,11 +452,11 @@ Phases livrées & validées :
 
 > **CET ORDRE REMPLACE la lecture linéaire A→H ci-dessous** (qui reste le DÉTAIL de chaque point). **Décision : AUCUN déploiement public tant que tout n'est pas testé ET nettoyé.** Les tests mobiles se font via un **tunnel HTTPS privé** (URL temporaire, obscure — **PAS une publication** ; `manifest-mind.app` reste vierge jusqu'au vrai déploiement).
 
-**✅ DÉJÀ FAIT :** PHASE A · PHASE B · PHASE C (Google complet) · **PHASE D TERMINÉE (2026-07-16)** — points **9** + **11** ✅ · point **12** ✅ (config Paddle, zéro code) · point **10** ⏸️ reporté V1.5 (runbook manuel) · point **13** ✅ (prix USD centralisés).
+**✅ DÉJÀ FAIT :** PHASE A · PHASE B · PHASE C (Google complet) · **PHASE D (2026-07-16)** — 9 + 11 + 12 + 13 ✅, 10 ⏸️ V1.5 · **PHASE E (2026-07-16)** — 15 export RGPD ✅ · 16 consentement qualifié ✅ · 14+17 les 9 documents légaux réécrits et publiés ✅. *(+ hors-roadmap : bug persistance web corrigé le 2026-07-16.)*
 
 **RESTE À FAIRE, STRICTEMENT DANS CET ORDRE :**
 1. ✅ **~~PHASE D — robustesse paiement~~** — **TERMINÉE (2026-07-16)** : points 9 ✅ · 11 ✅ · 12 ✅ (config Paddle) · 10 ⏸️ (reporté V1.5, runbook manuel) · 13 ✅ (prix USD centralisés). → **Prochaine étape : PHASE E.**
-2. **PHASE E — légal, ORDRE INTERNE : 15 → 16 → (14+17 fusionnés)** : **15** (export RGPD, code app) · **16** ✅ qualifié 2026-07-16 (pas de bannière — transparence seule, cf. détail + déclencheur) · **14+17** (passe UNIQUE sur les 9 fichiers légaux — ⚠️ **SESSION DÉDIÉE**, réécriture ~50 % des CGU ×3 langues : elles décrivent une app STORE, pas le lancement web Paddle — audit complet du 2026-07-16 en checklist au point 14).
+2. ✅ **~~PHASE E — légal~~ — TERMINÉE (2026-07-16)** : **15** ✅ export RGPD (`services/dataExport.ts` + rangée parametres) · **16** ✅ qualifié (pas de bannière — transparence seule ; 🚨 **DÉCLENCHEUR** : tout futur analytics/monitoring = bannière obligatoire AVANT activation) · **14+17** ✅ les 9 documents légaux réécrits et PUBLIÉS (dual-plateforme web Paddle MoR + stores ; cf. détail au point 14, dont la note anti-steering Phase 2).
 3. **PHASE H-partie-1 — configurer la PWA** : **25** (manifest, service worker, icônes 192/512/maskable, robots.txt). *(La PWA doit EXISTER avant de pouvoir la tester sur mobile.)*
 4. **🧪 TESTS MOBILES via TUNNEL HTTPS** : parcours complet, **PWA/installation**, **Google Sign-In**, **Paddle sandbox**, **Safari/iPhone**, responsive, **clavier mobile**, **🔴 PERSISTANCE après fermeture COMPLÈTE du navigateur** (photos vision board + journal + progression — leçon du bug du 2026-07-16). ⚠️ **AVEC les boutons debug ENCORE PRÉSENTS** (indispensables pour atteindre le cycle 8 sur mobile) — **MAIS ATTENTION : le bouton « reset » fait un `AsyncStorage.clear()` TOTAL en UN TAP sans confirmation** (home.tsx, coin haut-droit) : un tap accidentel pendant les tests efface tout. Cf. encadrés « TUNNEL » et « SAFARI/IPHONE » ci-dessous.
 5. **PHASE F — nettoyage complet, APRÈS les tests** : **18** (retirer boutons debug) · **19** (code mort/logs — **sauf** diagnostics `paddle.ts`) · **20** (`app.json` plugin `expo-font` double) · **renommage `claude_master.md`** (casse git, cf. ARCHIVE) · **21** (`DEBUG_SKIP_PAYWALL = false`).
@@ -559,7 +559,9 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
 16. 🟡 **Consentement cookies — QUALIFIÉ (2026-07-16) : PAS DE BANNIÈRE REQUISE.** Inventaire : Firebase Auth (IndexedDB, session) = exempté (strictement nécessaire) · AsyncStorage (progression/préférences) = exempté (le service même) · cookies Paddle au checkout = exemptés (nécessaires à la transaction initiée) · cookies Google du popup Sign-In = domaine google.com, mention en politique · **AUCUN analytics/pub/pixel**. Requis : la seule TRANSPARENCE (section stockage dans la politique de confidentialité → passe 14+17). 🚨 **DÉCLENCHEUR DE REQUALIFICATION** : le jour où un analytics/monitoring est ajouté (Sentry évoqué au point 9, Google Analytics…), la bannière devient OBLIGATOIRE **AVANT** l'activation de l'outil.
 17. **Mentions Paddle** (merchant of record) — fusionné dans la passe 14. Exigences : CGU/confidentialité/remboursement accessibles ✅ (prérequis de l'approbation domaine, point 23) · **mention MoR à AJOUTER** (formule type : « Nos commandes sont traitées par notre revendeur en ligne Paddle.com, qui est le Merchant of Record. Paddle gère les demandes de service client et la facturation. ») · politique de remboursement à aligner sur les conditions acheteur Paddle (Paddle peut accorder des remboursements) · TVA collectée/reversée par Paddle, reçu émis par Paddle.
 
-14. **CGU + confidentialité + remboursement — PASSE UNIQUE ×9 FICHIERS (SESSION DÉDIÉE — réécriture ~50 % des CGU ×3 langues, PAS un search-replace).**
+14. ✅ **~~CGU + confidentialité + remboursement — PASSE UNIQUE ×9 FICHIERS~~ — FAIT ET PUBLIÉ (2026-07-16, commit `ddb58db` sur `manifestmind/manifest-mind`).** Textes FR validés par l'utilisateur puis déclinés EN/ES. Résultat : CGU ×3 réécrites en **14 sections** (essai 7 cycles sans carte, compte/auth réelle, paiement/remboursement/résiliation/restauration **selon plateforme** web Paddle MoR / stores, export, réinit abonnés, suppression ≠ résiliation) · confidentialité ×3 en **11 sections** (auth réelle + essai anonyme, niveaux corrigés dans les 3 langues — EN `Awakening/Grounding/Expansion/Manifestation`, ES `Despertar/Arraigo/Expansión/Manifestación` = `t.niveaux` de l'app —, mention analytics RETIRÉE, serveurs complétés Paddle IDs, Paddle en tiers, **nouvelle section « Stockage local et cookies »**, portabilité → bouton export) · remboursement ×3 (lifetime ajouté, Paddle MoR, résiliation honnête, tutoiement harmonisé FR/ES, dates juillet 2026). Intégrité vérifiée : balises équilibrées, mêmes comptes de sections/paragraphes dans les 3 langues, badges + © 2026 ×9. HTML/CSS/SVG préservés (seul ajout : règles `h3` + `a{color}` aux 3 CGU pour les sous-titres plateforme).
+    - **🏪 NOTE PHASE 2 (stores)** : les documents couvrent DÉJÀ les deux plateformes — **MAIS relire les règles ANTI-STEERING d'Apple/Google au moment de la soumission** : les sections « selon ta plateforme » mentionnent le web et Paddle, ce qu'Apple peut juger comme de l'incitation au contournement de l'IAP (guideline 3.1.1/3.1.3). Ajuster les textes si besoin AVANT soumission (ex. version des docs servie dans l'app native sans les mentions web).
+    - *(Checklist d'audit d'origine conservée ci-dessous pour référence historique.)*
     - **⚙️ Méthode** : cloner le repo GitHub Pages `manifestmind/manifest-mind` (branche `main`) en dossier VOISIN (pas dans le repo app) → éditer → commit + push → Pages redéploie. Les 9 fichiers sont servis sur `manifest-mind.app/*.html` (le CNAME du repo est actif ; les URLs `github.io` font un 301 vers le domaine).
     - **📋 AUDIT COMPLET (2026-07-16, pages publiées lues intégralement) — CHECKLIST D'ÉDITION :**
     - **✅ Déjà bon (ne pas re-corriger)** : AUCUN « 7 jours/7 days/7 días » (corrigés par l'utilisateur en juin) · AUCUN prix (ni € ni $ — bonne pratique, les docs ne se périment pas quand les prix bougent) · remboursements disent déjà « 7 premiers cycles gratuits sans carte bancaire » ×3 langues.
@@ -588,7 +590,7 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
       - AJOUTER mention Paddle MoR (c'est Paddle qui accorde les remboursements)
       - 📅 Date « juin 2025 » + « © 2025 » → coquilles (mise à jour réelle : juin 2026)
       - Cosmétique (optionnel) : design différent des 2 autres docs (pas d'œil, style brut)
-    - **📎 Micro-retouche APP à glisser dans la même passe** : les URLs `t.legal.*` (`translations.ts` l. ~31/598/…) pointent sur `manifestmind.github.io/manifest-mind/…` qui 301-redirige → pointer DIRECTEMENT `https://manifest-mind.app/….html`.
+    - ✅ **~~Micro-retouche APP~~ — FAIT (2026-07-16)** : les 9 URLs `t.legal.*` pointent désormais DIRECTEMENT sur `https://manifest-mind.app/….html` (fini le 301 via github.io).
 
 **PHASE F — Nettoyage avant prod**
 18. Retirer **boutons debug** (`reset`, `⏭ cycle suivant`) de `home.tsx`.
@@ -628,7 +630,7 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
     - 📧 **Vérifier le destinataire du reçu Paddle.** Au **premier VRAI paiement en prod**, confirmer que le **reçu/la confirmation Paddle part bien au CLIENT** (e-mail saisi/utilisé au checkout), **pas à moi**. ⚠️ En **sandbox**, les confirmations arrivent sur MON e-mail vendeur — **comportement normal du sandbox** ; l'e-mail client est bien enregistré sur la transaction. À revalider en prod car un reçu manquant côté client = source de litiges/chargebacks.
 → 🚀 **PUBLICATION WEB**
 
-**Notes :** Phases **A, B, C, D** ✅ faites (D terminée le 2026-07-16 : 9 ✅ · 11 ✅ · 12 ✅ config Paddle · 10 ⏸️ V1.5 · 13 ✅ USD). **⚠️ L'ORDRE D'EXÉCUTION du reste = le bloc « 🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ » EN TÊTE de cette roadmap** (**E légal** → PWA → **tests mobiles tunnel** → F nettoyage → G prod → build/deploy → 🚀), et NON la lecture linéaire A→H. **Boutons debug conservés jusqu'à l'étape 5 (après tests mobiles).** Domaine Paddle approuvé (23 ✅). **Aucun déploiement public avant que tout soit testé ET nettoyé.** Après lancement web → **PHASE 2 stores**.
+**Notes :** Phases **A, B, C, D, E** ✅ faites (E terminée le 2026-07-16 : 15 export ✅ · 16 qualifié ✅ · 14+17 docs publiés ✅). **⚠️ L'ORDRE D'EXÉCUTION du reste = le bloc « 🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ » EN TÊTE de cette roadmap** (**PWA point 25** → **tests mobiles tunnel** → F nettoyage → G prod → build/deploy → 🚀), et NON la lecture linéaire A→H. **Boutons debug conservés jusqu'à l'étape 5 (après tests mobiles).** Domaine Paddle approuvé (23 ✅). **Aucun déploiement public avant que tout soit testé ET nettoyé.** Après lancement web → **PHASE 2 stores** (⚠️ relire l'anti-steering des docs légaux, cf. point 14).
 
 ---
 
@@ -654,6 +656,12 @@ Le repli **`signInWithRedirect`** (quand le popup Google est bloqué) passe par 
 4. **Compte Google-only + « mot de passe oublié »** : cas non testé (décision assumée). Si `sendPasswordResetEmail` reste silencieux pour un Google-only, l'utilisateur n'est **pas bloqué** : le message honnête l'oriente déjà vers le **bouton Google**. **Couvert par conception.**
 
 ---
+
+### 🎨 DESIGN / FINITIONS VISUELLES — à traiter EN UNE SEULE PASSE (plus tard, avant ou après lancement selon ampleur)
+
+> Regroupe tout ce qui touche à l'APPARENCE et n'est pas bloquant fonctionnellement. **Ne pas traiter au fil de l'eau** — accumuler ici, puis une passe dédiée.
+
+1. **Page « Politique de remboursement » (×3 langues) à harmoniser avec les 2 autres documents légaux** : pas d'œil animé SVG, pas de hero, style « brut » (Georgia, page simple) vs la charte complète (Cormorant Garamond + Jost, orbes animées, sections numérotées). Constaté à l'audit du 2026-07-16 — choix délibéré de ne PAS le traiter pendant la passe légale (contenu ≠ design).
 
 ### 🔴 BUG PERSISTANCE WEB — photos blob: + journal non rechargé — CORRIGÉ (2026-07-16)
 

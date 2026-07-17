@@ -29,9 +29,9 @@ export const translations = {
 
     // ── Legal URLs ─────────────────────────────────────────────────────────────
     legal: {
-      privacyUrl: 'https://manifestmind.github.io/manifest-mind/politique_confidentialite_fr.html',
-      termsUrl: 'https://manifestmind.github.io/manifest-mind/conditions_utilisation_fr.html',
-      refundUrl: 'https://manifestmind.github.io/manifest-mind/remboursement_fr.html',
+      privacyUrl: 'https://manifest-mind.app/politique_confidentialite_fr.html',
+      termsUrl: 'https://manifest-mind.app/conditions_utilisation_fr.html',
+      refundUrl: 'https://manifest-mind.app/remboursement_fr.html',
     },
 
     // ── Level names (NEW — replaces Éveillé/Floraison/Rayonnant/Manifestant) ──
@@ -601,9 +601,9 @@ export const translations = {
     },
 
     legal: {
-      privacyUrl: 'https://manifestmind.github.io/manifest-mind/privacy_policy_en.html',
-      termsUrl: 'https://manifestmind.github.io/manifest-mind/terms_of_use_en.html',
-      refundUrl: 'https://manifestmind.github.io/manifest-mind/refund_policy_en.html',
+      privacyUrl: 'https://manifest-mind.app/privacy_policy_en.html',
+      termsUrl: 'https://manifest-mind.app/terms_of_use_en.html',
+      refundUrl: 'https://manifest-mind.app/refund_policy_en.html',
     },
 
     niveaux: {
@@ -1144,9 +1144,9 @@ export const translations = {
     },
 
     legal: {
-      privacyUrl: 'https://manifestmind.github.io/manifest-mind/politica_privacidad_es.html',
-      termsUrl: 'https://manifestmind.github.io/manifest-mind/terminos_uso_es.html',
-      refundUrl: 'https://manifestmind.github.io/manifest-mind/politica_reembolso_es.html',
+      privacyUrl: 'https://manifest-mind.app/politica_privacidad_es.html',
+      termsUrl: 'https://manifest-mind.app/terminos_uso_es.html',
+      refundUrl: 'https://manifest-mind.app/politica_reembolso_es.html',
     },
 
     niveaux: {
