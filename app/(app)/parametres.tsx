@@ -6,6 +6,8 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { isPaywalled } from '../../services/access';
 import { exporterDonnees } from '../../services/dataExport';
+import { IosInstallModal } from '../../components/ui/InstallPrompt';
+import { installOfferable, performInstall, subscribeInstalled } from '../../services/pwaInstall';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
@@ -280,6 +282,23 @@ export default function Parametres() {
     }
   }
 
+  // Installer l'app (point 4-bis) — rangée permanente = seul moyen in-app de
+  // revenir sur un refus (masquée si déjà installé / non installable / natif).
+  const [showInstall, setShowInstall] = useState(false);
+  const [installIosModal, setInstallIosModal] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    if (installOfferable()) setShowInstall(true);
+    const unsub = subscribeInstalled(() => setShowInstall(false));
+    return unsub;
+  }, []);
+  async function handleInstall() {
+    await performInstall({
+      onIosInstructions: () => setInstallIosModal(true),
+      onFallback: () => showAuthToast(t.install.androidFallback, 'info'),
+    });
+  }
+
   // Envoi du lien de reconnexion quand Firebase exige une session récente avant
   // de supprimer le compte. On n'efface rien : l'utilisateur relancera la
   // suppression une fois reconnecté.
@@ -545,6 +564,19 @@ export default function Parametres() {
 
         {/* 5. COMPTE + LÉGAL + VERSION */}
         <Animated.View style={{ gap: 8, opacity: fadeUp4, transform: [{ translateY: fadeUp4.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
+
+        {/* Installer l'application (point 4-bis) — masquée si déjà installé / natif */}
+        {showInstall ? (
+          <Pressable style={[styles.rowBase, styles.rowFirst, styles.rowLast]} onPress={handleInstall}>
+            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+              <Rect x="6" y="2" width="8" height="16" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+              <Path d="M10 6v5M8 9l2 2 2-2" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.install.parametresRow}</Text>
+            <Chevron />
+          </Pressable>
+        ) : null}
+
         <View>
           <Text style={styles.sectionLabel}>{t.parametres.sections.compte}</Text>
 
@@ -662,6 +694,9 @@ export default function Parametres() {
         onConfirm={sendReauthLink}
         onCancel={() => setDialog(null)}
       />
+
+      {/* Modale d'instructions iOS (point 4-bis) — déclenchée par la rangée « Installer » */}
+      <IosInstallModal visible={installIosModal} onClose={() => setInstallIosModal(false)} />
 
       {/* Time Picker */}
       {showTimePicker && (

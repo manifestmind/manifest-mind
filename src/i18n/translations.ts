@@ -34,6 +34,25 @@ export const translations = {
       refundUrl: 'https://manifest-mind.app/remboursement_fr.html',
     },
 
+    // ── Installation PWA (point 4-bis) ──────────────────────────────────────────
+    install: {
+      boutonAndroid: 'Installer',
+      boutonIos: 'Montre-moi',
+      arriveeAndroid: 'Installe ManifestMind en un geste sur ton écran d\'accueil',
+      arriveeIos: 'Garde ManifestMind à portée de main',
+      celebrationTitre: 'Reviens demain ✨',
+      celebrationAndroid: 'Garde ManifestMind sous les yeux : installe l\'app sur ton écran d\'accueil pour ne manquer aucun cycle.',
+      celebrationIos: 'Garde ManifestMind sous les yeux : ajoute l\'app à ton écran d\'accueil pour ne manquer aucun cycle.',
+      plusTard: 'Plus tard',
+      parametresRow: 'Installer l\'application',
+      iosTitre: 'Installer ManifestMind',
+      iosEtape1: 'Appuie sur l\'icône Partager de ton navigateur',
+      iosEtape2: 'Choisis « Sur l\'écran d\'accueil »',
+      iosEtape3: 'Appuie sur « Ajouter »',
+      iosCompris: 'J\'ai compris',
+      androidFallback: 'Ouvre le menu ⋮ de Chrome, puis « Installer l\'application »',
+    },
+
     // ── Level names (NEW — replaces Éveillé/Floraison/Rayonnant/Manifestant) ──
     niveaux: {
       eveil: 'Éveil',
@@ -606,6 +625,24 @@ export const translations = {
       refundUrl: 'https://manifest-mind.app/refund_policy_en.html',
     },
 
+    install: {
+      boutonAndroid: 'Install',
+      boutonIos: 'Show me',
+      arriveeAndroid: 'Install ManifestMind in one tap on your home screen',
+      arriveeIos: 'Keep ManifestMind within reach',
+      celebrationTitre: 'Come back tomorrow ✨',
+      celebrationAndroid: 'Keep ManifestMind in sight: install the app on your home screen so you never miss a cycle.',
+      celebrationIos: 'Keep ManifestMind in sight: add the app to your home screen so you never miss a cycle.',
+      plusTard: 'Later',
+      parametresRow: 'Install the app',
+      iosTitre: 'Install ManifestMind',
+      iosEtape1: 'Tap the Share icon in your browser',
+      iosEtape2: 'Choose "Add to Home Screen"',
+      iosEtape3: 'Tap "Add"',
+      iosCompris: 'Got it',
+      androidFallback: 'Open Chrome\'s ⋮ menu, then "Install app"',
+    },
+
     niveaux: {
       eveil: 'Awakening',
       ancrage: 'Grounding',
@@ -1147,6 +1184,24 @@ export const translations = {
       privacyUrl: 'https://manifest-mind.app/politica_privacidad_es.html',
       termsUrl: 'https://manifest-mind.app/terminos_uso_es.html',
       refundUrl: 'https://manifest-mind.app/politica_reembolso_es.html',
+    },
+
+    install: {
+      boutonAndroid: 'Instalar',
+      boutonIos: 'Muéstrame',
+      arriveeAndroid: 'Instala ManifestMind en un gesto en tu pantalla de inicio',
+      arriveeIos: 'Ten ManifestMind siempre a mano',
+      celebrationTitre: 'Vuelve mañana ✨',
+      celebrationAndroid: 'Mantén ManifestMind a la vista: instala la app en tu pantalla de inicio para no perderte ningún ciclo.',
+      celebrationIos: 'Mantén ManifestMind a la vista: añade la app a tu pantalla de inicio para no perderte ningún ciclo.',
+      plusTard: 'Más tarde',
+      parametresRow: 'Instalar la aplicación',
+      iosTitre: 'Instalar ManifestMind',
+      iosEtape1: 'Toca el icono Compartir de tu navegador',
+      iosEtape2: 'Elige "Añadir a pantalla de inicio"',
+      iosEtape3: 'Toca "Añadir"',
+      iosCompris: 'Entendido',
+      androidFallback: 'Abre el menú ⋮ de Chrome y pulsa "Instalar aplicación"',
     },
 
     niveaux: {

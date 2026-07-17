@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import InstallPrompt from '../../components/ui/InstallPrompt';
 
 
 export default function Celebration() {
@@ -353,6 +354,11 @@ export default function Celebration() {
         </Animated.View>
 
       </View>
+
+      {/* Bannière d'installation PWA — engageante, 1re célébration (point 4-bis).
+          Web-only, gardée par pwa_celebration_prompt_shown, respecte le refus.
+          Additif : ne touche ni les points, ni la nav, ni la logique de fin de cycle. */}
+      <InstallPrompt variant="celebration" />
     </View>
   );
 }

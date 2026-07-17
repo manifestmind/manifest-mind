@@ -66,6 +66,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     [, notifAffirmation], [, notifRappel], [, reminderTime],
     [, legalAccepted], [, legalAcceptedDate], [, onboardingCompleted],
     [, selectedPlan], [, subscriptionActiveLocal], [, hadSubscription],
+    [, pwaArrivalDismissed], [, pwaCelebrationPromptShown],
   ] = await AsyncStorage.multiGet([
     'user_name', 'user_language',
     'current_cycle', 'current_theme', 'cycle_completed', 'cycle_points',
@@ -75,6 +76,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     'notif_affirmation', 'notif_rappel', 'reminder_time',
     'legal_accepted', 'legal_accepted_date', 'onboarding_completed',
     'selected_plan', 'subscription_active', 'had_subscription',
+    'pwa_arrival_dismissed', 'pwa_celebration_prompt_shown',
   ]);
 
   // 2. Journal — clés dynamiques journal_cycle_N, découvertes par préfixe.
@@ -164,6 +166,8 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
       cguAcceptees: toBool(legalAccepted),
       cguAccepteesLe: legalAcceptedDate,
       onboardingTermine: toBool(onboardingCompleted),
+      installArriveeRefusee: toBool(pwaArrivalDismissed),
+      installCelebrationMontree: toBool(pwaCelebrationPromptShown),
     },
   };
 }

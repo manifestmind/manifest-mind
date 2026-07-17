@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, ClipPath, Defs, Line, Path, Rect } from 'react-native-svg';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
+import InstallPrompt from '../../components/ui/InstallPrompt';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { isPaywalled } from '../../services/access';
 import { DEBUG_SKIP_PAYWALL } from '../../services/config';
@@ -527,6 +528,10 @@ export default function Home() {
           <Text style={styles.navLabel}>{t.commun.navbar.parametres}</Text>
         </Pressable>
       </View>
+
+      {/* Bannière d'installation PWA — discrète, au-dessus de la navbar (point 4-bis).
+          Web-only, rend null si natif/installé/refusé. Additif, ne touche rien. */}
+      <InstallPrompt variant="arrival" />
     </View>
   );
 }

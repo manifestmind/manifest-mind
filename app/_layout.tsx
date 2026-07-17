@@ -11,9 +11,17 @@ import { INITIAL_WEB_HREF } from '../services/initialUrl';
 import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
 import { LanguageProvider } from '../src/i18n/LanguageContext';
 import { useTranslation } from '../src/hooks/useTranslation';
+import { initPwaInstall } from '../services/pwaInstall';
 
 function SubscriptionSync() {
   useSubscriptionSync();
+  return null;
+}
+
+// Enregistre au démarrage les listeners d'installation PWA (point 4-bis).
+// Isolé, web-only, sans effet sur les autres bootstraps (auth, deep link).
+function PwaInstallListener() {
+  useEffect(() => { initPwaInstall(); }, []);
   return null;
 }
 
@@ -162,6 +170,7 @@ export default function RootLayout() {
       <AuthBootstrap />
       <DeepLinkHandler />
       <SubscriptionSync />
+      <PwaInstallListener />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(app)/splash"        options={{ animation: 'fade' }} />
