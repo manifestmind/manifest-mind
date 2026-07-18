@@ -697,15 +697,30 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
       - 📌 Les abonnements Paddle **SANDBOX** peuvent RESTER (environnement séparé de la prod, ne polluent rien).
 → 🚀 **PUBLICATION WEB**
 
-**Notes :** Phases **A, B, C, D, E** ✅ · **PWA point 25** ✅ · **ÉTAPE 4 tests mobiles ✅ TERMINÉE (2026-07-17)**. **⚠️ L'ORDRE D'EXÉCUTION du reste = le bloc « 🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ » EN TÊTE de cette roadmap.** **Aucun déploiement public avant que tout soit testé ET nettoyé.** Après lancement web → **PHASE 2 stores** (⚠️ relire l'anti-steering des docs légaux, cf. point 14).
+**Notes :** Phases **A, B, C, D, E** ✅ · **PWA point 25** ✅ · **bouton install 4-bis** ✅ · **ÉTAPE 4 tests mobiles** ✅ · **PHASE F ✅ TERMINÉE (2026-07-17, commit `949afe3`)**. **⚠️ L'ORDRE D'EXÉCUTION du reste = le bloc « 🔢 ORDRE D'EXÉCUTION — RÉORGANISÉ » EN TÊTE de cette roadmap.** **Aucun déploiement public avant que tout soit testé ET nettoyé.** Après lancement web → **PHASE 2 stores** (⚠️ relire l'anti-steering des docs légaux, cf. point 14).
 
-**📅 PLAN DE LA REPRISE (pause 2026-07-17) — DANS CET ORDRE :**
-1. **CODER le bouton d'installation PWA** (point 4-bis — plan + textes VALIDÉS, prêt à coder) → **tester au tunnel** (build + serve + cloudflared ; refaire les autorisations Firebase + Paddle car l'URL change).
-2. **PHASE F — Commit A unique** (points 18/19/20 + meta `mobile-web-app-capable`) → **smoke-test utilisateur**. (Décisions figées : handleRestore laissés, MediaTypeOptions reporté Phase 2, renommage master abandonné.)
-3. **PHASE G — config prod** (22 Paddle sandbox→prod + recocher les 9 événements webhook EN PROD · 23-bis bancaire · 24 Google prod : domaines Firebase + publier OAuth + restreindre clé API).
-4. **PHASE H-2 — build + déploiement** (26 build · 27 déploiement Firebase Hosting + docs dans `public/` + libérer Pages · 28 tests réels + reçu Paddle client).
-5. 🚀 **PUBLICATION WEB.**
-   - 🧪 **Rappel commandes TUNNEL (reprise)** : Terminal A `npx expo export --platform web` puis `npx serve dist -l 3000` · Terminal B `cloudflared tunnel --url http://localhost:3000` → URL HTTPS. ⚠️ **L'URL CHANGE à chaque relance** → re-autoriser dans **Firebase** (Authentication → Settings → Authorized domains) ET **Paddle sandbox** (Checkout → Approved domains), le HOST seul sans `https://` ni `/`. (Détail : encadré « PROCÉDURE TUNNEL HTTPS » plus haut.)
+**📅 PLAN DE LA REPRISE (pause 2026-07-17 soir) — RESTE PHASE G puis PHASE H. DANS CET ORDRE :**
+
+> 🚨 **NATURE DE LA PHASE G : ce sont SURTOUT DES MANIPS QUE L'UTILISATEUR FAIT LUI-MÊME dans les dashboards (Paddle, Firebase, Google Cloud).** Claude **ne peut PAS y accéder** — son rôle = **guider pas à pas** + éditer le code/`.env` quand il le faut. Ne jamais supposer une manip faite ; demander confirmation à chaque étape.
+
+> 🔴 **À TRAITER EN TOUT PREMIER DEMAIN — préoccupation utilisateur : NE PAS MÉLANGER SANDBOX ET PROD dans Paddle.** Avant toute manip prod, cadrer clairement : (a) **Paddle a deux dashboards SÉPARÉS** — sandbox = `sandbox-vendors.paddle.com`, prod = `vendors.paddle.com` (URLs distinctes, connexions distinctes, produits/prix/clés/secrets **indépendants**). (b) **Le risque n°1** : laisser `EXPO_PUBLIC_PADDLE_SANDBOX=true` dans `.env` au build prod → l'app encaisserait en SANDBOX (argent fictif, aucun vrai paiement) — ou l'inverse en test. (c) **Garde-fous à établir** : bascule `.env` `PADDLE_SANDBOX=false` = LE commutateur ; vérifier que les price IDs/token collés sont bien les `live_*` (prod) et non `test_*` (sandbox) ; le webhook prod a son PROPRE secret (distinct du sandbox). **Claude fera un point de vérification explicite « es-tu bien dans le dashboard PROD ? » avant chaque manip sensible.**
+
+1. **PHASE G — Point 22 : Paddle sandbox → PROD** (commencer par là = chemin critique) :
+   - **[UTILISATEUR]** Créer les **3 produits + prix en PROD** (Lifetime 149 $ · Mensuel 12,99 $ · Annuel 79 $, devise USD) → récupérer les **3 price IDs prod** + le **client token prod** (`live_*`).
+   - **[UTILISATEUR]** Configurer la **destination webhook PROD** sur l'URL stable `https://europe-west1-manifestmind.cloudfunctions.net/paddleWebhook` + **🚨 cocher les 9 ÉVÉNEMENTS** (liste canonique au point 22 — la config événements NE se transfère PAS du sandbox).
+   - **[UTILISATEUR]** Poser le **`PADDLE_WEBHOOK_SECRET` PROD** (distinct du sandbox) dans **Google Secret Manager** + redéployer la function (`npx firebase deploy --only functions`). Claude prépare les commandes.
+   - **[CLAUDE, sur valeurs fournies]** Basculer `.env` : `EXPO_PUBLIC_PADDLE_SANDBOX=false` + coller price IDs/token **prod**. Vérifier `live_*` partout.
+2. **PHASE G — Point 23-bis : détails bancaires Paddle** — **[UTILISATEUR]** dashboard Paddle prod → Payout details (compte bancaire + infos fiscales ; peut demander une vérification → prévoir de la marge).
+3. **PHASE G — Point 24 : Google prod** — **[UTILISATEUR]** : ajouter `manifest-mind.app` aux domaines autorisés Firebase · **publier l'écran de consentement OAuth** (simple publication, scopes non sensibles, PAS de délai) · **restreindre la clé API web** (référents + APIs). Handler auth Safari = contingence (seulement si popup casse au point 28).
+   - **🧹 [UTILISATEUR] Ménage des domaines de tunnel** : Firebase (Authorized domains) ET Paddle sandbox (Approved domains) → supprimer les `*.trycloudflare.com`/`*.loca.lt` → garder `manifest-mind.app` + `localhost` (liste des URLs au point 24).
+4. **PHASE H — build + déploiement** :
+   - **[CLAUDE]** Copier les 9 HTML légaux dans `public/` de l'app (cohabitation domaine, point 27) + préparer `firebase.json` Hosting.
+   - **[CLAUDE]** `npx expo export --platform web` → `dist/`.
+   - **[UTILISATEUR]** Déployer sur **Firebase Hosting** + pointer le DNS `manifest-mind.app` + **libérer le domaine de GitHub Pages** (retirer custom domain/CNAME).
+   - **[UTILISATEUR]** **Point 28 — tests finaux réels** : vrai paiement (forcer le cycle par la CONSOLE `localStorage.setItem('current_cycle','8')`+F5 → paywall), multi-navigateurs dont Safari/iPhone, **vérifier que le reçu Paddle part au CLIENT**.
+5. **🧹 [UTILISATEUR] Nettoyage des données de test — APRÈS le paiement réel** (comptes Firebase Users + docs Firestore `users` + réinstaller les PWA depuis `manifest-mind.app`). ⚠️ PAS avant.
+6. 🚀 **PUBLICATION WEB.**
+   - 🧪 **Rappel commandes TUNNEL** (si re-test nécessaire) : Terminal A `npx expo export --platform web` puis `npx serve dist -l 3000` · Terminal B `cloudflared tunnel --url http://localhost:3000`. URL change à chaque relance → re-autoriser Firebase + Paddle (HOST seul).
 
 ---
 
