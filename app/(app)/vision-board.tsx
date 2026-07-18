@@ -8,7 +8,6 @@ import { useLanguage } from '../../src/i18n/LanguageContext';
 import { toPersistentPhotoUri } from '../../services/imagePersist';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import {
-  Alert,
   Animated,
   Image,
   Pressable,
@@ -141,11 +140,8 @@ export default function VisionBoard() {
   async function handlePickPhoto(category: string) {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert(
-        t.visionBoard.permissionTitre,
-        t.visionBoard.permissionMessage,
-        [{ text: 'OK', style: 'default' }]
-      );
+      // Toast VISIBLE sur web (Alert.alert = no-op silencieux sur RN Web).
+      showAuthToast(`${t.visionBoard.permissionTitre} — ${t.visionBoard.permissionMessage}`, 'error');
       return;
     }
 

@@ -259,49 +259,12 @@ export default function Home() {
     }
   }
 
-  async function handleNextCycleDebug() {
-    const currentCycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-    const newCycle = Math.min(currentCycle + 1, 365);
-    const newTheme = ((newCycle - 1) % 7) + 1;
-    await AsyncStorage.setItem('current_cycle', String(newCycle));
-    await AsyncStorage.setItem('current_theme', String(newTheme));
-    await AsyncStorage.setItem('cycle_completed', 'false');
-    await AsyncStorage.setItem('cycle_points', '0');
-    await AsyncStorage.setItem('cycle_earned_points', JSON.stringify({
-      opening: 0, affirmation: 0, action_easy: 0, action_hard: 0,
-      visualisation: 0, journal: 0, vision_board: 0,
-    }));
-    await AsyncStorage.setItem('cycle_step_status', JSON.stringify({
-      opening: false, affirmation: false, action_easy: false, action_hard: false,
-      visualisation: false, journal: false, vision_board: false,
-    }));
-    await AsyncStorage.removeItem('next_cycle_time');
-    await loadHome();
-  }
-
   const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
   const currentLevelIndex = levelIndex;
 
   return (
     <View style={styles.container}>
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
-      {/* Bouton reset temporaire */}
-      <Pressable
-        onPress={async () => {
-          await AsyncStorage.clear();
-          router.replace('/' as any);
-        }}
-        style={{ position: 'absolute', top: 48, right: 16, zIndex: 10 }}
-      >
-        <Text style={{ fontSize: 10, color: '#C4A8D4' }}>reset</Text>
-      </Pressable>
-      {/* Bouton debug cycle suivant — à supprimer avant publication */}
-      <Pressable
-        onPress={handleNextCycleDebug}
-        style={{ position: 'absolute', top: 48, right: 60, zIndex: 10 }}
-      >
-        <Text style={{ fontSize: 10, color: '#C4A8D4' }}>⏭ cycle suivant</Text>
-      </Pressable>
 
       {/* Orbes */}
       <View style={[styles.orb, { width: 150, height: 150, backgroundColor: cycleColors.orb1, top: -40, right: -40 }]} />

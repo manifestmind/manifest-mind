@@ -1,9 +1,10 @@
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Clipboard from 'expo-clipboard';
-import { Alert } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../src/i18n/translations';
+import { showAuthToast } from '../components/ui/AuthToast';
 
 export async function shareProgress() {
   try {
@@ -27,6 +28,17 @@ export async function shareProgress() {
 
     const message = t.share.message(cycleNumber, level, pointsTotal);
 
+    // WEB : expo-sharing partage un FICHIER, or FileSystem.writeAsStringAsync
+    // n'existe pas sur web → crash (masqué autrefois par un Alert.alert muet).
+    // Le partage utile sur web = le TEXTE + le lien manifest-mind.app à coller
+    // ailleurs → on copie dans le presse-papier + toast VISIBLE.
+    if (Platform.OS === 'web') {
+      await Clipboard.setStringAsync(message);
+      showAuthToast(`${t.share.copieeTitre} — ${t.share.copieCorps}`, 'success');
+      return;
+    }
+
+    // NATIF (Phase 2) — flux inchangé : fichier temporaire + feuille de partage.
     const isAvailable = await Sharing.isAvailableAsync();
 
     if (isAvailable) {
@@ -39,13 +51,13 @@ export async function shareProgress() {
       });
     } else {
       await Clipboard.setStringAsync(message);
-      Alert.alert(t.share.copieeTitre, t.share.copieCorps);
+      showAuthToast(`${t.share.copieeTitre} — ${t.share.copieCorps}`, 'success');
     }
   } catch (error) {
-    console.error('Erreur partage:', error);
+    if (__DEV__) console.error('Erreur partage:', error);
     const langRaw = await AsyncStorage.getItem('user_language').catch(() => null);
     const lang = (langRaw === 'en' || langRaw === 'es') ? langRaw : 'fr';
     const t = translations[lang];
-    Alert.alert(t.share.erreurTitre || 'Erreur', t.share.erreurCorps || 'Le partage a échoué.');
+    showAuthToast(`${t.share.erreurTitre} — ${t.share.erreurCorps}`, 'error');
   }
 }

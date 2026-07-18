@@ -182,7 +182,7 @@ export default function Parametres() {
     if (next) {
       const ok = await requestPermissions();
       if (!ok) {
-        Alert.alert(t.parametres.alertNotifsDesactivees.titre, t.parametres.alertNotifsDesactivees.corps);
+        showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
         return;
       }
       await scheduleAffirmationNotif(reminderTime);
@@ -198,7 +198,7 @@ export default function Parametres() {
     if (next) {
       const ok = await requestPermissions();
       if (!ok) {
-        Alert.alert(t.parametres.alertNotifsDesactivees.titre, t.parametres.alertNotifsDesactivees.corps);
+        showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
         return;
       }
       await scheduleRappelNotifRaw(reminderTime);
@@ -503,8 +503,11 @@ export default function Parametres() {
           <Text style={styles.sectionLabel}>{t.parametres.sections.abonnement}</Text>
 
           {/* Ligne 1 — Plan actuel / Passer à Premium */}
+          {/* rowLast ajouté quand web + abonné : la rangée « Restaurer » (ci-dessous)
+              est masquée sur web → « Plan actuel » devient la seule rangée de la
+              section, il lui faut donc aussi les coins bas arrondis. */}
           <Pressable
-            style={[styles.rowBase, styles.rowFirst]}
+            style={[styles.rowBase, styles.rowFirst, Platform.OS === 'web' && subscriptionActive && styles.rowLast]}
             onPress={() => router.push('/(app)/pricing-upgrade' as any)}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
@@ -530,18 +533,25 @@ export default function Parametres() {
             )}
           </Pressable>
 
-          {/* Ligne 2 — Restaurer les achats */}
-          <Pressable
-            style={[styles.rowBase, subscriptionActive && styles.rowLast]}
-            onPress={handleRestorePurchases}
-          >
-            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
-              <Rect x="3" y="5" width="14" height="10" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
-              <Path d="M3 9h14" stroke="#6B3FA0" strokeWidth="1.2" />
-            </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.abonnement.restaurer}</Text>
-            <Chevron />
-          </Pressable>
+          {/* Ligne 2 — Restaurer les achats — MASQUÉE SUR WEB (2026-07-17).
+              « Restaurer » est un concept de store NATIF (RevenueCat, Phase 2) :
+              sur web il n'y a rien à restaurer (l'abonnement suit le compte via
+              Firestore ; la récupération se fait par « Me reconnecter »). Sur web
+              son handler faisait un Alert.alert = no-op silencieux → bouton mort.
+              Redeviendra visible et utile en Phase 2 (natif) avec RevenueCat. */}
+          {Platform.OS !== 'web' ? (
+            <Pressable
+              style={[styles.rowBase, subscriptionActive && styles.rowLast]}
+              onPress={handleRestorePurchases}
+            >
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Rect x="3" y="5" width="14" height="10" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+                <Path d="M3 9h14" stroke="#6B3FA0" strokeWidth="1.2" />
+              </Svg>
+              <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.abonnement.restaurer}</Text>
+              <Chevron />
+            </Pressable>
+          ) : null}
 
           {/* Ligne 3 — Lien de secours : un abonné qui a perdu sa session (nouvel
               appareil, cache vidé, déconnexion) et qui est entré en essai anonyme
