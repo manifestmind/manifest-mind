@@ -710,9 +710,15 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - **Point 23-bis (bancaire) COMPLET** : Payout settings enregistré, **Virement bancaire** (Payoneer ne couvre pas le Paraguay), entité **Horizonte Digital** (SAS Paraguay, type Corporations), **vérification compte au VERT, aucune attente**.
 - **Point 24 EN PARTIE** : `manifest-mind.app` dans **Firebase Authorized domains** ✅ · **ménage domaines de tunnel** fait (Firebase + Paddle, ne restent que `manifest-mind.app` + défauts) ✅ · **écran OAuth** « En production », type Externe, champs remplis (nom ManifestMind, page d'accueil, liens légaux fr, domaine autorisé) ✅ · docs légaux déjà en **HTTP 200** sur `manifest-mind.app` (GitHub Pages).
 
-**⏳ RESTE (à la reprise) :**
-- **Point 24 — RESTREINDRE LA CLÉ API web** = **LA dernière tâche Phase G, DÉLICATE (peut casser l'app)** → à faire prudemment en début de session, avec la **procédure détaillée déjà préparée au point 24** (⚠️ liste des référents à autoriser + APIs à cocher — voir bloc « 24. » plus bas : oublier un référent casse l'auth).
-- **Default payment link Paddle** → à régler sur `manifest-mind.app` (Checkout > Checkout settings).
+**✅ PHASE G TERMINÉE (2026-07-19)** — tous les réglages Checkout LIVE finalisés :
+- **Default payment link** = `https://manifest-mind.app` ✅
+- **Statement descriptor** = **`MANIFEST`** ✅ (8 car., marque reconnaissable ; PAS « Horizonte » — le client verra `PADDLE.NET* MANIFEST`, anti-contestation)
+- **Payment methods** : cartes auto-actives (socle Paddle non désactivable) ✅ + moyens choisis
+- **Discount field** activé ✅ (requis pour le test -100 %)
+- **Saving payment methods** activé ✅ (abonnements récurrents)
+- **Marketing consent** désactivé (V1) ✅
+
+**⏳ SEUL RESTE de la config prod : RESTREINDRE LA CLÉ API web** — **DÉPLACÉ EN PHASE H (option B)** : à faire JUSTE APRÈS le déploiement, testé directement sur `manifest-mind.app` (procédure détaillée prête au bloc « 24. »).
 
 **📌 AMÉLIORATION POST-LANCEMENT (notée)** : email d'assistance OAuth → passer de `ncpnettoyage@gmail.com` à **`contact@manifest-mind.app`** (nécessite créer un compte Google avec l'adresse Zoho + confirmer que la boîte reçoit). Idéal : aligner support OAuth = docs légaux = `SUPPORT_EMAIL` app, tous sur `contact@`.
 
