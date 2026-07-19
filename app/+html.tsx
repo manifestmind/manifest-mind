@@ -30,6 +30,26 @@ export default function Root({ children }: PropsWithChildren) {
           name="description"
           content="365 cycles de transformation guidée : affirmations, actions, visualisation, journal et vision board."
         />
+        {/* Open Graph / Twitter — aperçu riche quand le lien est partagé
+            (levier d'acquisition : le bouton Partager copie manifest-mind.app). */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="ManifestMind" />
+        <meta property="og:title" content="ManifestMind — Bien-être & Intentions" />
+        <meta
+          property="og:description"
+          content="365 cycles de transformation guidée : affirmations, actions, visualisation, journal et vision board."
+        />
+        <meta property="og:url" content="https://manifest-mind.app" />
+        <meta property="og:image" content="https://manifest-mind.app/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="ManifestMind — Bien-être & Intentions" />
+        <meta
+          name="twitter:description"
+          content="365 cycles de transformation guidée : affirmations, actions, visualisation, journal et vision board."
+        />
+        <meta name="twitter:image" content="https://manifest-mind.app/og-image.png" />
         {/* PWA — point 25 */}
         <meta name="theme-color" content="#F0EAE0" />
         <link rel="manifest" href="/manifest.webmanifest" />

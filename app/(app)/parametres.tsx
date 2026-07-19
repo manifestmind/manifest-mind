@@ -29,7 +29,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { STORES_ACTIVE } from '../../services/config';
+import { canPay } from '../../services/config';
 
 function Chevron({ color = '#C4A8D4' }: { color?: string }) {
   return (
@@ -526,7 +526,7 @@ export default function Parametres() {
             ) : (
               <>
                 <Text style={[styles.rowTitle, { flex: 1 }]}>
-                  {STORES_ACTIVE ? t.parametres.abonnement.passerPremium : t.commun.disponibleProchainement}
+                  {canPay() ? t.parametres.abonnement.passerPremium : t.commun.disponibleProchainement}
                 </Text>
                 <Chevron />
               </>

@@ -736,6 +736,97 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
    - 🚨 **Garde-fous guides Paddle** : ne JAMAIS recréer/supprimer la destination webhook live (régénère le secret → casse tout), ni éditer/supprimer les produits/prix live (immuables une fois utilisés).
    - 🧪 **Rappel TUNNEL** (si re-test) : `npx expo export --platform web` + `npx serve dist -l 3000` + `cloudflared tunnel --url http://localhost:3000` ; URL change → re-autoriser Firebase + Paddle.
 
+**✅ BLOC B — DÉPLOIEMENT TEST + VÉRIFICATION B2 (2026-07-19) :**
+- **B1 déploiement test OK** : `npx firebase deploy --only hosting` → **`https://manifestmind.web.app`** (63 fichiers, aucune erreur). `manifest-mind.app` **pas touché** (sert encore les docs légaux via GitHub Pages).
+- **B2 VÉRIFICATION LECTURE SEULE VALIDÉE** : ✅ app charge (welcome + langues) · ✅ navigation + onboarding + cycle complet + célébration · ✅ les 3 langues · ✅ Google Sign-In (marche sur `web.app` : domaine Firebase auto-autorisé) · ✅ docs légaux en accès direct + liens in-app (les liens pointent en dur vers `manifest-mind.app`, servi par GitHub Pages → 200) · ✅ paywall cycle 8 → redirige bien vers la page de paiement (le gate marche) · ✅ auth email : détection « compte existant » OK (testée avec un ancien email de test → comportement correct, PAS un bug). **PWA** : normal de ne PAS voir les bannières en navigation privée desktop (déjà validées au tunnel mobile, étape 4).
+- **⚠️ Reportés au vrai domaine (normal de ne PAS marcher sur `web.app`)** : **checkout Paddle** (seul `manifest-mind.app` approuvé en LIVE → à tester au Bloc E) · **aperçu OG** (balises pointent en dur vers `manifest-mind.app/og-image.png`, absent de GitHub Pages → à tester au Bloc C avec un debugger de partage).
+- 📌 **Anciens comptes de test restants dans Firebase** (d'où le « email déjà utilisé ») → à nettoyer à l'étape E3 (nettoyage données de test après le paiement réel), comme prévu.
+
+**🧹 POLISH V1.5 — Console web (bénin, NON bloquant lancement) :** deux logs propres à l'**export statique** (SSG + hydratation), **zéro impact utilisateur** (prouvé au B2 : tout fonctionne), **PAS des régressions** (invisibles en dev/tunnel car dev = rendu client pur, apparaissent uniquement avec le pré-rendu HTML) :
+1. **React #418** (mismatch d'hydratation, probablement langue au 1ᵉʳ rendu : `+html.tsx` code `lang="fr"` en dur, le client rend selon la langue stockée) → React re-rend le sous-arbre côté client, imperceptible. **Piste correctif** : aligner le rendu initial sur la langue stockée / `lang` dynamique.
+2. **Warning expo-router** « No route named "(app)/profil" (et parametres/name/activation) in nested children » → artefact de timing (résolution avant montage du layout `(app)`), les routes existent bel et bien (navigation OK). Interne à expo-router.
+→ Décision (2026-07-19) : **on ne corrige pas avant le lancement** (mauvais rapport risque/bénéfice, risque de régression). À traiter en passe polish V1.5.
+
+**✅ BLOC C — BASCULE DU DOMAINE `manifest-mind.app` → FIREBASE HOSTING — TERMINÉ (2026-07-19) :**
+- **Registrar = Namecheap.** Setup apex Firebase standard : **A `@` → `199.36.158.100`** + **TXT `@` → `hosting-site=manifestmind`** (sans guillemets) ; les **4 A records GitHub** (`185.199.108/109/110/111.153`) **supprimés**. TTL baissé à 5 min en pré-vol. **Zoho 100 % intact** (aucun `MX`/`TXT` Zoho touché ; A ≠ MX) ; **Mail Settings = Custom MX** inchangé.
+- **C1/C2 OK** : domaine ajouté dans Firebase Console → Hosting (mode « Configuration rapide »), TXT posé, A basculé (ajouter-avant-supprimer), « Valider » cliqué.
+- **C3 VALIDÉ** : statut Firebase **« Connecté »** (SSL provisionné ; l'`ERR_CERT_COMMON_NAME_INVALID` transitoire a disparu). Vérifs HTTPS sur `manifest-mind.app` : app charge · cadenas valide · docs légaux directs (FR/EN/ES) servis par **Firebase** · liens légaux in-app OK · **Google Sign-In OK sur le vrai domaine** · **aperçu OG OK** (og-image.png désormais servi par Firebase — le test reporté du B2 est levé) · console = seulement les 2 logs bénins connus (#418 + warning route).
+- **C4 TERMINÉ** : **CNAME `www` supprimé** (Namecheap — décision « option minimale », pas de 2ᵉ domaine Firebase → `www.manifest-mind.app` ne résout plus, voulu) + **custom domain retiré de GitHub Pages** (Settings → Pages, repo `manifest-mind` branche `main`). **GitHub Pages libéré** ; Firebase est seul maître de l'apex. Docs légaux toujours OK après libération (servis par Firebase). ⚠️ **Rollback GitHub instantané perdu** (assumé : C3 était 100 % vert et stable).
+- 📌 **`www` non traité en 2ᵉ domaine Firebase** (choix minimal). Si un jour on veut `www → apex`, l'ajouter comme 2ᵉ domaine perso Firebase (noté, non bloquant).
+
+**➡️ PROCHAINE ÉTAPE : BLOC E** (dans l'ordre) : **E1** restreindre la clé API web (sur le vrai domaine, procédure point 24) + tester l'auth → **E2** GATE (3 verts : domaine approuvé ✅ + compte vérifié ✅ + déployé ✅) → **E3** créer le code -100 % (usage limit 1) → **E4** test paiement réel Mensuel à 0 $ (vérifier transaction `completed` · webhook 200 · `subscription_active=true` · accès débloqué · reçu client) puis archiver le code + annuler l'abo test → **E5** nettoyage données de test → **E6 🚀 lancement.**
+
+**✅ E1 — RESTRICTION CLÉ API WEB — TERMINÉ (2026-07-19) :**
+- **Clé** = « Browser key (auto created by Firebase) » (`AIzaSyDqKc6XJz…`, = `EXPO_PUBLIC_FIREBASE_API_KEY`), projet Google Cloud `manifestmind`.
+- **Application restrictions → Sites Web** : 6 référents ajoutés (**nouveau format Google, avec schéma, SANS `/*`**) : `https://manifest-mind.app` · `https://*.manifest-mind.app` · `https://manifestmind.firebaseapp.com` (CRITIQUE Google Sign-In) · `https://manifestmind.web.app` · `http://localhost:8081` · `http://localhost`.
+- **📌 DÉCOUVERTE : les API restrictions étaient DÉJÀ posées par Firebase** (25 API auto-cochées à la création de la clé, incluant Identity Toolkit / Token Service / Cloud Firestore, etc.). La clé n'a **jamais** été « non restreinte » côté API — seulement côté application (« Aucune » avant E1). **On n'a PAS touché aux 25 API** (les trimmer à 5 = gain quasi nul vs risque de casse ; elles sont prouvées non-cassantes puisque l'app tournait déjà avec). **E1 = uniquement l'ajout des référents.**
+- **Testé OK sur `manifest-mind.app`** : app charge (lecture Firestore) · console propre (pas de `API key not valid` ni `referer blocked`) · gate cycle 8 OK · navigation compte existant OK.
+- 🛟 **Rollback documenté** (si besoin un jour) : Application restrictions → **Aucune** → Enregistrer → ~5 min. Ne jamais toucher aux API.
+
+**✅ E3 + E4 — TEST DE PAIEMENT RÉEL EN PROD — RÉUSSI À 100 % (2026-07-19) :**
+- **E3** : code **`LAUNCHTEST100`** créé en Paddle LIVE (Percentage 100 %, restreint au Mensuel, **usage limit 1**).
+- **E4** : parcours réel sur `manifest-mind.app` (nav. privée, cycle 8 forcé par console, compte frais **`ncpnettoyage+launchtest@gmail.com`** via l'astuce Gmail `+`), plan **Mensuel**, code -100 % → checkout **0 $** → complété (mastercard). **Les 5 vérifs VERTES** :
+  1. Paddle → Transaction **« Complete »** 0 $ (ManifestMind Mensuel).
+  2. Webhook **prouvé** (Firestore, cf. #3 — le client ne peut pas écrire `subscription_active`, seul le webhook Admin SDK le peut).
+  3. Firestore `users/{uid}` : **`subscription_active=true`**, `paddle_status="active"`, `paddle_event_type="subscription.activated"`, `paddle_customer_id` + `paddle_event_id` remplis, `updated_at` à l'heure du test.
+  4. **Accès débloqué** (passage cycle 8).
+  5. **Reçu Paddle** reçu par mail.
+- **→ La chaîne paiement PROD complète est validée end-to-end** (checkout LIVE → webhook signé → Firestore → déblocage → reçu client). Reste **E5 (nettoyage)** puis **E6 🚀**.
+
+**✅ E5 — NETTOYAGE + 🚀 LANCEMENT PHASE 1 (WEB + PWA) — TERMINÉ (2026-07-19) :**
+- **E5.1** : code `LAUNCHTEST100` **archivé** (Paddle).
+- **E5.2** : abo de test **annulé** (« Cancel immediately ») → webhook **`subscription.canceled`** prouvé → Firestore `subscription_active` repassé à **`false`**, `paddle_status="canceled"`. **➡️ Chaîne paiement validée DANS LES DEUX SENS (souscription ✅ + annulation ✅ = point 12 confirmé en PROD).**
+- **E5.3** : **SLATE 100 % VIERGE** — tous les comptes de test supprimés : Firestore `users` (3 docs) + Authentication (18 comptes : emails + anonymes). Base propre pour les vrais utilisateurs.
+- **E5.4** : **PWA réinstallée depuis `manifest-mind.app`** (bannière d'install OK, icône téléphone) = canal d'installation des utilisateurs Phase 1.
+- **Flags confirmés (lecture seule)** : `DEBUG_SKIP_PAYWALL=false` · `EXPO_PUBLIC_PADDLE_SANDBOX=false` · `PADDLE_ACTIVE=true` · `STORES_ACTIVE=false`.
+
+═══════════════════════════════
+🚀🚀 **MANIFESTMIND — LANCÉE EN PHASE 1 (WEB + PWA) le 2026-07-19** 🚀🚀
+═══════════════════════════════
+**`https://manifest-mind.app` est publiquement fonctionnel** : app + PWA installable, 3 langues, essai 7 cycles → paywall cycle 8 → paiement Paddle (Mensuel/Annuel/Vie en USD) → déblocage, auth email+mdp / Google, docs légaux servis par Firebase, clé API restreinte, chaîne paiement prouvée souscription+annulation, base vierge. **Le déploiement web est COMPLET.** Prochain grand chantier = **PHASE 2 STORES** (voir section dédiée ci-dessous).
+
+═══════════════════════════════
+📱 **PRÉPARATION V2 STORES (PHASE 2) — MÉMOIRE À DÉROULER LE JOUR DU CHANTIER NATIF**
+═══════════════════════════════
+
+> Consolidé le 2026-07-19 (post-lancement web). **Rien de tout ceci n'est bloquant pour la V1 web.** C'est le plan de reprise pour publier sur l'App Store (iOS) et le Play Store (Android). Regroupe les notes Phase 2 dispersées dans ce doc.
+
+**🎛️ Les bascules de config (le commutateur central)**
+- **`services/config.ts`** : `STORES_ACTIVE=false` → **passer à `true`** pour activer le paiement natif. `canPay()` renvoie alors `STORES_ACTIVE` sur iOS/Android (aujourd'hui → « Disponible prochainement » sur natif). `PADDLE_ACTIVE`/`PADDLE_SANDBOX` = web only, ne pas confondre.
+- **`DEBUG_SKIP_PAYWALL`** doit rester `false` (rappel encadré : point 0 checklist stores).
+
+**💳 Paiement natif (le gros morceau)**
+- **Décision d'archi à trancher** : les stores **imposent leur facturation in-app** (Apple IAP / Google Play Billing) pour du contenu numérique → **Paddle NE peut PAS servir sur natif**. Plan retenu de longue date = **RevenueCat** (cf. tableau plateformes en bas du doc, `STORES_ACTIVE=true` + `eas build`).
+- **Conséquence prix** : de nouveaux **product IDs IAP** (par store) à créer ; `getPriceId()` de `services/paddle.ts` (mapping plan→price Paddle) est **web-only** → le natif aura son propre mapping RevenueCat. Les prix devront respecter les **paliers de prix des stores** (pas de montant libre comme Paddle).
+- **Branches natives déjà en place, inatteignables en web** (à re-tester/brancher sur RevenueCat) : `pricing.tsx` et `pricing-upgrade.tsx` ont des chemins `Platform.OS !== 'web'` (dont `handleRestore`) + `pricing.tsx` pousse vers `auth.tsx` en supposant une **création** de compte (⚠️ `auth.tsx` est devenu **login-only** au chantier reconnexion — **RISQUE 3 consigné** : ce chemin suppose une création qu'un écran de login ne fait pas → **à retraiter avec RevenueCat**, cf. section « RECONNEXION DIRECTE », risque 3).
+
+**🔐 Auth & clés (prêtes, non touchées)**
+- **Clés API Android/iOS** (« auto created by Firebase ») **NON modifiées**, restreintes à leurs 25 API par défaut → **prêtes pour le natif**. (Seule la **Browser key** a reçu la restriction de référents en E1 — cf. E1.)
+- **« Sign in with Apple » à AJOUTER pour iOS** : Apple **impose** Sign in with Apple si l'app propose un autre login social (Google). Non nécessaire en web V1 ; **prérequis de validation App Store**. (Il n'y a PAS de stub Apple fonctionnel aujourd'hui — c'est à implémenter.)
+
+**♻️ Restaurer les achats (natif only)**
+- `parametres.tsx` : rangées « Restaurer » (`handleRestorePurchases` + `restaurerAcces`) **masquées sur web** (`Platform.OS !== 'web'`), avec `Alert.alert` (⚠️ **no-op sur web mais OK sur natif** — sur natif `Alert.alert` fonctionne). Sur natif = vrai concept store (RevenueCat `restorePurchases`). **À câbler.**
+
+**🖼️ Persistance native (fiabilité)**
+- **Photos** : `services/imagePersist.ts` garde les URIs `file://` du picker/manipulator sur natif — or ces URIs pointent vers le **cache** que l'OS peut nettoyer. **➡️ Copier vers `documentDirectory`** (vision board + photo de profil) pour une persistance native fiable. (Le web utilise déjà des data-URIs, non concerné.)
+- **`ImagePicker.MediaTypeOptions`** (déprécié) : migration reportée Phase 2 (cf. PHASE F, point 19).
+
+**🎨 Assets stores (cf. section 🎨 DESIGN / FINITIONS)**
+- **Feature graphic Google Play 1024×500** (bannière fiche Play).
+- **Icône monochrome Android 13** (« themed icons » launcher — `android.adaptiveIcon.monochromeImage`, ref template retirée au point 25).
+- **Splash screen natif** : `app.json` référence encore l'image template (`splash-icon.png`) → remplacer par l'identité définitive M+œil.
+- **Politique de remboursement (×3 langues)** à harmoniser avec la charte des 2 autres docs légaux (actuellement style « brut »).
+
+**⚖️ Légal / conformité stores**
+- **Anti-steering** : relire la note des docs légaux (point 14) — les stores **interdisent** de rediriger vers un paiement web externe depuis l'app native. Les docs dual-plateforme ont été rédigés en prévision ; **vérifier le wording avant soumission**.
+- **Comptes développeur à créer/anticiper** : **Apple Developer Program** (99 $/an) + **Google Play Developer** (25 $ une fois). Délais de validation à prévoir.
+- **RGPD/consentement** : si ajout d'analytics/monitoring natif → **bannière de consentement obligatoire AVANT activation** (déclencheur consigné au point 16).
+
+**🔁 Build & sortie**
+- Build via **`eas build --platform ios/android`** (cf. tableau plateformes). Prévoir la config EAS, les provisioning profiles Apple, le keystore Android.
+
+**📌 Où retrouver le détail** : sections « RECONNEXION DIRECTE » (risque 3), « 🎨 DESIGN / FINITIONS », « BUG PERSISTANCE WEB » (note Phase 2 natif), PHASE F (point 19), tableau plateformes en fin de doc.
+
 ---
 
 ### 🔐 RECONNEXION DIRECTE email + mot de passe — **CODÉ (2026-07-15), à tester**

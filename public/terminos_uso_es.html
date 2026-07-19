@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Condiciones de uso — ManifestMind</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes dashDraw{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.45;transform:scale(1.03)}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#E8E0D8;color:#3A3530;font-family:'Jost',sans-serif;font-weight:300;line-height:1.8;min-height:100vh;}
+.hero{background:#F0EAE0;border-bottom:0.5px solid #D4C4B8;padding:60px 32px 52px;text-align:center;position:relative;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;}
+.hero-inner{position:relative;z-index:1}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;animation:fadeUp .6s ease .1s both;}
+.app-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.3rem;color:#2A2520;letter-spacing:.04em;}
+.app-tagline{font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:2.2rem;color:#2A2520;letter-spacing:.02em;margin-bottom:8px;animation:fadeUp .6s ease .3s both;opacity:0;}
+.hero .subtitle{font-size:0.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9A8878;animation:fadeUp .6s ease .5s both;opacity:0;}
+.update-badge{display:inline-block;margin-top:14px;background:#DDD0F8;border:0.5px solid #C4A8D4;color:#6B3FA0;font-size:0.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.08em;padding:3px 14px;border-radius:20px;animation:fadeUp .6s ease .7s both;opacity:0;}
+.container{max-width:700px;margin:0 auto;padding:48px 28px 80px;}
+.intro-box{background:rgba(221,208,248,.4);border:0.5px solid #C4A8D4;border-left:3px solid #6B3FA0;border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:48px;font-size:0.9rem;color:#4A3060;line-height:1.7;}
+section{margin-bottom:40px;padding-bottom:40px;border-bottom:0.5px solid #C4A8D4;}
+section:last-of-type{border-bottom:none}
+.section-number{font-size:0.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9B72C8;margin-bottom:5px;}
+h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.55rem;color:#2A2520;margin-bottom:14px;line-height:1.3;}
+h3{font-family:'Jost',sans-serif;font-weight:500;font-size:0.95rem;color:#4A3060;margin:18px 0 8px;}
+p{font-size:0.9rem;color:#3A3530;margin-bottom:12px;line-height:1.75;}
+ul{padding-left:0;list-style:none;margin-bottom:12px}
+ul li{font-size:0.9rem;padding:5px 0 5px 18px;position:relative;color:#3A3530;line-height:1.65;}
+ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:300;}
+.highlight{background:rgba(221,208,248,.35);border:0.5px solid #C4A8D4;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:0.87rem;color:#4A3060;line-height:1.65;}
+.contact-box{background:#F0EAE0;border:0.5px solid #C4A8D4;border-radius:16px;padding:32px;text-align:center;margin-top:48px;}
+.contact-box h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;font-weight:300;color:#2A2520;margin-bottom:6px;}
+.contact-sub{font-size:0.8rem;color:#7A7068;margin:6px 0 18px;}
+.contact-btn{display:inline-block;background:#3A3530;color:#F0EAE0;text-decoration:none;font-size:0.82rem;font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;padding:11px 28px;border-radius:50px;}
+.footer{text-align:center;padding:24px;font-size:0.7rem;color:#9A8878;letter-spacing:.08em;border-top:0.5px solid #C4A8D4;background:#F0EAE0;}
+a{color:#6B3FA0}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="orb" style="width:200px;height:200px;background:#B8D4B0;top:-60px;right:-60px;opacity:.25"></div>
+  <div class="orb" style="width:120px;height:120px;background:#C4A8D4;bottom:-30px;left:-40px;animation-delay:1s;opacity:.2"></div>
+  <div class="orb" style="width:80px;height:80px;background:#E8C890;top:40px;left:10%;animation-delay:2s;opacity:.18"></div>
+  <div class="hero-inner">
+    <div class="logo-wrap">
+      <svg width="110" height="85" viewBox="0 0 56 44" style="overflow:visible" aria-label="ManifestMind">
+        <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2s infinite"/>
+        <clipPath id="ec6"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+        <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+        <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="clip-path:url(#ec6)"/>
+        <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="clip-path:url(#ec6)"/>
+        <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="clip-path:url(#ec6)"/>
+        <circle cx="28" cy="22" r="3" fill="#1A0E30" style="clip-path:url(#ec6)"/>
+        <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="clip-path:url(#ec6)"/>
+        <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="clip-path:url(#ec6)"/>
+        <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="clip-path:url(#ec6)"/>
+        <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .1s forwards"/>
+        <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .2s forwards"/>
+      </svg>
+      <p class="app-name">ManifestMind</p>
+      <p class="app-tagline">Bienestar &amp; Intenciones</p>
+    </div>
+    <h1>Condiciones de uso</h1>
+    <p class="subtitle">Usa la app con total claridad</p>
+    <span class="update-badge">Última actualización: julio 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="intro-box">
+    Al utilizar ManifestMind, aceptas las presentes condiciones de uso. Te invitamos a leerlas detenidamente. Definen las normas de uso de la aplicación y los derechos de cada parte.
+  </div>
+
+  <section>
+    <div class="section-number">01</div>
+    <h2>Aceptación de las condiciones</h2>
+    <p>Al utilizar ManifestMind — en la web o a través de nuestras aplicaciones móviles — aceptas quedar vinculado/a por estas condiciones de uso. Si no aceptas estas condiciones, no debes utilizar la aplicación.</p>
+    <p>Estas condiciones pueden actualizarse ocasionalmente. Te informaremos mediante una notificación en la app o por correo electrónico en caso de modificación significativa.</p>
+  </section>
+
+  <section>
+    <div class="section-number">02</div>
+    <h2>Descripción de la aplicación</h2>
+    <p>ManifestMind es una aplicación de bienestar y desarrollo personal, accesible en la web y en móvil. Ofrece un recorrido estructurado de 365 ciclos temáticos que incluye:</p>
+    <ul>
+      <li>Afirmaciones diarias personalizadas según el ciclo actual</li>
+      <li>Acciones fáciles y desafiantes para anclar nuevos hábitos</li>
+      <li>Ejercicios de visualización guiada</li>
+      <li>Un diario personal para registrar tus reflexiones</li>
+      <li>Un Vision Board para visualizar tus intenciones</li>
+      <li>Un sistema de puntos y niveles para fomentar la constancia</li>
+    </ul>
+    <p>La aplicación está disponible en francés, inglés y español.</p>
+  </section>
+
+  <section>
+    <div class="section-number">03</div>
+    <h2>Prueba gratuita — 7 ciclos incluidos</h2>
+    <p>Tu viaje comienza gratis: <strong>los 7 primeros ciclos de ManifestMind están incluidos, sin tarjeta bancaria y sin compromiso</strong>. No necesitas registrarte para empezar — un espacio de prueba anónimo se crea automáticamente en tu dispositivo.</p>
+    <p>A partir del 8.º ciclo, continuar el recorrido requiere una suscripción. Al suscribirte, creas tu cuenta (correo electrónico y contraseña, o Google): <strong>tu progreso de los 7 primeros ciclos se conserva íntegramente</strong>.</p>
+    <div class="highlight">
+      Durante la prueba, tus datos (diario, vision board, progreso) se almacenan únicamente en tu dispositivo. Si borras los datos de tu navegador antes de crear una cuenta, se perderán.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">04</div>
+    <h2>Tu cuenta</h2>
+    <p>ManifestMind ofrece dos formas de crear y recuperar tu cuenta:</p>
+    <ul>
+      <li><strong>Correo electrónico y contraseña</strong> — defines tu contraseña al crear la cuenta y la utilizas para volver a conectarte. Si la olvidas, el enlace «Contraseña olvidada» te permite definir una nueva.</li>
+      <li><strong>Google</strong> — conexión en un clic con tu cuenta de Google.</li>
+    </ul>
+    <p>Un mismo correo electrónico corresponde a una misma cuenta, sea cual sea el método utilizado: tu suscripción te sigue. Algunas operaciones sensibles (como la eliminación de tu cuenta) pueden requerir una reconexión reciente mediante un enlace por correo, por tu seguridad.</p>
+    <p>Eres responsable de la confidencialidad de tus credenciales. Avísanos inmediatamente en caso de uso no autorizado de tu cuenta.</p>
+  </section>
+
+  <section>
+    <div class="section-number">05</div>
+    <h2>Suscripciones y pago</h2>
+    <p>El acceso al recorrido completo (365 ciclos) se obtiene mediante uno de los siguientes planes:</p>
+    <ul>
+      <li><strong>Mensual:</strong> facturación mensual, cancelable en cualquier momento</li>
+      <li><strong>Anual:</strong> facturación anual, con renovación automática</li>
+      <li><strong>De por vida:</strong> pago único, acceso permanente a los 365 ciclos</li>
+    </ul>
+    <h3>Si utilizas la versión web (manifest-mind.app)</h3>
+    <p>Nuestros pedidos son procesados por nuestro revendedor en línea <strong>Paddle.com, que es el «Merchant of Record» (comerciante oficial) de todos nuestros pedidos</strong>. Es Paddle quien cobra tu pago, envía tu recibo por correo electrónico, recauda el IVA aplicable y presta el servicio de atención al cliente relacionado con la facturación. Los precios se muestran en dólares estadounidenses; el importe exacto, impuestos incluidos, se muestra antes de confirmar el pago.</p>
+    <h3>Si descargaste la aplicación desde la App Store o Google Play</h3>
+    <p>Los pagos son procesados por Apple o Google según tu plataforma, y la renovación automática se gestiona desde los ajustes de tu cuenta de App Store o Google Play, al menos 24 horas antes del vencimiento.</p>
+    <div class="highlight">
+      En todos los casos, ManifestMind nunca tiene acceso a tu información bancaria.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">06</div>
+    <h2>Reembolsos</h2>
+    <p>Los detalles completos figuran en nuestra <a href="politica_reembolso_es.html">Política de reembolso</a>.</p>
+    <ul>
+      <li><strong>Versión web:</strong> los reembolsos son tramitados por <strong>Paddle</strong>, nuestro comerciante oficial. Contáctanos en la dirección indicada abajo o responde a tu recibo de Paddle; Paddle también puede conceder un reembolso conforme a sus propias condiciones de compra.</li>
+      <li><strong>App Store / Google Play:</strong> las solicitudes son gestionadas directamente por Apple (reportaproblem.apple.com) o Google (a través de Play Store).</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-number">07</div>
+    <h2>Cancelación</h2>
+    <p>Puedes cancelar tu suscripción en cualquier momento. <strong>El acceso al contenido permanece activo hasta el final del período ya pagado</strong>; después no se cobrará ninguna renovación.</p>
+    <ul>
+      <li><strong>Versión web:</strong> utiliza el enlace de gestión de suscripción incluido en tu recibo y en los correos de facturación de Paddle, o escríbenos a la dirección indicada abajo — tramitamos tu solicitud rápidamente.</li>
+      <li><strong>App Store / Google Play:</strong> desde los ajustes de suscripción de tu cuenta de Apple o Google.</li>
+    </ul>
+    <p>El plan «De por vida» no se cancela: es un pago único, sin renovación.</p>
+  </section>
+
+  <section>
+    <div class="section-number">08</div>
+    <h2>Restauración de tu acceso</h2>
+    <p>Tu suscripción está vinculada a tu cuenta, no a tu dispositivo.</p>
+    <ul>
+      <li><strong>Versión web:</strong> en un nuevo dispositivo o tras cerrar sesión, simplemente vuelve a conectarte (correo electrónico y contraseña, o Google) — tu suscripción se recupera automáticamente, sin volver a pagar.</li>
+      <li><strong>App Store / Google Play:</strong> utiliza el botón «Restaurar compras» en los Ajustes de la app.</li>
+    </ul>
+    <div class="highlight">
+      Nota: tu progreso (diario, vision board, puntos) se almacena localmente en tu dispositivo. Al cambiar de dispositivo, recuperas tu suscripción, pero tu progreso local no te sigue automáticamente.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">09</div>
+    <h2>Contenido y propiedad intelectual</h2>
+    <p>Todo el contenido de ManifestMind — afirmaciones, acciones, visualizaciones, diseño, animaciones, logotipo — es propiedad exclusiva de ManifestMind y está protegido por las leyes de propiedad intelectual.</p>
+    <ul>
+      <li>No puedes reproducir, distribuir ni modificar este contenido sin autorización escrita</li>
+      <li>Los textos del diario y las fotos que añadas siguen siendo de tu propiedad</li>
+      <li>Nos otorgas el derecho a almacenarlos en tu dispositivo para el correcto funcionamiento de la app</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-number">10</div>
+    <h2>Tus datos: restablecimiento, exportación, eliminación</h2>
+    <p>Dispones de tres opciones para gestionar tus datos desde la aplicación:</p>
+    <ul>
+      <li><strong>Restablecimiento del recorrido</strong> <em>(reservado a los suscriptores)</em>: desde tu Perfil, restablece tu recorrido al Ciclo 1. Elimina definitivamente puntos, ciclos, diario y fotos; tu cuenta y tu suscripción permanecen activas.</li>
+      <li><strong>Exportación de tus datos:</strong> desde los Ajustes, «Exportar mis datos» descarga la totalidad de tus datos (progreso, diario, fotos, cuenta) en un archivo legible.</li>
+      <li><strong>Eliminación de cuenta:</strong> desde los Ajustes, elimina definitivamente tu cuenta y todos tus datos.</li>
+    </ul>
+    <div class="highlight">
+      El restablecimiento y la eliminación son irreversibles: no es posible recuperar datos después de la confirmación. ⚠️ La eliminación de la cuenta no cancela la suscripción: cancélala primero (ver «Cancelación»).
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">11</div>
+    <h2>Uso aceptable</h2>
+    <p>Al utilizar ManifestMind, te comprometes a:</p>
+    <ul>
+      <li>Utilizar la aplicación únicamente con fines personales y no comerciales</li>
+      <li>No intentar eludir los sistemas de pago o autenticación</li>
+      <li>No reproducir ni redistribuir el contenido de la aplicación</li>
+      <li>No utilizar la aplicación de manera que pueda perjudicar su funcionamiento</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-number">12</div>
+    <h2>Aviso médico</h2>
+    <p>ManifestMind es una aplicación de bienestar y desarrollo personal. No constituye asesoramiento médico, psicológico o terapéutico y en ningún caso reemplaza el seguimiento profesional de salud mental.</p>
+    <div class="highlight">
+      Si estás pasando por un momento difícil, te animamos a consultar a un profesional de la salud cualificado.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">13</div>
+    <h2>Limitación de responsabilidad</h2>
+    <p>ManifestMind se proporciona "tal cual". No garantizamos que la aplicación esté libre de errores o disponible de forma permanente. No somos responsables de la pérdida de datos debida a un fallo técnico, un restablecimiento voluntario o una eliminación de cuenta.</p>
+    <p>Nuestra responsabilidad se limita al importe pagado por la suscripción durante los últimos 12 meses.</p>
+  </section>
+
+  <section>
+    <div class="section-number">14</div>
+    <h2>Ley aplicable</h2>
+    <p>Estas condiciones se rigen por la ley aplicable en el territorio del usuario. En caso de litigio, favorecemos una resolución amistosa. Puedes contactarnos en cualquier momento en la dirección indicada a continuación.</p>
+  </section>
+
+  <div class="contact-box">
+    <h3>¿Una pregunta sobre estas condiciones?</h3>
+    <p class="contact-sub">Nuestro equipo está disponible para responder a todas tus preguntas.</p>
+    <a class="contact-btn" href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a>
+  </div>
+
+</div>
+
+<div class="footer">
+  © 2026 ManifestMind — Todos los derechos reservados
+</div>
+
+</body>
+</html>
