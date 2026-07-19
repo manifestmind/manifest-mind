@@ -716,13 +716,14 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 
 **📌 AMÉLIORATION POST-LANCEMENT (notée)** : email d'assistance OAuth → passer de `ncpnettoyage@gmail.com` à **`contact@manifest-mind.app`** (nécessite créer un compte Google avec l'adresse Zoho + confirmer que la boîte reçoit). Idéal : aligner support OAuth = docs légaux = `SUPPORT_EMAIL` app, tous sur `contact@`.
 
-**📅 PLAN DE LA REPRISE — DANS CET ORDRE :**
-1. **[UTILISATEUR + guide CLAUDE] Restreindre la clé API web** (procédure détaillée au point 24 : référents `manifest-mind.app/*`, `*.manifest-mind.app/*`, `manifestmind.firebaseapp.com/*`, `manifestmind.web.app/*`, `localhost/*`+`localhost:*/*` ; APIs : Identity Toolkit, Token Service, Cloud Firestore, Firebase Installations, Cloud Storage). ⚠️ **Tester l'auth après** (login email+mdp, popup Google, magic link, lecture Firestore).
-2. **[UTILISATEUR] Default payment link Paddle** → `manifest-mind.app` (Checkout settings) + activer les **payment methods** (cartes).
-3. **PHASE H — build + déploiement** :
+**📅 PLAN DE LA REPRISE — ORDRE RÉVISÉ (2026-07-19) : clé API APRÈS le déploiement (décision utilisateur — option B).**
+> **Pourquoi option B** : le référent qui compte (`manifest-mind.app`) ne peut être testé qu'une fois l'app déployée ; localhost est capricieux avec les référents (faux négatifs) ; la restriction protège le quota/facture PAS les données (déjà couvertes par les règles Firestore) → aucune urgence avant la mise en public. **Procédure clé API inchangée, PRÊTE (bloc « 24. » ci-dessous) — juste appliquée après le déploiement, testée directement sur `manifest-mind.app`.**
+1. **[UTILISATEUR] Default payment link Paddle** → `https://manifest-mind.app` (Checkout > Checkout settings) + activer les **payment methods** (cartes).
+2. **PHASE H — build + déploiement** :
    - **[CLAUDE]** Copier les 9 HTML légaux dans `public/` de l'app (cohabitation domaine, point 27) + préparer `firebase.json` Hosting.
    - **[CLAUDE, sur ton feu vert]** `EXPO_PUBLIC_PADDLE_SANDBOX=false` dans `.env` + `npx expo export --platform web` → `dist/`.
-   - **[UTILISATEUR]** Déployer sur **Firebase Hosting** + DNS `manifest-mind.app` + **libérer GitHub Pages** (retirer custom domain/CNAME) + remplir le default payment link si pas déjà fait.
+   - **[UTILISATEUR]** Déployer sur **Firebase Hosting** + DNS `manifest-mind.app` + **libérer GitHub Pages** (retirer custom domain/CNAME).
+3. **[UTILISATEUR + guide CLAUDE] Restreindre la clé API web — JUSTE APRÈS le déploiement, testée DIRECTEMENT sur `manifest-mind.app`** (procédure détaillée au point 24 : référents `manifest-mind.app/*`, `*.manifest-mind.app/*`, `manifestmind.firebaseapp.com/*`, `manifestmind.web.app/*`, `localhost/*`+`localhost:*/*` ; APIs : Identity Toolkit, Token Service, Cloud Firestore, Firebase Installations, Cloud Storage). ⚠️ **Tester l'auth après ~5 min** (login email+mdp, popup Google, magic link, lecture Firestore) SUR le domaine. 🛟 Rollback = Application restrictions → None.
 4. **✅ GATE (3 verts avant de payer)** : domaine **APPROUVÉ** ✅ (déjà) + **vérification compte PASSÉE** ✅ (déjà) + app **DÉPLOYÉE**.
 5. **[UTILISATEUR] Test paiement réel** avec **code -100 %** (créé en live, checkout complet à 0 $, rien à rembourser) sur `manifest-mind.app` → vérifier : transaction `completed` · webhook 200 · `subscription_active=true` · accès débloqué · reçu Paddle au CLIENT. **Archiver le code -100 % après.**
 6. **🧹 [UTILISATEUR] Nettoyage données de test APRÈS le paiement** (comptes Firebase Users + docs Firestore `users` + réinstaller les PWA depuis `manifest-mind.app`) → 🚀 **PUBLICATION WEB.**
