@@ -909,6 +909,13 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 
 **⚠️ Vigilances** : achats intestables en Expo Go → **EAS build obligatoire** + appareil Android réel avec Play Services · coûts Play 25 $ (une fois) / RevenueCat gratuit au début / Apple 99 $/an (plus tard) · le flux compte+achat natif doit refléter la conversion au paywall (après le cycle 1) web mais via Play Billing (conçu en G3, là où RISQUE 3 se retravaille).
 
+**🎯 DÉCISION — CIBLE API ANDROID 36 (Android 16) DÈS LA 1ʳᵉ PUBLICATION, via ROUTE A (2026-07-21)**
+- **Cible** : `targetSdk`/`compileSdk` **36** dès la première soumission, par la **Route A** = override via le plugin **`expo-build-properties`**, en **RESTANT sur Expo SDK 54**. 🚫 **PAS de montée vers Expo SDK 55** (Route B **INTERDITE ici** : risque web élevé — bumperait des dépendances PARTAGÉES web/natif).
+- **Justification** : **zéro risque pour le web** (réglage 100 % natif Android — `compileSdk`/`targetSdk` non lus par le bundle web, aucune dépendance partagée touchée) ; évite un **second chantier API** ; **sécurise la bascule Google du 31 août 2026** dès le départ ; **edge-to-edge déjà activé** (`app.json` `edgeToEdgeEnabled: true`).
+- **Application** : réglage à faire **AU MOMENT du premier build natif (étape G2)**, PAS isolément maintenant.
+- **🛟 Filet de sécurité acté** : si un build en API 36 révèle une **incompatibilité bloquante** avec Expo 54 → **repli sur API 35** pour la 1ʳᵉ soumission (acceptée avant le 31 août 2026), puis nouvelle tentative en 36 ensuite. Ce repli reste **sans risque pour le web** dans les deux sens.
+- ⚠️ Rappel outillage : le build `.aab` qui **valide** réellement l'API 36 passe par **EAS (cloud) + test sur appareil** — non vérifiable en local dans l'environnement Claude (cf. G2).
+
 ───────────────────────────────
 📚 **BLOC G0 — SYNTHÈSE DES RÈGLES GOOGLE PLAY (référence durable, consignée 2026-07-21)**
 ───────────────────────────────
