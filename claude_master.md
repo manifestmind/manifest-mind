@@ -917,6 +917,42 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - ⚠️ Rappel outillage : le build `.aab` qui **valide** réellement l'API 36 passe par **EAS (cloud) + test sur appareil** — non vérifiable en local dans l'environnement Claude (cf. G2).
 
 ───────────────────────────────
+📅 **PLAN DE REPRISE — CHRONOLOGIQUE JUSQU'AU LANCEMENT GOOGLE PLAY (établi 2026-07-21)**
+───────────────────────────────
+
+> Légende : 👤 utilisatrice (dashboards/décisions/tests téléphone) · 🤖 Claude (code/config) · risque web 🟢 aucun / 🟡 à re-tester / 🔴 élevé · ⏳ attente externe · ⚖️ décision · ▶️ démarrable MAINTENANT · ⛔ attend l'approbation d'identité Google.
+
+**☀️ Coups d'envoi (en parallèle dès la reprise)**
+1. 👤 Surveiller la **validation d'identité Google** ⏳⛔ (débloque produits + upload).
+2. 👤 Recruter **12-15 testeurs** (emails Google) ⏳▶️ — **chemin critique** (compteur 14 jours).
+3. 👤 Créer comptes gratuits **Expo (EAS)** + **RevenueCat** ▶️ 🟢.
+4. ⚖️ Confirmer **paiement = Play Billing via RevenueCat** (Paddle web-only) ▶️ — bloque le code paiement.
+5. ⚖️ Choisir **e-mail public** (contact@) + confirmer alignement des **prix** sur les paliers Play ▶️.
+
+**🛠️ Socle build natif (SANS attendre Google) ▶️**
+6. 🤖 Préparer `eas.json` + `expo-build-properties` (**API 36**) + vérif `app.json` — 🟡 (re-test web).
+7. 👤 Lancer le **1er build EAS dev/interne SANS paiement** → test vrai Android (démarrage, Firebase auth, deep links, notifs) ⏳(build) 🟡. Filet : repli **API 35** si blocage 🟢.
+8. 🤖 Correctifs natifs propres : **tap-notif → écran affirmation** ; **persistance photos** → dossier durable — 🟡.
+
+**💳 Paiement natif ⛔ (compte Google approuvé requis)**
+9. 👤 Créer produits/abos **Play Console** (Mensuel/Annuel/Vie, prix par pays) 🟢.
+10. 👤 Configurer **RevenueCat** (entitlement premium + mapping produits) 🟢.
+11. 🤖 Installer `react-native-purchases` (🔴 **ISOLER du web** + re-test), `logIn(uid)`, UI achat native, restore, branche pricing native (**RISQUE 3**).
+12. 🤖 **Cloud Function webhook RevenueCat → Firestore** (jumelle Paddle ; **NE PAS toucher `paddleWebhook`**) 🟢.
+13. 🤖 Basculer `STORES_ACTIVE=true` — 🟡 (vérifier web inchangé).
+
+**📋 Fiche & conformité Play ⛔ (parallélisable ; assets dès la Semaine 1)**
+14. 👤 Listing (descriptions ×3, feature graphic 1024×500, screenshots, icône 512) + **Data Safety** + content rating (Tout public) + public **adultes** + privacy URL + **suppression de compte hors-app**. Assets 🟡. ⚖️ trancher **textes légaux natifs anti-steering** avant soumission.
+
+**🚀 Test fermé & publication**
+15. 👤 Build **`.aab` final signé** + upload sur la **piste de test fermé** (12 testeurs) ⛔ 🟢 → **démarre les 14 jours**.
+16. ⏳ **14 jours de test fermé** (incompressible) — corriger les retours.
+17. 👤 **Achat réel de test** → vérifier déblocage + base + restore + annulation — 🟡 (re-vérif web).
+18. 👤 Demander le **passage en production** → soumission → ⏳ validation Google → 🚀 **publication**.
+
+**🔑 Rappels** : ▶️ **démarrable sans Google** = décisions, comptes Expo/RevenueCat, config API 36, 1er build, correctifs natifs, assets. ⛔ **après approbation** = produits, mapping RevenueCat, listing, upload, 14 jours. Maillon **le plus risqué web** = **étape 11** (isoler `react-native-purchases`). Objectif calendrier : atteindre vite l'**étape 15** pour lancer les 14 jours au plus tôt.
+
+───────────────────────────────
 📚 **BLOC G0 — SYNTHÈSE DES RÈGLES GOOGLE PLAY (référence durable, consignée 2026-07-21)**
 ───────────────────────────────
 
