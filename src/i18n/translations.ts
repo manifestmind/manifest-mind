@@ -172,9 +172,9 @@ export const translations = {
       etape: 'Étape 3 / 3',
       plans: {
         free: {
-          titre: '7 cycles offerts',
+          titre: 'Ton premier cycle offert',
           sousTitre: 'Pour découvrir ManifestMind',
-          description: 'Accès complet aux 7 premiers cycles. Le tarif s\'affiche à partir du cycle 8.',
+          description: 'Vis ton premier cycle en entier, gratuitement. L\'abonnement démarre au cycle 2.',
           prix: 'Gratuit',
           bouton: 'Commencer gratuitement →',
         },
@@ -212,7 +212,7 @@ export const translations = {
       // marqueur had_subscription (un abonnement a déjà existé ici).
       retourAbonne: {
         titre: 'Bon retour parmi nous ✨',
-        texte: 'Il semble qu\'un abonnement existe déjà sur cet appareil. Tu peux retrouver ton espace, ou créer un nouveau compte (essai gratuit de 7 cycles, puis abonnement).',
+        texte: 'Il semble qu\'un abonnement existe déjà sur cet appareil. Tu peux retrouver ton espace, ou créer un nouveau compte (premier cycle offert, puis abonnement).',
         retrouver: 'Retrouver mon espace',
         nouveauCompte: 'Nouveau compte',
       },
@@ -523,7 +523,7 @@ export const translations = {
       titre: 'Changer d\'abonnement',
       confirmer: 'Confirmer mon abonnement →',
       restaurer: 'Restaurer un achat',
-      freemiumTitre: 'Tes 7 cycles offerts sont terminés',
+      freemiumTitre: 'Ton premier cycle est accompli ✦',
       freemiumMessage: 'Tu as découvert ManifestMind. Continue ta transformation jusqu\'au cycle 365 en passant à Premium.',
       freemiumBouton: 'Continuer mon parcours',
       gererCompte: 'Paramètres du compte',
@@ -755,9 +755,9 @@ export const translations = {
       etape: 'Step 3 / 3',
       plans: {
         free: {
-          titre: '7 free cycles',
+          titre: 'Your first cycle, free',
           sousTitre: 'To discover ManifestMind',
-          description: 'Full access to the first 7 cycles. Pricing appears from cycle 8.',
+          description: 'Live your entire first cycle, free. The subscription begins at cycle 2.',
           prix: 'Free',
           bouton: 'Start for free →',
         },
@@ -793,7 +793,7 @@ export const translations = {
       restaurer: 'Restore a purchase',
       retourAbonne: {
         titre: 'Welcome back ✨',
-        texte: 'It looks like a subscription already exists on this device. You can return to your space, or create a new account (7 free cycles, then subscription).',
+        texte: 'It looks like a subscription already exists on this device. You can return to your space, or create a new account (first cycle free, then subscription).',
         retrouver: 'Return to my space',
         nouveauCompte: 'New account',
       },
@@ -1091,7 +1091,7 @@ export const translations = {
       titre: 'Change subscription',
       confirmer: 'Confirm my subscription →',
       restaurer: 'Restore a purchase',
-      freemiumTitre: 'Your 7 free cycles are complete',
+      freemiumTitre: 'You\'ve completed your first cycle ✦',
       freemiumMessage: 'You\'ve discovered ManifestMind. Continue your transformation to cycle 365 by going Premium.',
       freemiumBouton: 'Continue my journey',
       gererCompte: 'Account settings',
@@ -1316,9 +1316,9 @@ export const translations = {
       etape: 'Paso 3 / 3',
       plans: {
         free: {
-          titre: '7 ciclos gratuitos',
+          titre: 'Tu primer ciclo gratis',
           sousTitre: 'Para descubrir ManifestMind',
-          description: 'Acceso completo a los primeros 7 ciclos. El precio aparece a partir del ciclo 8.',
+          description: 'Vive tu primer ciclo completo, gratis. La suscripción comienza en el ciclo 2.',
           prix: 'Gratis',
           bouton: 'Empezar gratis →',
         },
@@ -1354,7 +1354,7 @@ export const translations = {
       restaurer: 'Restaurar una compra',
       retourAbonne: {
         titre: 'Qué bueno verte de nuevo ✨',
-        texte: 'Parece que ya existe una suscripción en este dispositivo. Puedes volver a tu espacio o crear una cuenta nueva (7 ciclos gratis y luego suscripción).',
+        texte: 'Parece que ya existe una suscripción en este dispositivo. Puedes volver a tu espacio o crear una cuenta nueva (primer ciclo gratis, luego suscripción).',
         retrouver: 'Volver a mi espacio',
         nouveauCompte: 'Cuenta nueva',
       },
@@ -1652,7 +1652,7 @@ export const translations = {
       titre: 'Cambiar suscripción',
       confirmer: 'Confirmar mi suscripción →',
       restaurer: 'Restaurar una compra',
-      freemiumTitre: 'Tus 7 ciclos gratuitos han terminado',
+      freemiumTitre: 'Has completado tu primer ciclo ✦',
       freemiumMessage: 'Has descubierto ManifestMind. Continúa tu transformación hasta el ciclo 365 pasando a Premium.',
       freemiumBouton: 'Continuar mi camino',
       gererCompte: 'Ajustes de la cuenta',

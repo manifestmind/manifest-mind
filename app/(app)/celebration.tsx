@@ -16,6 +16,7 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InstallPrompt from '../../components/ui/InstallPrompt';
+import { FREE_CYCLES } from '../../services/config';
 
 
 export default function Celebration() {
@@ -79,9 +80,25 @@ export default function Celebration() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     async function load() {
       await AsyncStorage.setItem('cycle_completed', 'true');
-      const tomorrow = new Date();
-      tomorrow.setHours(24, 0, 0, 0);
-      await AsyncStorage.setItem('next_cycle_time', String(tomorrow.getTime()));
+
+      // Programmation du prochain cycle.
+      //  - Cas NORMAL (cycles payants, ou abonné) → minuit : rythme 1 cycle/jour.
+      //  - Cas FRONTIÈRE (dernier cycle gratuit terminé ET non-abonné) →
+      //    "maintenant" : au retour sur home, l'avancement EXISTANT passe au
+      //    cycle suivant tout de suite → le paywall s'affiche dès la fin du
+      //    cycle 1, sans attendre minuit. N'affecte QUE ce cas.
+      const cycleNow = parseInt(await AsyncStorage.getItem('current_cycle') || '1', 10);
+      const subActive = (await AsyncStorage.getItem('subscription_active')) === 'true';
+
+      let nextTime: number;
+      if (cycleNow === FREE_CYCLES && !subActive) {
+        nextTime = Date.now();
+      } else {
+        const tomorrow = new Date();
+        tomorrow.setHours(24, 0, 0, 0);
+        nextTime = tomorrow.getTime();
+      }
+      await AsyncStorage.setItem('next_cycle_time', String(nextTime));
 
       const pts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
       setCyclePoints(pts);

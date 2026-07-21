@@ -21,7 +21,7 @@ export const PADDLE_ACTIVE = true;
 export const PADDLE_SANDBOX = process.env.EXPO_PUBLIC_PADDLE_SANDBOX === 'true';
 
 // Nombre de cycles offerts avant le paywall freemium.
-export const FREE_CYCLES = 7;
+export const FREE_CYCLES = 1;
 
 // Adresse de support (boîte configurée et relevée). Utilisée par activation.tsx
 // pour offrir un recours à un vrai payeur dont le webhook a échoué. Si un jour
