@@ -1,5 +1,16 @@
 # CLAUDE_MASTER.md — ManifestMind
 
+═══════════════════════════════════════════════════════════════════════════════
+🔒🔒🔒 **RÈGLE ABSOLUE ET PERMANENTE — PROTECTION DE LA VERSION WEB** 🔒🔒🔒
+*(À RELIRE ET RESPECTER À CHAQUE SESSION, SANS QU'ON AIT À LA RÉPÉTER)*
+═══════════════════════════════════════════════════════════════════════════════
+
+- 🟢 **L'application WEB en ligne (`https://manifestmind.web.app`) doit rester STRICTEMENT IDENTIQUE. On n'y touche à rien.**
+- 🔗 **Le code source est PARTAGÉ entre le web et le natif.** Toute modification destinée au **natif (stores)** ne doit **JAMAIS** dégrader, changer ou casser le comportement de la **version web**.
+- 🛑 **À chaque intervention future, AVANT toute modification : vérifier et SIGNALER si elle risque d'affecter le web. En cas de doute → s'ARRÊTER et DEMANDER.**
+
+═══════════════════════════════════════════════════════════════════════════════
+
 > Référence technique complète pour les sessions Claude Code.
 > Mise à jour : 2026-06-16
 
