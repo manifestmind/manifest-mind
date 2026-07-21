@@ -783,7 +783,38 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 ═══════════════════════════════
 🚀🚀 **MANIFESTMIND — LANCÉE EN PHASE 1 (WEB + PWA) le 2026-07-19** 🚀🚀
 ═══════════════════════════════
-**`https://manifest-mind.app` est publiquement fonctionnel** : app + PWA installable, 3 langues, essai 7 cycles → paywall cycle 8 → paiement Paddle (Mensuel/Annuel/Vie en USD) → déblocage, auth email+mdp / Google, docs légaux servis par Firebase, clé API restreinte, chaîne paiement prouvée souscription+annulation, base vierge. **Le déploiement web est COMPLET.** Prochain grand chantier = **PHASE 2 STORES** (voir section dédiée ci-dessous).
+**`https://manifest-mind.app` est publiquement fonctionnel** : app + PWA installable, 3 langues, essai 7 cycles → paywall cycle 8 → paiement Paddle (Mensuel/Annuel/Vie en USD) → déblocage, auth email+mdp / Google, docs légaux servis par Firebase, clé API restreinte, chaîne paiement prouvée souscription+annulation, base vierge. **Le déploiement web est COMPLET.** Prochains chantiers → voir la section **« PROCHAINS CHANTIERS »** juste ci-dessous (analytics d'abord, stores ensuite).
+
+═══════════════════════════════
+📝 **DÉCISION MODÈLE — 1 CYCLE GRATUIT (au lieu de 7) — 2026-07-21**
+═══════════════════════════════
+- **Décision** : l'essai gratuit passe de **7 cycles à 1 SEUL cycle**. Motif : conversion trop lente avec 7 (rétention gratuite trop longue, erreur d'évaluation initiale) — corrigée pendant que **seuls des amis** utilisaient l'app (aucun impact vrai client). ⚠️ Cette décision **remplace** le modèle « 7 cycles → paywall cycle 8 » décrit plus haut dans l'historique (les mentions « 7 » antérieures = trace historique, non corrigées).
+- **Parcours cible (obtenu)** : cycle 1 complet → **écran de félicitations AVEC les points** (non sauté) → **paywall dès le retour à l'accueil** (même session, sans attendre minuit) → **bloqué à chaque ouverture** tant que non-abonné → abonnement = accès cycle 2 + rythme quotidien normal dès le cycle 3.
+- **Implémentation (Option B, la plus propre)** :
+  - `services/config.ts` : `FREE_CYCLES` **7 → 1**.
+  - `app/(app)/celebration.tsx` : avance immédiate de `next_cycle_time` (`Date.now()` au lieu de minuit) **UNIQUEMENT** à la frontière `cycle === FREE_CYCLES && non-abonné`. Les cycles payants ET les abonnés gardent minuit → **rythme 1/jour strictement intact** dès le cycle 3.
+  - `services/access.ts` : `isPaywalled` **INCHANGÉ** (`cycle > FREE_CYCLES && !subActive`). ⚠️ Une 1ʳᵉ tentative via une clause `cycle_completed` a été **ANNULÉE** : elle créait une **course** (la célébration pose `cycle_completed` au montage, le gate le lisait dans la même navigation) qui **interceptait l'écran de félicitations**. Ne PAS ré-introduire cette clause.
+  - Textes UI : 4 clés × 3 langues (`translations.ts` — titre carte, description, retourAbonne, freemiumTitre → « premier cycle offert / accompli »).
+  - Docs légaux : 6 fichiers `public/` (CGU ×3 + Remboursement ×3) → « premier cycle offert », « à partir du 2ᵉ cycle ».
+- **Effet de bord assumé (validé)** : le jour de l'abonnement, la personne peut faire cycle 1 (gratuit) **et** cycle 2 (payant) le même jour — **bonus** (gratification post-paiement), pas une perte. Rythme strict dès le cycle 3.
+- **État** : figé en code au commit **`34dffde`** ; `tsc --noEmit` propre ; **déployé en production et vérifié fonctionnel le 2026-07-21** (`https://manifestmind.web.app` — déploiement Firebase Hosting).
+
+═══════════════════════════════
+🧭 **PROCHAINS CHANTIERS — À LIRE EN DÉBUT DE PROCHAINE SESSION (noté 2026-07-19)**
+═══════════════════════════════
+
+**PRIORITÉ 1 — 📊 FIREBASE ANALYTICS (à évaluer et probablement intégrer DÈS LE DÉBUT de la prochaine session).**
+- **Objectif** : voir le **parcours des utilisateurs**, surtout les **anonymes en essai gratuit** — à quel cycle ils arrivent, où ils décrochent, **taux d'arrivée au paywall (cycle 8)**, **taux de conversion au paiement**.
+- **Contexte favorable** : Firebase Analytics est **gratuit** et **déjà disponible** dans le projet Firebase `manifestmind` (rien à acheter/créer côté compte).
+- **À faire lors du chantier** :
+  1. **Définir les événements à tracker** — ex. `cycle_1_atteint`, `cycle_7_atteint`, `paywall_vu`, `checkout_ouvert`, `paiement_effectue`, `essai_reset`… (liste à trancher ensemble).
+  2. **🔴 POINT RGPD (bloquant à vérifier AVANT activation)** : vérifier que la **politique de confidentialité couvre l'usage d'analytics** et l'**ajuster si besoin**. ⚠️ Rappel du déclencheur consigné au **point 16** : *tout* ajout d'analytics/monitoring = **bannière de consentement obligatoire AVANT activation** (transparence seule ne suffit plus dès qu'on collecte du comportement). → prévoir bannière consentement + mise à jour des 9 docs (×3 langues) si on part sur Analytics.
+  3. **Câbler les événements** dans le code (web + prêt pour natif Phase 2).
+- **⚖️ ALTERNATIVE PLUS LÉGÈRE À PRÉSENTER AUSSI (comparer les 2 AVANT de décider)** : un **compteur maison dans Firestore** (incréments par cycle/événement) — **moins puissant** (pas d'entonnoirs/segmentation clés en main, pas de tableau de bord riche) mais **plus simple** et **potentiellement moins lourd côté RGPD** (données agrégées, pas de SDK de tracking tiers). → présenter **avantages/inconvénients des deux options** (Analytics vs compteur Firestore) et **décider ensemble**.
+
+**PRIORITÉ 2 — 📱 PHASE 2 STORES (iOS/Android) — VOLONTAIREMENT DIFFÉRÉE.**
+- **Décision (2026-07-19)** : **laisser tourner le web quelques semaines d'abord**, et **trancher la question du paiement natif (Paddle vs achats in-app RevenueCat) AVANT de se lancer**. **L'analytics est PRIORITAIRE sur les stores.**
+- Toute la mémoire technique du chantier natif est prête dans la section **« PRÉPARATION V2 STORES »** ci-dessous — à ne dérouler que le jour venu.
 
 ═══════════════════════════════
 📱 **PRÉPARATION V2 STORES (PHASE 2) — MÉMOIRE À DÉROULER LE JOUR DU CHANTIER NATIF**
@@ -826,6 +857,85 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - Build via **`eas build --platform ios/android`** (cf. tableau plateformes). Prévoir la config EAS, les provisioning profiles Apple, le keystore Android.
 
 **📌 Où retrouver le détail** : sections « RECONNEXION DIRECTE » (risque 3), « 🎨 DESIGN / FINITIONS », « BUG PERSISTANCE WEB » (note Phase 2 natif), PHASE F (point 19), tableau plateformes en fin de doc.
+
+═══════════════════════════════
+🤖 **PHASE 2 — ANDROID / GOOGLE PLAY — ÉTAT DES LIEUX + FEUILLE DE ROUTE (démarré 2026-07-21)**
+═══════════════════════════════
+
+> On commence par **Google Play (Android)** avant Apple. Comprendre les règles des DEUX avant de construire à fond. Rythme « tranquille comme le web ».
+
+**🏷️ DÉCISIONS STRUCTURANTES (2026-07-21) :**
+- **Publication en NOM PROPRE (compte développeur INDIVIDUEL)**, PAS en société : le DUNS (demandé il y a des mois pour un compte Organisation) est toujours sans réponse → on contourne par le compte individuel.
+  - ⚠️ **CONSÉQUENCE À GARDER EN MÉMOIRE** : **Paddle = entité Horizonte Digital (SAS Paraguay)** / **Stores = nom propre (individuel)**. Deux identités de vendeur distinctes selon le canal. À assumer dans les mentions/CGV le jour venu.
+- **Paiement : Google Play Billing OBLIGATOIRE sur Android** (contenu numérique = déblocage de cycles) → **via RevenueCat** (`react-native-purchases`, abstrait Play Billing + StoreKit iOS, webhooks serveur). **Paddle reste WEB ONLY** (no-op sur natif, déjà en place). **Ne jamais afficher un checkout Paddle dans l'app Android** (= violation policy).
+- **`subscription_active` mis à jour par 2 sources, même modèle** : web = webhook Paddle ; Android = achat Play Billing → **webhook RevenueCat** → même Cloud Function → `users/{uid}`. **Clé = même `uid` Firebase** des deux côtés (`Purchases.logIn(firebaseUid)` côté natif, symétrique au `custom_data.firebase_uid` de Paddle). Architecture web (Firestore source de vérité) = tremplin, on ajoute juste un 2ᵉ écrivain.
+
+**✅ SOCLE ANDROID DÉJÀ EN PLACE (audit lecture seule 2026-07-21)** : package `com.manifestmind.app` (app.json) · `google-services.json` présent (app Android enregistrée Firebase) · `adaptiveIcon` (foreground + fond violet) · `intentFilters autoVerify` sur `firebaseapp.com` (App Links = magic link natif OK) · Expo ~54 / RN 0.81.5 / new arch · `expo-notifications`. Flags/garde-fous prêts : `STORES_ACTIVE=false` (à basculer), `canPay()` chemin natif, `openCheckout` no-op natif (paddle.ts l.171).
+
+**❌ MANQUE POUR UN BUILD STORE** : `eas.json` (config EAS Build, absent) 🔴 · **bibliothèque paiement natif** (aucune : ni RevenueCat, ni IAP) 🔴 · **Sign in with Apple** (iOS only, inexistant — pas de vrai stub) · splash définitif (encore template blanc, app.json l.53) · icône monochrome Android 13 (optionnel) · permission `POST_NOTIFICATIONS` runtime (Android 13+) · assets fiche Play (feature graphic 1024×500, screenshots, icône 512, descriptions ×3 langues) 🔴 · déclarations conformité (Data Safety, content rating, target audience) 🔴.
+
+**🧩 CODE STORE-ONLY — statut réel** : `STORES_ACTIVE`/`canPay()`/no-op Paddle natif = **prêts (flags)**. `handleRestore`/rangées « Restaurer » (pricing.tsx l.608, parametres.tsx) = **stubs `Alert.alert` à REMPLACER** par `Purchases.restorePurchases()`. Branche native `pricing.tsx` pousse vers `auth.tsx` en supposant une **création** de compte → **à retravailler (RISQUE 3 : auth.tsx est login-only)**. `getPriceId()` = Paddle only → le natif aura son mapping RevenueCat (product IDs Play). **Sign in with Apple = à écrire de zéro (iOS).**
+
+**🗺️ FEUILLE DE ROUTE G0→G7 ([TOI]=dashboards, [CLAUDE]=code sur feu vert) :**
+- **G0 — Règles & décision** : synthétiser les policies Play (Payments, Data Safety, Content rating, target audience) AVANT de payer les 25 $. Aucune ligne de code. *(en cours 2026-07-21)*
+- **G1 — Comptes** : [TOI] compte **Google Play Developer INDIVIDUEL** (25 $ une fois) + accords ; compte **RevenueCat** (gratuit).
+- **G2 — EAS Build** : [CLAUDE] créer `eas.json` + config credentials ; [TOI] lancer un **1ᵉʳ build dev/interne SANS paiement** → installer sur vrai Android → valider que l'app build & tourne natif.
+- **G3 — Paiement natif** : [CLAUDE] installer `react-native-purchases`, câbler `logIn(uid)`, remplacer stubs restore + UI achat native, écrire **Cloud Function webhook RevenueCat → Firestore**, basculer `STORES_ACTIVE=true` ; [TOI] configurer produits/abos Play Console + RevenueCat.
+- **G4 — Fiche & conformité Play** : [TOI, guidé] listing (descriptions ×3, feature graphic 1024×500, screenshots, icône 512), **Data Safety**, **content rating**, target audience, privacy URL.
+- **G5 — Assets natifs** : [CLAUDE/design] splash définitif M+œil, icône monochrome Android 13, screenshots.
+- **G6 — Tests piste interne** : [TOI] internal testing track, achat réel (license testers) → vérifier Firestore via webhook RevenueCat, restore, annulation ; [CLAUDE] corrige.
+- **G7 — Soumission → publication** 🚀.
+- *(plus tard : Phase Apple — Sign in with Apple, StoreKit via RevenueCat déjà abstrait, exigences App Store.)*
+
+**⚠️ Vigilances** : achats intestables en Expo Go → **EAS build obligatoire** + appareil Android réel avec Play Services · coûts Play 25 $ (une fois) / RevenueCat gratuit au début / Apple 99 $/an (plus tard) · le flux compte+achat natif doit refléter la conversion cycle-8 web mais via Play Billing (conçu en G3, là où RISQUE 3 se retravaille).
+
+───────────────────────────────
+📚 **BLOC G0 — SYNTHÈSE DES RÈGLES GOOGLE PLAY (référence durable, consignée 2026-07-21)**
+───────────────────────────────
+
+> À comprendre AVANT de créer le compte. Aucune ligne de code — c'est de la compréhension.
+
+**🅰️ Google Play Payments policy (paiement)**
+- Contenu numérique (déblocage de cycles) → **Play Billing OBLIGATOIRE**. Interdit d'afficher un paiement externe (Paddle) DANS l'app Android.
+- Dans Play Console : créer les **abonnements** (Mensuel, Annuel) + le **produit unique** (Vie), prix par pays. RevenueCat s'y branche.
+- **Clarté abonnement (strict)** : avant l'achat, afficher clairement prix + périodicité + **renouvellement automatique** + comment annuler. Google rejette les abos « pièges ».
+
+**🅱️ Data Safety form (déclaration des données) — concerne les données qui QUITTENT l'appareil**
+- **Email** (Firebase Auth, création de compte) → ✅ collecté → déclarer (email, fonctionnement app + gestion compte).
+- **Statut d'abonnement** (Firestore `users`) → ✅ collecté → déclarer.
+- **Photos vision board/profil + journal** → ❌ **restent sur l'appareil (Option A, stockage local) → NON collectés** (nuance en ta faveur).
+- **Infos de paiement** → gérées par Google Play, pas par l'app → généralement non déclarées.
+- Cocher : **chiffré en transit** ✅ (Firebase HTTPS), **suppression possible** ✅ (flux RGPD in-app), **URL privacy** ✅ (`manifest-mind.app`).
+- 🔴 **Doit être COHÉRENT avec la politique de confidentialité** (Google recoupe).
+
+**🅲️ Content rating + Target audience**
+- **Content rating** : questionnaire IARC (violence/sexe/jeux d'argent/drogues → tout « non ») → **« Tout public » / PEGI 3**.
+- **Target audience** : cibler **ADULTES (18+ ou 16+)**, PAS les enfants → évite le programme **« Designed for Families »** (règles bien plus strictes).
+
+**⚠️ Règles qui peuvent faire REFUSER**
+1. Paiement externe dans l'app → rejet (Play Billing only).
+2. **Allégations santé/médicales** : « bien-être / épanouissement personnel » OK ; « soigne / guérit / traite l'anxiété » = risqué (désinformation santé). **Rester sur le vocabulaire épanouissement.**
+3. **Suppression de compte** : exigée in-app ✅ (existe) ET **depuis l'EXTÉRIEUR de l'app** (une URL/instruction de demande de suppression) → **À PRÉVOIR** (page/section accessible hors app).
+4. Crash / fonctionnalité cassée → rejet (d'où tests G6).
+5. Fiche trompeuse (titre/captures) → rejet.
+6. Permissions : ne demander que le nécessaire (notifs, photos) et les déclarer.
+
+**🔴 TIMING CRITIQUE (compte PERSONNEL créé depuis fin 2023)**
+- **Test fermé obligatoire : ≥ 12 testeurs inscrits pendant 14 JOURS CONSÉCUTIFS AVANT de pouvoir demander la production.**
+- Impossible de publier directement. **Recruter ~12-15 testeurs (emails Google) dès maintenant** = seul délai incompressible (2 semaines). L'utilisatrice a commencé à les réunir (2026-07-21).
+
+**📋 À PRÉPARER AVANT de payer les 25 $**
+1. Compte Google (perso) dédié.
+2. **Pièce d'identité officielle** (vérification d'identité réelle du compte individuel).
+3. Nom légal + adresse + téléphone (correspondant à la pièce).
+4. Moyen de paiement (25 $ une fois, à vie).
+5. **Nom de développeur public** (peut être une marque, compte reste à l'identité vérifiée).
+6. ⚠️ **Coordonnées développeur PUBLIQUES** sur la fiche (email, souvent adresse) → choisir quoi exposer, **idéalement `contact@manifest-mind.app`** (pas un perso).
+7. URL politique de confidentialité ✅ (`manifest-mind.app`).
+8. Liste des ~12 testeurs.
+9. **Pas de DUNS** en individuel ✅ (c'est le contournement retenu, le DUNS Organisation étant sans réponse depuis des mois).
+
+**🎯 À retenir** : Android = Play Billing (RevenueCat) · Data Safety = email + statut abo (photos/journal locaux = non collectés) · rating « Tout public » + cible adultes · bien-être oui / promesses médicales non · suppression de compte hors app à ajouter · **12 testeurs / 14 jours** avant prod · identité réelle + email public à préparer avant de payer.
 
 ---
 
