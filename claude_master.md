@@ -11,6 +11,15 @@
 
 ═══════════════════════════════════════════════════════════════════════════════
 
+═══════════════════════════════════════════════════════════════════════════════
+🟣 **MODÈLE FREEMIUM EN VIGUEUR (AUTORITÉ) — 1 CYCLE GRATUIT** 🟣
+═══════════════════════════════════════════════════════════════════════════════
+
+- ✅ **MODÈLE ACTUEL (la SEULE règle en vigueur)** : **1 seul cycle gratuit** → écran de félicitations (avec points) → **paywall dès le retour à l'accueil** (même session, sans attendre minuit) → bloqué à chaque ouverture tant que non-abonné → abonnement = accès cycle 2 + rythme quotidien dès le cycle 3. *(Décision 2026-07-21, commit `34dffde` ; détail : « 📝 DÉCISION MODÈLE — 1 CYCLE GRATUIT » plus bas.)*
+- 🕰️ **ANCIEN MODÈLE (OBSOLÈTE, NE PLUS APPLIQUER)** : « **7 cycles gratuits → paywall au cycle 8** ». **TOUTES** les mentions « 7 cycles / cycle 7 / cycle 8 » ailleurs dans ce document décrivent CET ancien modèle (trace historique des Phases A→E et des tests). **Ne JAMAIS les prendre pour la règle en vigueur** — la seule règle actuelle est « 1 cycle gratuit » ci-dessus.
+
+═══════════════════════════════════════════════════════════════════════════════
+
 > Référence technique complète pour les sessions Claude Code.
 > Mise à jour : 2026-06-16
 
@@ -794,7 +803,7 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 ═══════════════════════════════
 🚀🚀 **MANIFESTMIND — LANCÉE EN PHASE 1 (WEB + PWA) le 2026-07-19** 🚀🚀
 ═══════════════════════════════
-**`https://manifest-mind.app` est publiquement fonctionnel** : app + PWA installable, 3 langues, essai 7 cycles → paywall cycle 8 → paiement Paddle (Mensuel/Annuel/Vie en USD) → déblocage, auth email+mdp / Google, docs légaux servis par Firebase, clé API restreinte, chaîne paiement prouvée souscription+annulation, base vierge. **Le déploiement web est COMPLET.** Prochains chantiers → voir la section **« PROCHAINS CHANTIERS »** juste ci-dessous (analytics d'abord, stores ensuite).
+**`https://manifest-mind.app` est publiquement fonctionnel** : app + PWA installable, 3 langues, essai **1 cycle gratuit → paywall après le cycle 1** (⚠️ 7 cycles au lancement, passé à 1 le 2026-07-21 — cf. bandeau modèle en tête) → paiement Paddle (Mensuel/Annuel/Vie en USD) → déblocage, auth email+mdp / Google, docs légaux servis par Firebase, clé API restreinte, chaîne paiement prouvée souscription+annulation, base vierge. **Le déploiement web est COMPLET.** Prochains chantiers → voir la section **« PROCHAINS CHANTIERS »** juste ci-dessous (analytics d'abord, stores ensuite).
 
 ═══════════════════════════════
 📝 **DÉCISION MODÈLE — 1 CYCLE GRATUIT (au lieu de 7) — 2026-07-21**
@@ -815,7 +824,7 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 ═══════════════════════════════
 
 **PRIORITÉ 1 — 📊 FIREBASE ANALYTICS (à évaluer et probablement intégrer DÈS LE DÉBUT de la prochaine session).**
-- **Objectif** : voir le **parcours des utilisateurs**, surtout les **anonymes en essai gratuit** — à quel cycle ils arrivent, où ils décrochent, **taux d'arrivée au paywall (cycle 8)**, **taux de conversion au paiement**.
+- **Objectif** : voir le **parcours des utilisateurs**, surtout les **anonymes en essai gratuit** — à quel cycle ils arrivent, où ils décrochent, **taux d'arrivée au paywall (après le cycle 1)**, **taux de conversion au paiement**.
 - **Contexte favorable** : Firebase Analytics est **gratuit** et **déjà disponible** dans le projet Firebase `manifestmind` (rien à acheter/créer côté compte).
 - **À faire lors du chantier** :
   1. **Définir les événements à tracker** — ex. `cycle_1_atteint`, `cycle_7_atteint`, `paywall_vu`, `checkout_ouvert`, `paiement_effectue`, `essai_reset`… (liste à trancher ensemble).
@@ -898,7 +907,7 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - **G7 — Soumission → publication** 🚀.
 - *(plus tard : Phase Apple — Sign in with Apple, StoreKit via RevenueCat déjà abstrait, exigences App Store.)*
 
-**⚠️ Vigilances** : achats intestables en Expo Go → **EAS build obligatoire** + appareil Android réel avec Play Services · coûts Play 25 $ (une fois) / RevenueCat gratuit au début / Apple 99 $/an (plus tard) · le flux compte+achat natif doit refléter la conversion cycle-8 web mais via Play Billing (conçu en G3, là où RISQUE 3 se retravaille).
+**⚠️ Vigilances** : achats intestables en Expo Go → **EAS build obligatoire** + appareil Android réel avec Play Services · coûts Play 25 $ (une fois) / RevenueCat gratuit au début / Apple 99 $/an (plus tard) · le flux compte+achat natif doit refléter la conversion au paywall (après le cycle 1) web mais via Play Billing (conçu en G3, là où RISQUE 3 se retravaille).
 
 ───────────────────────────────
 📚 **BLOC G0 — SYNTHÈSE DES RÈGLES GOOGLE PLAY (référence durable, consignée 2026-07-21)**
