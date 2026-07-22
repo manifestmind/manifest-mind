@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suppression de compte et de données — ManifestMind</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes irisAppear{0%,35%{transform:scale(0);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pupilAppear{0%,50%{transform:scale(0);opacity:0}80%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes refletAppear{0%,65%{opacity:0}100%{opacity:1}}
+@keyframes thirdEye{0%,70%{opacity:0;transform:scale(0)}85%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:.9}}
+@keyframes dashDraw{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.45;transform:scale(1.03)}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#E8E0D8;color:#3A3530;font-family:'Jost',sans-serif;font-weight:300;line-height:1.8;min-height:100vh;}
+.hero{background:#F0EAE0;border-bottom:0.5px solid #D4C4B8;padding:60px 32px 52px;text-align:center;position:relative;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;}
+.hero-inner{position:relative;z-index:1}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;animation:fadeUp .6s ease .1s both;}
+.app-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.3rem;color:#2A2520;letter-spacing:.04em;}
+.app-tagline{font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:2.2rem;color:#2A2520;letter-spacing:.02em;margin-bottom:8px;animation:fadeUp .6s ease .3s both;opacity:0;}
+.hero .subtitle{font-size:0.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9A8878;animation:fadeUp .6s ease .5s both;opacity:0;}
+.update-badge{display:inline-block;margin-top:14px;background:#DDD0F8;border:0.5px solid #C4A8D4;color:#6B3FA0;font-size:0.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.08em;padding:3px 14px;border-radius:20px;animation:fadeUp .6s ease .7s both;opacity:0;}
+.container{max-width:700px;margin:0 auto;padding:48px 28px 80px;}
+.intro-box{background:rgba(221,208,248,.4);border:0.5px solid #C4A8D4;border-left:3px solid #6B3FA0;border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:48px;font-size:0.9rem;color:#4A3060;line-height:1.7;}
+section{margin-bottom:40px;padding-bottom:40px;border-bottom:0.5px solid #C4A8D4;}
+section:last-of-type{border-bottom:none}
+.section-number{font-size:0.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9B72C8;margin-bottom:5px;}
+h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.55rem;color:#2A2520;margin-bottom:14px;line-height:1.3;}
+p{font-size:0.9rem;color:#3A3530;margin-bottom:12px;line-height:1.75;}
+ul{padding-left:0;list-style:none;margin-bottom:12px}
+ul li{font-size:0.9rem;padding:5px 0 5px 18px;position:relative;color:#3A3530;line-height:1.65;}
+ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:300;}
+.highlight{background:rgba(221,208,248,.35);border:0.5px solid #C4A8D4;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:0.87rem;color:#4A3060;line-height:1.65;}
+.contact-box{background:#F0EAE0;border:0.5px solid #C4A8D4;border-radius:16px;padding:32px;text-align:center;margin-top:48px;}
+.contact-box h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;font-weight:300;color:#2A2520;margin-bottom:6px;}
+.contact-sub{font-size:0.8rem;color:#7A7068;margin:6px 0 18px;}
+.contact-btn{display:inline-block;background:#3A3530;color:#F0EAE0;text-decoration:none;font-size:0.82rem;font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;padding:11px 28px;border-radius:50px;}
+.footer{text-align:center;padding:24px;font-size:0.7rem;color:#9A8878;letter-spacing:.08em;border-top:0.5px solid #C4A8D4;background:#F0EAE0;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="orb" style="width:200px;height:200px;background:#B8D4B0;top:-60px;right:-60px;opacity:.25"></div>
+  <div class="orb" style="width:120px;height:120px;background:#C4A8D4;bottom:-30px;left:-40px;animation-delay:1s;opacity:.2"></div>
+  <div class="orb" style="width:80px;height:80px;background:#E8C890;top:40px;left:10%;animation-delay:2s;opacity:.18"></div>
+  <div class="hero-inner">
+    <div class="logo-wrap">
+      <svg width="110" height="85" viewBox="0 0 56 44" style="overflow:visible" aria-label="ManifestMind">
+        <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2s infinite"/>
+        <clipPath id="ec"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+        <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+        <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .5s both;clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="3" fill="#1A0E30" style="clip-path:url(#ec)"/>
+        <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="clip-path:url(#ec)"/>
+        <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .1s forwards"/>
+        <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .2s forwards"/>
+      </svg>
+      <p class="app-name">ManifestMind</p>
+      <p class="app-tagline">Bien-être &amp; Intentions</p>
+    </div>
+    <h1>Suppression de compte</h1>
+    <p class="subtitle">Comment demander la suppression de tes données</p>
+    <span class="update-badge">Dernière mise à jour : juillet 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="intro-box">
+    ManifestMind te permet de supprimer ton compte et l'ensemble de tes données à tout moment, et gratuitement. Cette page décrit comment demander la suppression, et ce qui est effacé ou conservé.
+  </div>
+
+  <section>
+    <div class="section-number">01</div>
+    <h2>Deux façons de supprimer ton compte</h2>
+    <p>Tu peux demander la suppression, que tu aies encore l'application ou non :</p>
+    <p><strong>a) Depuis l'application (le plus simple)</strong></p>
+    <ul>
+      <li>Ouvre <strong>ManifestMind</strong> → <strong>Paramètres</strong> → <strong>« Supprimer mon compte »</strong>.</li>
+      <li>Confirme la suppression.</li>
+      <li>Pour ta sécurité, si ta session est trop ancienne, un <strong>lien de connexion (magic link)</strong> est envoyé à l'adresse e-mail de ton compte : clique dessus pour te reconnecter, puis <strong>relance</strong> la suppression.</li>
+    </ul>
+    <p>La suppression est alors <strong>immédiate et irréversible</strong>.</p>
+    <p><strong>b) Sans l'application (si tu ne l'as plus)</strong></p>
+    <p>Si tu n'as plus l'application installée, écris-nous à <strong>contact@manifest-mind.app</strong> depuis l'adresse e-mail de ton compte, avec pour objet <strong>« Suppression de compte »</strong>. Après vérification de ton identité, nous supprimerons ton compte et tes données dans un <strong>délai maximal de 30 jours</strong>.</p>
+  </section>
+
+  <section>
+    <div class="section-number">02</div>
+    <h2>Données supprimées</h2>
+    <p>Lors de la suppression, sont <strong>définitivement effacés</strong> :</p>
+    <ul>
+      <li><strong>Ton compte :</strong> adresse e-mail et méthode de connexion.</li>
+      <li><strong>Ton statut d'abonnement</strong> et les identifiants techniques de facturation associés (références client et abonnement).</li>
+      <li><strong>Toutes tes données stockées sur ton appareil :</strong> progression, points, cycles complétés, entrées de journal, photos du Vision Board et photo de profil — ces données ne quittaient jamais ton appareil.</li>
+    </ul>
+    <div class="highlight">
+      Aucune sauvegarde de ces données n'est conservée de notre côté.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">03</div>
+    <h2>Données conservées (obligation légale)</h2>
+    <p>Une seule catégorie est conservée, <strong>hors de notre contrôle</strong> : les <strong>enregistrements de transaction et de facturation</strong> liés à tes paiements. Ils sont conservés par notre prestataire de paiement pour la <strong>durée imposée par les obligations comptables et fiscales légales</strong> (généralement plusieurs années) :</p>
+    <ul>
+      <li>sur la <strong>version web</strong>, les paiements sont traités par <strong>Paddle.com</strong> (notre marchand officiel) ;</li>
+      <li>sur l'<strong>application mobile</strong>, les paiements sont traités par <strong>Google Play</strong> (et <strong>Apple</strong> sur iOS).</li>
+    </ul>
+    <div class="highlight">
+      Cette conservation légale s'applique indépendamment de la suppression de ton compte et ne comprend jamais tes données bancaires, que nous ne voyons jamais.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">04</div>
+    <h2>Délais en bref</h2>
+    <ul>
+      <li><strong>Suppression dans l'app :</strong> immédiate.</li>
+      <li><strong>Suppression par e-mail :</strong> sous 30 jours après vérification de ton identité.</li>
+      <li><strong>Conservation des factures :</strong> durée légale imposée au prestataire de paiement.</li>
+    </ul>
+  </section>
+
+  <div class="contact-box">
+    <h3>Une question ou une demande de suppression ?</h3>
+    <p class="contact-sub">Écris-nous depuis l'adresse e-mail de ton compte — nous traitons ta demande.</p>
+    <a class="contact-btn" href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a>
+  </div>
+
+</div>
+
+<div class="footer">
+  © 2026 ManifestMind — Tous droits réservés
+</div>
+
+</body>
+</html>
