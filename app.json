@@ -18,7 +18,7 @@
     },
     "android": {
       "package": "com.manifestmind.app",
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
       "intentFilters": [
         {
           "action": "VIEW",
