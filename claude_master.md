@@ -953,6 +953,25 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 **🔑 Rappels** : ▶️ **démarrable sans Google** = décisions, comptes Expo/RevenueCat, config API 36, 1er build, correctifs natifs, assets. ⛔ **après approbation** = produits, mapping RevenueCat, listing, upload, 14 jours. Maillon **le plus risqué web** = **étape 11** (isoler `react-native-purchases`). Objectif calendrier : atteindre vite l'**étape 15** pour lancer les 14 jours au plus tôt.
 
 ───────────────────────────────
+📌 **NOTES À NE PAS OUBLIER — PHASE 2 / TEST FERMÉ (ajoutées 2026-07-23)**
+───────────────────────────────
+
+**1. 🔴 DÉBLOCAGE DES TESTEURS PENDANT LE TEST FERMÉ (critique)**
+- Pendant les 14 jours de test fermé, les 12 testeurs finiront leur **cycle 1 gratuit** puis heurteront le **paywall** — or le paiement natif n'est pas branché (`STORES_ACTIVE=false` → bouton « Disponible prochainement »). Sans déblocage, les testeurs seraient **bloqués après 1 cycle** → test vidé de son sens.
+- **Décision** : donner l'accès complet aux comptes de test pendant tout le test fermé, par le **même mécanisme que le compte de démo Google** (`subscription_active: true` en base Firestore, **données uniquement, zéro code**). **Méthode exacte analysée le 2026-07-23 → piste retenue : UN compte ManifestMind partagé (e-mail + mot de passe) avec `subscription_active:true` ; les testeurs se connectent via « J'ai déjà un abonnement — Me reconnecter » (login e-mail, la progression restant LOCALE par appareil, Option A → un seul compte suffit pour les 12).** Réversible en fin de test (repasser `subscription_active:false` / supprimer le doc).
+
+**2. 🎵 MUSIQUE DE FOND (à intégrer AVANT publication)**
+- **Décision** : intégrer une **musique de fond dès l'onboarding**, sur **TOUTES** les versions (web ET natif).
+- **Droits** : composée par le conjoint de l'utilisatrice, qui en détient les droits et autorise l'usage dans ManifestMind → **aucun problème de droits** côté Google.
+- **Calendrier** : à faire **PENDANT le test fermé, PAS après publication** (une MàJ post-publication après le **31 août 2026** imposerait l'API 36 + un nouvel examen).
+- ⚠️ **Code PARTAGÉ web/natif → RÈGLE A → re-test web OBLIGATOIRE** avant validation.
+
+**3. 📊 MàJ DATA SAFETY À PRÉVOIR (quand Analytics sera activé)**
+- La déclaration « Sécurité des données » est **exacte aujourd'hui** (collecte : **e-mail, ID utilisateur, historique des achats** ; rien d'autre coché).
+- **MAIS à mettre à jour AVANT de publier la version qui active Firebase Analytics** (chantier priorité 1) : Analytics collecte l'**App Instance ID** (→ « Appareil ou autres ID »), des **événements d'usage** (→ « Activité dans l'appli »), et peut collecter l'**identifiant publicitaire** (→ revoir aussi la déclaration **AD_ID**).
+- **Idem** si ajout de **Crashlytics/Sentry** (→ « Infos et performance des applis ») ou des **notifications push FCM** (→ token/FID). Déclencheur RGPD associé : bannière de consentement (cf. point 16 + PROCHAINS CHANTIERS).
+
+───────────────────────────────
 📚 **BLOC G0 — SYNTHÈSE DES RÈGLES GOOGLE PLAY (référence durable, consignée 2026-07-21)**
 ───────────────────────────────
 
