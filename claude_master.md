@@ -1006,6 +1006,15 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - ⚠️ **Piège identifié** : une clé restreinte **« Applications Android (SHA-256) »** ne fonctionnerait **PAS** — le **SDK Firebase JS** utilisé sur natif n'envoie **ni référent ni en-têtes de package/signature Android**.
 - **Portée** : ce correctif débloque **à la fois** les examinateurs Google Play **et** les 12 testeurs du test fermé. **À faire AVANT la soumission.**
 
+**✅ CORRECTIF CLÉ FIREBASE NATIVE — APPLIQUÉ (23/07/2026)**
+- **Diagnostic prouvé par test curl SANS build** : la **Browser key** renvoie **403 `API_KEY_HTTP_REFERRER_BLOCKED`** sans référent (= cause de l'échec de connexion sur l'APK) ; la **Android key** renvoie **400 `INVALID_LOGIN_CREDENTIALS`** (= acceptée, fonctionne sans référent). Firestore atteint avec les deux clés (refus par les règles, pas par la clé).
+- **Correctif appliqué** : dans le dashboard EAS, `EXPO_PUBLIC_FIREBASE_API_KEY` remplacée par la valeur de la **« Android key (auto created by Firebase) »** (Application restriction = Aucune), sur les **3 environnements**.
+- **Aucune modification de code.** 🟢 **Web inchangé** : le web est déployé depuis le `.env` local (Browser key) ; les variables EAS n'affectent que les builds natifs.
+- ⏳ **Reste à confirmer par un build** : la connexion e-mail du compte de démo sur l'APK.
+
+**📌 MÉTHODE DE TEST RETENUE (23/07/2026)**
+- Un build EAS coûte jusqu'à **1 h d'attente** (file de l'offre gratuite). **Décision : ne plus JAMAIS itérer une correction à la fois par build.** On **valide chaque correctif AVANT le build** par les moyens rapides (**curl**, **Expo Go**, tests locaux), puis on **REGROUPE** les corrections dans un **build unique de confirmation**. *(Preuve : la clé Firebase native a été validée par curl, zéro build gâché — cf. ci-dessus.)*
+
 **2. 🎵 MUSIQUE DE FOND (à intégrer AVANT publication)**
 - **Décision** : intégrer une **musique de fond dès l'onboarding**, sur **TOUTES** les versions (web ET natif).
 - **Droits** : composée par le conjoint de l'utilisatrice, qui en détient les droits et autorise l'usage dans ManifestMind → **aucun problème de droits** côté Google.
