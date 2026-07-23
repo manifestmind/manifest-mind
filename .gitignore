@@ -35,7 +35,6 @@ yarn-error.*
 .env*.local
 
 # Firebase config (contiennent des clés sensibles)
-google-services.json
 GoogleService-Info.plist
 
 # Firebase Functions backend
