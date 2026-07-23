@@ -17,12 +17,14 @@
 // (~5 Mo). Resize à 900 px de large max + JPEG qualité 0,7 → ~100-200 Ko par
 // photo, 8 photos (7 vision board + 1 profil) ≈ 1,5 Mo. Marge confortable.
 //
-// Sur NATIF, on conserve le comportement historique (URI de fichier, ici la
-// sortie du manipulator dans le cache de l'app) : des data-URIs gonfleraient
-// AsyncStorage (limite ~2 Mo par entrée sur Android). ⚠️ Phase 2 : copier vers
-// documentDirectory — le cache peut être nettoyé par l'OS (noté au master).
+// Sur NATIF, on stocke une URI de FICHIER (des data-URIs gonfleraient
+// AsyncStorage, limite ~2 Mo/entrée sur Android). La sortie du manipulator
+// atterrit dans le CACHE (nettoyable par l'OS) → on la DÉPLACE vers
+// documentDirectory (durable) pour que les photos survivent aux nettoyages
+// système (corrigé 2026-07-23 — indispensable aux testeurs sur 14 jours).
 
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import type { ImagePickerAsset } from 'expo-image-picker';
 
@@ -46,5 +48,17 @@ export async function toPersistentPhotoUri(asset: ImagePickerAsset): Promise<str
     if (!res.base64) throw new Error('manipulateAsync: base64 absent');
     return `data:image/jpeg;base64,${res.base64}`;
   }
-  return res.uri;
+
+  // NATIF : déplacer la sortie du manipulator (cache) vers documentDirectory
+  // (durable). Sans ça, l'OS peut nettoyer le cache → photos perdues.
+  const dir = FileSystem.documentDirectory + 'photos/';
+  try {
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+  } catch {
+    // dossier déjà présent — sans conséquence
+  }
+  const name = res.uri.split('/').pop() || `photo_${Date.now()}.jpg`;
+  const dest = dir + name;
+  await FileSystem.moveAsync({ from: res.uri, to: dest });
+  return dest;
 }
