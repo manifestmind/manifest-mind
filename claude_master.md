@@ -978,6 +978,34 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
   - **MUSIQUE DE FOND** : intégration **dès l'onboarding**, **web et natif** (droits détenus par le conjoint de l'utilisatrice — cf. note précédente).
 - **Calendrier** : **après** le premier build natif fonctionnel, **avant** l'envoi de la version aux 12 testeurs.
 
+───────────────────────────────
+🤖 **PREMIER TEST DE L'APK NATIF — RÉSULTATS (23/07/2026)**
+───────────────────────────────
+
+**✅ PREMIER BUILD NATIF ANDROID RÉUSSI — 23/07/2026**
+- Build EAS réussi (profil **preview**, APK), installé et testé sur un **vrai téléphone Android**.
+- 🎯 **API 36 (Android 16) COMPILE SANS PROBLÈME** → la décision **« Route A »** (`expo-build-properties`, en restant sur Expo SDK 54) est **VALIDÉE**. Le repli API 35 n'a **pas** été nécessaire.
+- **Blocages franchis avant d'y arriver** (mémoire) : (1) variables Firebase à fournir via le **dashboard EAS** ; (2) **`google-services.json` désormais suivi par git** (la variable-fichier EAS ne se chargeait pas — cf. commits `9dc0ccf`) ; (3) **entrée `expo-font` retirée** d'`app.json` (URLs Google Fonts traitées comme fichiers locaux au Prebuild — commit `18fdf23`).
+- **Testé et FONCTIONNEL sur natif** : splash, choix de langue, onboarding complet, cycle 1 jouable, journal (saisie), photos/Vision Board (ajout), paywall après le cycle 1 avec « Disponible prochainement », rendu visuel validé, bouton « J'ai déjà un abonnement — Me reconnecter » présent.
+
+**✅ NOTIFICATIONS LOCALES — RÉSOLU (23/07/2026)**
+- Cause = uniquement une **autorisation système** : notifications non activées pour ManifestMind dans les réglages du téléphone.
+- Après activation : **test concluant** — notification programmée à H+quelques minutes, **reçue à l'heure prévue** avec l'affirmation. Fonctionne sur natif.
+- **Reste en suspens (polish, non bloquant)** : le **tap sur la notification n'est pas câblé** vers l'écran affirmation.
+
+**📌 REPORTÉ À FROID, APRÈS LE LANCEMENT — ÉCRANS DE CÉLÉBRATION DE PALIERS**
+- **État constaté** : il n'existe **AUCUN écran de célébration dédié aux paliers de niveau**. Ce qui existe = un **TOAST éphémère** (bandeau violet, 6 s, `CongratulationsToast`) déclenché par `checkMilestones` au franchissement d'un niveau **ou** d'un palier de 1 000 pts.
+- **Aucun schéma ni spec** d'un tel écran retrouvé dans le projet : **ce travail n'existe pas** (les docs retrouvés — `MEMO_S2.md`, tableau niveaux du master — décrivent la **jauge** et le **système de niveaux**, pas des écrans de célébration).
+- **DÉCISION : ne rien faire maintenant.** Si souhaité, ce sera un **chantier NEUF, à concevoir de zéro, à froid APRÈS le lancement**.
+- **Justification du report** : paliers hors de portée à court terme (1ᵉʳ toast à 1 000 pts ≈ 10 cycles ; 1ᵉʳ changement de niveau à 9 125 pts ≈ 91 cycles) — ni l'utilisatrice ni les 12 testeurs ne les atteindront pendant les 14 jours. De plus, `checkMilestones` est du **code PARTAGÉ** (tous les écrans d'étape) → **risque web 🟡**, à traiter sans pression de calendrier.
+
+**🔴 EN COURS — CLÉ FIREBASE NATIVE (problème bloquant identifié)**
+- **Diagnostic confirmé** : la **restriction par référent HTTP** de la clé API Firebase (durcissement **E1**) **BLOQUE toutes les requêtes Firebase sur l'app native** (une app native n'envoie pas de référent). Conséquence : **connexion e-mail impossible** sur l'APK, et Firebase globalement inopérant sur natif (le cycle 1 fonctionnait uniquement sur l'**état local**).
+- Ce cas était **PRÉVU** et déjà noté dans ce journal (« Phase 2 native : la restriction par référent bloquerait l'app native → clé distincte »).
+- **Correctif retenu : Option 1** — créer une **clé API dédiée au natif** avec **Application restriction = « Aucune »** (API restrictions limitées aux APIs Firebase), et la fournir au build via la variable **`EXPO_PUBLIC_FIREBASE_API_KEY`** du dashboard EAS (environnements **Preview/Production**). Le web conserve sa **Browser key** restreinte par référent → **🟢 web inchangé**.
+- ⚠️ **Piège identifié** : une clé restreinte **« Applications Android (SHA-256) »** ne fonctionnerait **PAS** — le **SDK Firebase JS** utilisé sur natif n'envoie **ni référent ni en-têtes de package/signature Android**.
+- **Portée** : ce correctif débloque **à la fois** les examinateurs Google Play **et** les 12 testeurs du test fermé. **À faire AVANT la soumission.**
+
 **2. 🎵 MUSIQUE DE FOND (à intégrer AVANT publication)**
 - **Décision** : intégrer une **musique de fond dès l'onboarding**, sur **TOUTES** les versions (web ET natif).
 - **Droits** : composée par le conjoint de l'utilisatrice, qui en détient les droits et autorise l'usage dans ManifestMind → **aucun problème de droits** côté Google.
