@@ -960,6 +960,16 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - Pendant les 14 jours de test fermé, les 12 testeurs finiront leur **cycle 1 gratuit** puis heurteront le **paywall** — or le paiement natif n'est pas branché (`STORES_ACTIVE=false` → bouton « Disponible prochainement »). Sans déblocage, les testeurs seraient **bloqués après 1 cycle** → test vidé de son sens.
 - **Décision** : donner l'accès complet aux comptes de test pendant tout le test fermé, par le **même mécanisme que le compte de démo Google** (`subscription_active: true` en base Firestore, **données uniquement, zéro code**). **Méthode exacte analysée le 2026-07-23 → piste retenue : UN compte ManifestMind partagé (e-mail + mot de passe) avec `subscription_active:true` ; les testeurs se connectent via « J'ai déjà un abonnement — Me reconnecter » (login e-mail, la progression restant LOCALE par appareil, Option A → un seul compte suffit pour les 12).** Réversible en fin de test (repasser `subscription_active:false` / supprimer le doc).
 
+**🎯 DÉCISION VALIDÉE (2026-07-23) — DÉBLOCAGE DES TESTEURS : OPTION A1 (compte partagé)** *(complète la note ci-dessus, commit `e567528`)*
+- **Méthode retenue** : créer **UN SEUL compte ManifestMind dédié aux bêta-testeurs** (e-mail + mot de passe), avec **`subscription_active: true` posé à la main dans Firestore** — exactement comme le compte de démo Google.
+- **Pourquoi un seul compte suffit pour 12 testeurs** : la progression est stockée **LOCALEMENT** sur chaque appareil (AsyncStorage). Le seul état serveur partagé est `subscription_active` (**lecture seule** côté client). Chaque testeur a donc sa propre progression sur son téléphone, même en partageant le compte.
+- **Compte DÉDIÉ** aux bêta-testeurs, **distinct du compte de démo Google** — pour pouvoir le désactiver en fin de test **sans toucher** au compte utilisé par les examinateurs Google.
+- **Zéro code modifié** → 🟢 aucun risque web, 🟢 aucun risque d'ouvrir le premium à de vrais utilisateurs (**le gate reste intact**).
+- **Options ÉCARTÉES** : liste de comptes de test en dur dans le code · allowlist Firestore lue par le gate · Remote Config — toutes impliquent de **modifier le gate** (code sensible partagé web/natif), avec un **risque élevé** de débloquer le premium pour tout le monde en cas de bug.
+- **Retour en arrière (fin de test)** : repasser `subscription_active` à `false` sur ce doc (ou supprimer le doc / désactiver le compte dans Authentication). **Instantané, aucun redéploiement.**
+- ⚠️ **Instructions testeurs** : au paywall, toucher **« J'ai déjà un abonnement — Me reconnecter »** et se connecter avec l'e-mail + mot de passe fournis. **PAS** le mode anonyme (impossible à débloquer, aucun doc Firestore). **PAS** la connexion Google (ne fonctionne pas sur natif aujourd'hui).
+- ⚠️ **Ces identifiants donnent l'accès premium** : à ne **pas** diffuser au-delà des testeurs.
+
 **2. 🎵 MUSIQUE DE FOND (à intégrer AVANT publication)**
 - **Décision** : intégrer une **musique de fond dès l'onboarding**, sur **TOUTES** les versions (web ET natif).
 - **Droits** : composée par le conjoint de l'utilisatrice, qui en détient les droits et autorise l'usage dans ManifestMind → **aucun problème de droits** côté Google.
