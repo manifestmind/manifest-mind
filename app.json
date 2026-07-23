@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.manifestmind.app",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": ["applinks:manifestmind.firebaseapp.com"]
+      "associatedDomains": [
+        "applinks:manifestmind.firebaseapp.com"
+      ]
     },
     "android": {
       "package": "com.manifestmind.app",
@@ -21,8 +23,16 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "manifestmind.firebaseapp.com" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "manifestmind.firebaseapp.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -59,11 +69,26 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a4587dd4-6d9a-4b96-8091-cf1636292a84"
+      }
     }
   }
 }
