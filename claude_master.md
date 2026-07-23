@@ -970,6 +970,14 @@ Testé sur iPhone Safari (PWA installée depuis le tunnel) : **le popup Google s
 - ⚠️ **Instructions testeurs** : au paywall, toucher **« J'ai déjà un abonnement — Me reconnecter »** et se connecter avec l'e-mail + mot de passe fournis. **PAS** le mode anonyme (impossible à débloquer, aucun doc Firestore). **PAS** la connexion Google (ne fonctionne pas sur natif aujourd'hui).
 - ⚠️ **Ces identifiants donnent l'accès premium** : à ne **pas** diffuser au-delà des testeurs.
 
+**🎨 CHANTIER TYPO + MUSIQUE À FAIRE AVANT LE TEST FERMÉ (regroupés) — noté 2026-07-23**
+- **Découverte (build du 23/07/2026)** : l'app **WEB n'utilise PAS** les vraies polices **Cormorant Garamond / Jost** — elle affiche des **polices de substitution système**. Le plugin `expo-font` déclarait ces polices par **URL Google Fonts**, ce qui ne fonctionnait **ni pour le web** (jamais lu — aucun `@font-face`/lien dans le build app, vérifié dans `dist/`) **ni pour le natif** (cause de l'échec du **Prebuild**). L'entrée `expo-font` a été **retirée** pour débloquer le build (commit `18fdf23`).
+- **Conséquence actuelle** : **natif ET web** affichent des polices de substitution. **Seules les 9 pages légales** chargent les vraies polices (via leur propre `<link>` dans le `<head>`).
+- **DÉCISION** : chantier dédié **AVANT le test fermé**, regroupant **deux améliorations** :
+  - **TYPOGRAPHIE (option c)** : **embarquer les vraies polices** Cormorant Garamond et Jost, pour le **natif ET le web**, afin d'unifier l'identité visuelle sur toutes les plateformes. ⚠️ Ce chantier **CHANGERA le rendu du web** (aujourd'hui en fallback) — c'est une **amélioration DÉLIBÉRÉE et assumée, décidée par l'utilisatrice**, et **non une violation de la règle A**. À **valider écran par écran** (débordements, alignements, centrage).
+  - **MUSIQUE DE FOND** : intégration **dès l'onboarding**, **web et natif** (droits détenus par le conjoint de l'utilisatrice — cf. note précédente).
+- **Calendrier** : **après** le premier build natif fonctionnel, **avant** l'envoi de la version aux 12 testeurs.
+
 **2. 🎵 MUSIQUE DE FOND (à intégrer AVANT publication)**
 - **Décision** : intégrer une **musique de fond dès l'onboarding**, sur **TOUTES** les versions (web ET natif).
 - **Droits** : composée par le conjoint de l'utilisatrice, qui en détient les droits et autorise l'usage dans ManifestMind → **aucun problème de droits** côté Google.
