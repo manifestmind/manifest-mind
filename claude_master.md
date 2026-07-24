@@ -1447,3 +1447,19 @@ Build EAS **`54ef4e56`** (commit `0b0aabc`), installé via **adb** et testé sur
 **Objectif** : garder la maîtrise de ce qui part sur chaque plateforme, éviter les régressions sur une version web stable, ne redéployer le web que quand on le décide, avec un contenu choisi.
 
 **⚠️ POINT DE VIGILANCE À TRAITER — redéploiement web (prévu pour la MUSIQUE, Build 2)** : un déploiement web reconstruit TOUT depuis l'état du code → les corrections du Build 1 partiront automatiquement avec. Deux touchent du **code partagé** : **n°3** (messages d'erreur de connexion, `auth.tsx` + `translations.ts`) et **n°5** (démontage du `TextInput` dans le journal, `journal.tsx`). Avant ce déploiement, il faudra : (a) dire précisément ce qui changerait pour un utilisateur web, (b) proposer, si pertinent, de conditionner ces corrections au natif, (c) prévoir un **test web complet après déploiement** (connexion + journal en priorité).
+
+---
+
+## 🔴 BLOQUANTS AVANT PUBLICATION — À TRAITER ABSOLUMENT (consignés le 2026-07-24)
+
+### 🔴 A. Nettoyage RGPD des photos — OBLIGATOIRE avant soumission
+Depuis la **correction n°1** (photos → `documentDirectory`, commit `076ebfa`), les fichiers images **survivent à `AsyncStorage.clear()`** : ils ne sont donc **PAS effacés** à la suppression de compte, et les photos remplacées laissent des **fichiers orphelins** dans `documentDirectory/photos/`.
+⚠️ Nos **pages publiques de suppression de compte** (`suppression_compte_fr.html`, `account_deletion_en.html`, `eliminacion_cuenta_es.html`), **DÉJÀ EN LIGNE et liées à la fiche Play Store**, affirment que « toutes tes données stockées sur ton appareil : progression, points, cycles complétés, entrées de journal, **photos du Vision Board et photo de profil** » sont effacées. Tant que le nettoyage n'est pas fait, cette **affirmation juridique est INEXACTE** — engagement RGPD public non tenu.
+→ **À FAIRE avant soumission** : ajouter le nettoyage de `documentDirectory/photos/` à `confirmDeleteAccount`, et traiter les fichiers orphelins (au remplacement d'une photo). ⚠️ Correction **NATIVE uniquement** (le web stocke les photos en data-URI dans AsyncStorage, déjà effacées par `clear()`) → conditionner à la plateforme, cf. règle de ciblage.
+
+### 🔴 B. Mise à jour Data Safety quand Analytics sera activé
+La déclaration « **Sécurité des données** » de la Play Console est **exacte pour l'app actuelle** (collecte : e-mail, ID utilisateur, historique des achats ; rien d'autre). Elle **DEVRA être mise à jour AVANT** de publier la version activant **Firebase Analytics** :
+- **App Instance ID** → catégorie « **Appareil ou autres ID** »
+- **Événements d'usage** → « **Activité dans l'appli** »
+- **Identifiant publicitaire** éventuel → revoir aussi la déclaration **AD_ID** (aujourd'hui « non »).
+Idem si on ajoute **Crashlytics/Sentry** (→ « Infos et performance ») ou le **push FCM** (→ token/FID).
