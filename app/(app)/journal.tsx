@@ -6,6 +6,7 @@ import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -158,7 +159,11 @@ export default function Journal() {
   }
 
   async function handleFinishCycle() {
-    setLeaving(true);
+    // n°5 conditionnée au natif : WEB = flux d'origine (replace direct). Le crash
+    // Fabric visé par le démontage du TextInput est impossible sur web (pas de New Arch).
+    Platform.OS === 'web'
+      ? router.replace('/(app)/celebration' as any)
+      : setLeaving(true);
   }
 
   function handleTextChange(val: string) {
@@ -202,7 +207,7 @@ export default function Journal() {
 
       const route = getNextStepRoute(status);
       if (route === 'completed') {
-        setTimeout(() => { setLeaving(true); }, 1500);
+        setTimeout(() => { Platform.OS === 'web' ? router.replace('/(app)/celebration' as any) : setLeaving(true); }, 1500);
       } else if (fromCycle !== 'true') {
         setTimeout(() => { router.back(); }, 1500);
       } else {
@@ -232,7 +237,9 @@ export default function Journal() {
       setValidated(true);
       const route = getNextStepRoute(status);
       if (route === 'completed') {
-        setLeaving(true);
+        Platform.OS === 'web'
+          ? router.replace('/(app)/celebration' as any)
+          : setLeaving(true);
       } else if (fromCycle !== 'true') {
         router.back();
       } else {
