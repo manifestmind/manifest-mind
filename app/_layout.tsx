@@ -11,6 +11,7 @@ import { finalizeSignIn } from '../services/authSession';
 import { INITIAL_WEB_HREF } from '../services/initialUrl';
 import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
 import { BackgroundMusicProvider } from '../components/audio/BackgroundMusicProvider';
+import VolumeControl from '../components/audio/VolumeControl';
 import { LanguageProvider } from '../src/i18n/LanguageContext';
 import { useTranslation } from '../src/hooks/useTranslation';
 import { initPwaInstall } from '../services/pwaInstall';
@@ -263,6 +264,7 @@ export default function RootLayout() {
         <Stack.Screen name="(app)/activation"    options={{ animation: 'fade' }} />
       </Stack>
       <AuthToastHost />
+      <VolumeControl />
       </BackgroundMusicProvider>
     </LanguageProvider>
   );
