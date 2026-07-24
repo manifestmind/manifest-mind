@@ -1397,3 +1397,20 @@ Les deux pipelines partagent le même code source Expo. Le routing par `Platform
    - EN : `privacy_policy_en.html`, `terms_of_use_en.html`, `refund_policy_en.html`
    - ES : `politica_privacidad_es.html`, `terminos_uso_es.html`, `politica_reembolso_es.html`
    URLs lues via `t.legal.{privacyUrl,termsUrl,refundUrl}` depuis `parametres.tsx` (section "Légal").
+
+---
+
+## STRATÉGIE DE BUILD NATIF — décidée le 2026-07-23
+
+**Principe (décision utilisatrice)** : un seul chantier par build, JAMAIS mélangés. Le code partagé web/natif (surtout ce qui exige un redéploiement web) est TOUJOURS isolé, pour identifier immédiatement toute régression.
+
+- **BUILD 1 (périmètre GELÉ le 2026-07-23)** — 4 corrections JS + confirmation clé Firebase native :
+  - n°1 persistance photos → `documentDirectory` (`services/imagePersist.ts`) — commit `076ebfa`
+  - n°2 tap notification → écran affirmation (`app/_layout.tsx`) — commit `e59f16b`
+  - n°3 erreurs de connexion non trompeuses (`auth.tsx` + `translations.ts`) — commit `d1a8f8c`
+  - n°4 bouton Apple masqué sur Android, iOS-only (`auth.tsx`) — commit `79bc6c2`
+  - + clé Firebase native (Android key, App-restriction=None) déjà dans les variables EAS Preview/Production → **à CONFIRMER par ce build** (connexion e-mail native qui échouait avant).
+  - Tous : `tsc --noEmit` = 0 et `expo export --platform web` = 0 à chaque commit. Aucun redéploiement web.
+- **BUILD 2** — **MUSIQUE DE FOND, ISOLÉE**. Raison : touche du code PARTAGÉ web/natif ET impose un **redéploiement web**. Jamais mélangée à autre chose (fichier audio pas encore prêt, cf. chantier musique).
+- **BUILD 3** — **Google Sign-In natif**, isolé (`@react-native-google-signin`, SHA, config).
+- **BUILD 4** — **RevenueCat / achats in-app**, isolé. ⚠️ **BLOQUANT avant le test fermé** : les 12 testeurs doivent pouvoir tester le VRAI parcours d'achat (pas seulement le compte de démo).
