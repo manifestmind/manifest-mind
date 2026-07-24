@@ -90,6 +90,17 @@ export default function Journal() {
   const [congratToast, setCongratToast] = useState('');
   const { fromCycle } = useLocalSearchParams();
   const [nextRoute, setNextRoute] = useState('');
+  // Démontage du TextInput avant la transition vers la célébration (cf. rendu plus bas).
+  const [leaving, setLeaving] = useState(false);
+
+  // Navigation vers la célébration UNIQUEMENT après le commit du démontage du
+  // TextInput. Sinon, pendant l'animation slide_from_bottom, Fabric (New Arch)
+  // tente de déplacer le ReactEditText encore monté → crash « View already has a
+  // parent ». setLeaving(true) démonte le champ (rendu conditionnel) ; ce useEffect,
+  // exécuté APRÈS le rendu, lance alors la navigation en sécurité.
+  useEffect(() => {
+    if (leaving) router.replace('/(app)/celebration' as any);
+  }, [leaving]);
 
   useEffect(() => {
     async function load() {
@@ -147,7 +158,7 @@ export default function Journal() {
   }
 
   async function handleFinishCycle() {
-    router.replace('/(app)/celebration' as any);
+    setLeaving(true);
   }
 
   function handleTextChange(val: string) {
@@ -191,7 +202,7 @@ export default function Journal() {
 
       const route = getNextStepRoute(status);
       if (route === 'completed') {
-        setTimeout(() => { router.replace('/(app)/celebration' as any); }, 1500);
+        setTimeout(() => { setLeaving(true); }, 1500);
       } else if (fromCycle !== 'true') {
         setTimeout(() => { router.back(); }, 1500);
       } else {
@@ -221,7 +232,7 @@ export default function Journal() {
       setValidated(true);
       const route = getNextStepRoute(status);
       if (route === 'completed') {
-        router.replace('/(app)/celebration' as any);
+        setLeaving(true);
       } else if (fromCycle !== 'true') {
         router.back();
       } else {
@@ -294,6 +305,11 @@ export default function Journal() {
           </View>
 
           <View style={[styles.textAreaWrapper, validated && { opacity: 0.6 }]}>
+            {/* Démonté pendant la transition vers la célébration : évite que Fabric
+                tente de déplacer ce ReactEditText encore monté (crash « already has a
+                parent »). Invisible pour l'utilisateur (l'écran part de toute façon) ;
+                inerte sur web où la navigation est instantanée. */}
+            {!leaving && (
             <TextInput
               style={styles.textArea}
               multiline
@@ -311,6 +327,7 @@ export default function Journal() {
               // confortablement 150 vrais mots — jamais atteint en usage légitime.
               maxLength={2000}
             />
+            )}
           </View>
 
           {!validated && (
