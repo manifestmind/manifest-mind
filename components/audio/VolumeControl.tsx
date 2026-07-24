@@ -24,7 +24,8 @@
 // only) → sûr pour le rendu statique web. useBackgroundMusic() peut renvoyer null
 // (avant montage du moteur / SSR) : géré.
 
-import { useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useState } from 'react';
 import {
   PanResponder,
   Pressable,
@@ -34,14 +35,14 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBackgroundMusic } from './BackgroundMusicProvider';
+import { DEFAULT_VOLUME, MUSIC_VOLUME_KEY, useBackgroundMusic } from './BackgroundMusicProvider';
 
 const PURPLE = '#6B3FA0';
 const TRACK_WIDTH = 120;
 const TRACK_HEIGHT = 5;
 const THUMB = 16;
-// Aligné sur le défaut de BackgroundMusicProvider (Bloc 2).
-const DEFAULT_VOLUME = 0.15;
+// DEFAULT_VOLUME et MUSIC_VOLUME_KEY sont importés de BackgroundMusicProvider
+// (source unique partagée avec le lecteur).
 
 function SpeakerIcon({ muted }: { muted: boolean }) {
   return (
@@ -82,6 +83,31 @@ export default function VolumeControl() {
   const [open, setOpen] = useState(false);
   const [volume, setVolume] = useState(DEFAULT_VOLUME);
 
+  // Miroir du volume courant, lu par les handlers du PanResponder (créé une fois).
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+
+  // Bloc 4 — au démarrage : relire le niveau mémorisé pour positionner le curseur
+  // (le lecteur démarre déjà au bon volume via BackgroundMusicProvider). On teste
+  // Number.isFinite pour respecter un 0 mémorisé ; sinon on garde le défaut.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(MUSIC_VOLUME_KEY);
+        const parsed = raw != null ? parseFloat(raw) : NaN;
+        if (!cancelled && Number.isFinite(parsed)) {
+          setVolume(Math.min(1, Math.max(0, parsed)));
+        }
+      } catch {
+        /* storage indisponible : garder le défaut */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Applique une position tactile (relative à la piste) au volume [0..1].
   const apply = (x: number) => {
     const v = Math.max(0, Math.min(1, x / TRACK_WIDTH));
@@ -90,12 +116,19 @@ export default function VolumeControl() {
     if (p) p.volume = v;
   };
 
+  // Bloc 4 — persistance AU RELÂCHÉ (pas à chaque micro-mouvement du curseur).
+  const persist = () => {
+    AsyncStorage.setItem(MUSIC_VOLUME_KEY, String(volumeRef.current)).catch(() => {});
+  };
+
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (e: GestureResponderEvent) => apply(e.nativeEvent.locationX),
       onPanResponderMove: (e: GestureResponderEvent) => apply(e.nativeEvent.locationX),
+      onPanResponderRelease: () => persist(),
+      onPanResponderTerminate: () => persist(),
     }),
   ).current;
 

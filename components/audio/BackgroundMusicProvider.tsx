@@ -24,6 +24,7 @@
 // persistance du volume (Bloc 4) s'y branchent sans refonte. La valeur vaut
 // `null` tant que le moteur n'est pas monté (SSR / avant hydratation).
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
@@ -32,8 +33,22 @@ import { useAudioPlayer } from 'expo-audio';
 // Sur web, le fichier n'est réellement récupéré qu'au player.replace() (1er geste).
 const AUDIO_SOURCE = require('../../assets/audio/background-music.mp3');
 
-// Volume discret de départ (deviendra réglable/persisté aux blocs 3-4).
-const DEFAULT_VOLUME = 0.15;
+// Clé AsyncStorage du volume mémorisé (Bloc 4) + volume par défaut (1er lancement).
+// Exportés pour que VolumeControl (Bloc 3/4) partage EXACTEMENT la même clé/valeur.
+export const MUSIC_VOLUME_KEY = 'music_volume';
+export const DEFAULT_VOLUME = 0.15;
+
+// Lit le volume mémorisé. Respecte 0 (silence conservé) — d'où Number.isFinite et
+// NON `parsed || défaut` qui écraserait un 0 légitime. Défaut si absent/illisible.
+async function loadSavedVolume(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(MUSIC_VOLUME_KEY);
+    const parsed = raw != null ? parseFloat(raw) : NaN;
+    return Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : DEFAULT_VOLUME;
+  } catch {
+    return DEFAULT_VOLUME;
+  }
+}
 
 type BackgroundMusicValue = { player: ReturnType<typeof useAudioPlayer> };
 
@@ -56,45 +71,61 @@ function AudioEngine({ onReady }: { onReady: (value: BackgroundMusicValue) => vo
   useEffect(() => {
     onReady({ player });
 
-    if (Platform.OS !== 'web') {
-      // ── NATIF : boucle + volume discret + lecture immédiate ──
+    let cancelled = false;
+    let removeListeners: (() => void) | undefined;
+
+    (async () => {
+      // 🔑 ANTI-BLIP : on charge le volume mémorisé AVANT tout démarrage de la
+      // lecture. La lecture ne commence donc JAMAIS au volume par défaut pour
+      // « sauter » ensuite au niveau sauvegardé. Coût = une lecture AsyncStorage
+      // (quelques ms), imperceptible. Un 0 mémorisé (silence) est respecté.
+      const initial = await loadSavedVolume();
+      if (cancelled) return;
       player.loop = true;
-      player.volume = DEFAULT_VOLUME;
-      try {
-        player.play();
-      } catch {
-        /* no-op */
+
+      if (Platform.OS !== 'web') {
+        // ── NATIF : volume appliqué AVANT play() → démarre au bon niveau ──
+        player.volume = initial;
+        try {
+          player.play();
+        } catch {
+          /* no-op */
+        }
+        return;
       }
-      return;
-    }
 
-    // ── WEB : autoplay bloqué → démarrage au 1er geste + chargement strict ──
-    // On ne CHARGE le fichier (replace) qu'à cet instant : un visiteur qui
-    // rebondit avant toute interaction ne télécharge jamais les 3,11 Mo.
-    if (typeof document === 'undefined') return;
+      // ── WEB : autoplay bloqué → démarrage au 1er geste + chargement strict ──
+      // On ne CHARGE le fichier (replace) qu'à cet instant : un visiteur qui
+      // rebondit avant toute interaction ne télécharge jamais les 3,11 Mo.
+      if (typeof document === 'undefined') return;
 
-    const events = ['pointerdown', 'touchstart', 'keydown', 'click'] as const;
+      const events = ['pointerdown', 'touchstart', 'keydown', 'click'] as const;
 
-    function start() {
-      try {
-        player.replace(AUDIO_SOURCE); // déclenche le téléchargement MAINTENANT
-        player.loop = true;
-        player.volume = DEFAULT_VOLUME;
-        player.play();
-      } catch {
-        /* refus navigateur : ne rien casser */
+      function start() {
+        try {
+          player.replace(AUDIO_SOURCE); // déclenche le téléchargement MAINTENANT
+          player.loop = true;
+          player.volume = initial; // volume mémorisé appliqué dès le démarrage
+          player.play();
+        } catch {
+          /* refus navigateur : ne rien casser */
+        }
+        remove();
       }
-      remove();
-    }
 
-    const remove = () =>
-      events.forEach((e) => document.removeEventListener(e, start, true));
+      const remove = () =>
+        events.forEach((e) => document.removeEventListener(e, start, true));
+      removeListeners = remove;
 
-    events.forEach((e) =>
-      document.addEventListener(e, start, { once: true, capture: true }),
-    );
+      events.forEach((e) =>
+        document.addEventListener(e, start, { once: true, capture: true }),
+      );
+    })();
 
-    return remove;
+    return () => {
+      cancelled = true;
+      removeListeners?.();
+    };
   }, [player, onReady]);
 
   return null;
