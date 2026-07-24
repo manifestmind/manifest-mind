@@ -244,13 +244,13 @@ export default function Auth() {
         </View>
 
         <View style={styles.buttonsContainer}>
-          {/* Apple Sign-In : coquille vide (handleAppleSignIn = toast). Le câblage
-              web exige un compte Apple Developer payant, qu'on n'a pas encore →
-              masqué sur web pour ne pas proposer un bouton qui ne fait rien.
-              Code conservé : il reprend vie en Phase 2 (App Store), où Apple
-              IMPOSE son sign-in dès qu'on propose Google. Sur web, Google +
-              email/magic link suffisent. */}
-          {Platform.OS !== 'web' ? (
+          {/* Apple Sign-In : coquille vide (handleAppleSignIn = toast). Affiché
+              UNIQUEMENT sur iOS, où Apple IMPOSE son sign-in dès qu'on propose
+              Google (Phase 2 App Store) et où le bouton reprendra vie. Masqué sur
+              web ET Android : y montrer un bouton qui ne fait que « Disponible
+              prochainement » ferait mauvaise impression (et remarque possible à
+              l'examen Google). Code conservé → réactivation auto en phase iOS. */}
+          {Platform.OS === 'ios' ? (
             <Pressable style={styles.appleButton} onPress={handleAppleSignIn}>
               <Svg width="14" height="14" viewBox="0 0 18 18">
                 <Path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4z" fill="white"/>
