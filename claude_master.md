@@ -1412,6 +1412,20 @@ Les deux pipelines partagent le même code source Expo. Le routing par `Platform
   - n°5 crash journal → célébration (démontage du `TextInput` avant navigation ; Fabric/New Arch réparentait le `ReactEditText` pendant `slide_from_bottom`) (`app/(app)/journal.tsx`) — commit `0b0aabc`
   - + clé Firebase native (Android key, App-restriction=None) déjà dans les variables EAS Preview/Production → **à CONFIRMER par ce build** (connexion e-mail native qui échouait avant).
   - Tous : `tsc --noEmit` = 0 et `expo export --platform web` = 0 à chaque commit. Aucun redéploiement web.
+
+### ✅ BUILD 1 ENTIÈREMENT VALIDÉ — CANDIDAT AU TEST FERMÉ (24/07/2026)
+Build EAS **`54ef4e56`** (commit `0b0aabc`), installé via **adb** et testé sur **téléphone Honor réel** (ALI-NX1, API/Android confirmés). Toutes les corrections validées sur APK :
+- **Clé Firebase native** (Android key sans restriction de référent, via variables EAS) → connexion e-mail **fonctionnelle** ✅
+- **n°1** persistance photos → `documentDirectory` (`076ebfa`) : photo Vision Board survit à la fermeture de l'app ✅
+- **n°2** tap notification → écran affirmation (`e59f16b`) : notification reçue à l'heure, tap ouvre bien l'écran Affirmation ✅
+- **n°3** erreurs de connexion honnêtes (`d1a8f8c`) : mauvais mot de passe → « identifiants incorrects », cooldown au 3ᵉ essai ✅
+- **n°4** bouton Apple masqué sur Android (`79bc6c2`) : absent de l'écran de connexion ✅
+- **n°5** crash journal → célébration (`0b0aabc`) : corrigé, testé dans les **conditions exactes** du plantage (cycle complet → journal → « Passer » sans écrire → célébration s'affiche normalement, montée par le bas conservée, points OK, retour à la progression, aucun écran blanc ni fermeture) ✅
+- **Abonnement compte de démo** reconnu : pas de paywall, passage au cycle suivant ✅
+- **API 36 (Android 16)** confirmée dans l'APK installé ✅
+
+→ **L'application native fonctionne de bout en bout.** Ce build est le **CANDIDAT AU TEST FERMÉ**, sous réserve des chantiers restants (musique, Google Sign-In, RevenueCat — ce dernier BLOQUANT avant le test fermé).
+
 - **BUILD 2** — **MUSIQUE DE FOND, ISOLÉE**. Raison : touche du code PARTAGÉ web/natif ET impose un **redéploiement web**. Jamais mélangée à autre chose (fichier audio pas encore prêt, cf. chantier musique).
 - **BUILD 3** — **Google Sign-In natif**, isolé (`@react-native-google-signin`, SHA, config).
 - **BUILD 4** — **RevenueCat / achats in-app**, isolé. ⚠️ **BLOQUANT avant le test fermé** : les 12 testeurs doivent pouvoir tester le VRAI parcours d'achat (pas seulement le compte de démo).
