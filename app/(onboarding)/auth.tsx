@@ -9,6 +9,19 @@ import { signInWithGoogle } from '../../services/googleAuth';
 import { finalizeSignIn } from '../../services/authSession';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
+// Codes Firebase qui signifient VRAIMENT « identifiants invalides » (et rien
+// d'autre — la protection anti-énumération regroupe mauvais mot de passe,
+// e-mail inconnu et compte Google-only sous auth/invalid-credential). Tout code
+// HORS de cette liste (clé API bloquée, permission refusée, config, cas
+// inattendu) ne doit JAMAIS être présenté comme un mauvais mot de passe.
+const CREDENTIAL_ERROR_CODES = new Set([
+  'auth/invalid-credential',
+  'auth/invalid-login-credentials',
+  'auth/wrong-password',
+  'auth/user-not-found',
+  'auth/invalid-email',
+  'auth/user-disabled',
+]);
 
 export default function Auth() {
   const insets = useSafeAreaInsets();
@@ -92,9 +105,18 @@ export default function Auth() {
         showAuthToast(t.auth.erreurTropDeTentatives, 'error');
         return;
       }
-      // La protection anti-énumération de Firebase regroupe mauvais mot de passe,
-      // e-mail inconnu et compte Google-only sous auth/invalid-credential. Un seul
-      // message honnête, qui oriente vers « mot de passe oublié » ou Google.
+      // ⚠️ NE PAS tout rabattre sur « identifiants incorrects » : une clé API
+      // bloquée, une permission refusée ou un cas inattendu renverraient alors un
+      // message MENSONGER (« mauvais mot de passe ») masquant le vrai problème —
+      // exactement ce qui a coûté une heure de debug côté natif (clé E1 bloquée).
+      // Hors des codes VRAIMENT liés aux identifiants : erreur technique, et on ne
+      // pénalise PAS l'utilisateur (pas d'incrément du compteur de tentatives).
+      if (!CREDENTIAL_ERROR_CODES.has(code)) {
+        showAuthToast(t.auth.erreurTechnique, 'error');
+        return;
+      }
+      // Identifiants réellement invalides : un seul message honnête, qui oriente
+      // vers « mot de passe oublié » ou Google (cf. anti-énumération plus haut).
       const next = failedAttempts + 1;
       setFailedAttempts(next);
       if (next >= 3) {

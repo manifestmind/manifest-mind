@@ -237,6 +237,7 @@ export const translations = {
       },
       erreurIdentifiants: 'E-mail ou mot de passe incorrect. Si tu n\'as jamais défini de mot de passe, utilise « Mot de passe oublié ». Si tu t\'es inscrit avec Google, utilise le bouton Google.',
       erreurTropDeTentatives: 'Trop de tentatives. Patiente quelques instants avant de réessayer.',
+      erreurTechnique: 'Connexion momentanément impossible pour une raison technique. Réessaie plus tard ; si le problème persiste, contacte-nous.',
       alertApple: {
         titre: 'Disponible prochainement',
         corps: 'La connexion Apple sera disponible dans une prochaine version.',
@@ -817,6 +818,7 @@ export const translations = {
       },
       erreurIdentifiants: 'Incorrect e-mail or password. If you never set a password, use “Forgot password”. If you signed up with Google, use the Google button.',
       erreurTropDeTentatives: 'Too many attempts. Please wait a moment before trying again.',
+      erreurTechnique: 'Sign-in is temporarily unavailable for a technical reason. Please try again later; if the problem persists, contact us.',
       alertApple: {
         titre: 'Coming soon',
         corps: 'Apple sign-in will be available in a future version.',
@@ -1378,6 +1380,7 @@ export const translations = {
       },
       erreurIdentifiants: 'Correo o contraseña incorrectos. Si nunca definiste una contraseña, usa «¿Olvidaste tu contraseña?». Si te registraste con Google, usa el botón de Google.',
       erreurTropDeTentatives: 'Demasiados intentos. Espera un momento antes de volver a intentarlo.',
+      erreurTechnique: 'Inicio de sesión no disponible por el momento por un motivo técnico. Inténtalo más tarde; si el problema persiste, contáctanos.',
       alertApple: {
         titre: 'Próximamente',
         corps: 'El acceso con Apple estará disponible en una versión futura.',
