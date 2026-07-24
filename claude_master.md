@@ -1404,13 +1404,32 @@ Les deux pipelines partagent le même code source Expo. Le routing par `Platform
 
 **Principe (décision utilisatrice)** : un seul chantier par build, JAMAIS mélangés. Le code partagé web/natif (surtout ce qui exige un redéploiement web) est TOUJOURS isolé, pour identifier immédiatement toute régression.
 
-- **BUILD 1 (périmètre GELÉ le 2026-07-23)** — 4 corrections JS + confirmation clé Firebase native :
+- **BUILD 1 (périmètre GELÉ le 2026-07-23)** — 5 corrections JS + confirmation clé Firebase native :
   - n°1 persistance photos → `documentDirectory` (`services/imagePersist.ts`) — commit `076ebfa`
   - n°2 tap notification → écran affirmation (`app/_layout.tsx`) — commit `e59f16b`
   - n°3 erreurs de connexion non trompeuses (`auth.tsx` + `translations.ts`) — commit `d1a8f8c`
   - n°4 bouton Apple masqué sur Android, iOS-only (`auth.tsx`) — commit `79bc6c2`
+  - n°5 crash journal → célébration (démontage du `TextInput` avant navigation ; Fabric/New Arch réparentait le `ReactEditText` pendant `slide_from_bottom`) (`app/(app)/journal.tsx`) — commit `0b0aabc`
   - + clé Firebase native (Android key, App-restriction=None) déjà dans les variables EAS Preview/Production → **à CONFIRMER par ce build** (connexion e-mail native qui échouait avant).
   - Tous : `tsc --noEmit` = 0 et `expo export --platform web` = 0 à chaque commit. Aucun redéploiement web.
 - **BUILD 2** — **MUSIQUE DE FOND, ISOLÉE**. Raison : touche du code PARTAGÉ web/natif ET impose un **redéploiement web**. Jamais mélangée à autre chose (fichier audio pas encore prêt, cf. chantier musique).
 - **BUILD 3** — **Google Sign-In natif**, isolé (`@react-native-google-signin`, SHA, config).
 - **BUILD 4** — **RevenueCat / achats in-app**, isolé. ⚠️ **BLOQUANT avant le test fermé** : les 12 testeurs doivent pouvoir tester le VRAI parcours d'achat (pas seulement le compte de démo).
+
+---
+
+## 🎯 RÈGLE DE TRAVAIL — CIBLAGE DES CORRECTIONS PAR PLATEFORME (décidée le 2026-07-23)
+
+**Constat utilisatrice** : la version WEB fonctionne bien et est stable depuis longtemps. Les bugs rencontrés le 23/07/2026 (crash Fabric journal, persistance photos, tap notification, bouton Apple) sont TOUS **spécifiquement NATIFS** — ils n'existent pas sur le web. Appliquer ces correctifs au web ne résoudrait rien et introduirait un **risque inutile de régression** sur une version qui marche.
+
+**Contexte** : les trois plateformes (web / Google Play / Apple) **divergent DÉJÀ par nature** — Paddle sur web vs Google Play Billing sur natif, clés Firebase différentes, Sign in with Apple iOS-only, boutons masqués selon la plateforme. Variantes assumées d'un même code.
+
+**RÈGLE : NE PAS APPLIQUER AU WEB CE QUI NE CONCERNE QUE LE NATIF.** Pour CHAQUE correction future :
+1. **Dire explicitement** si le problème existe AUSSI sur le web, ou s'il est spécifique au natif.
+2. **Si spécifique au natif → conditionner à la plateforme** (`Platform.OS`), pour que le comportement web reste STRICTEMENT inchangé. **C'est le cas par défaut.**
+3. **Si la correction bénéficierait aussi au web → le dire, expliquer pourquoi, et LAISSER TRANCHER l'utilisatrice.** Ne JAMAIS l'appliquer au web sans accord explicite.
+4. **Toujours indiquer, pour chaque correction : « affecte le web : OUI / NON »**, et si OUI, ce que l'utilisateur web verrait changer concrètement.
+
+**Objectif** : garder la maîtrise de ce qui part sur chaque plateforme, éviter les régressions sur une version web stable, ne redéployer le web que quand on le décide, avec un contenu choisi.
+
+**⚠️ POINT DE VIGILANCE À TRAITER — redéploiement web (prévu pour la MUSIQUE, Build 2)** : un déploiement web reconstruit TOUT depuis l'état du code → les corrections du Build 1 partiront automatiquement avec. Deux touchent du **code partagé** : **n°3** (messages d'erreur de connexion, `auth.tsx` + `translations.ts`) et **n°5** (démontage du `TextInput` dans le journal, `journal.tsx`). Avant ce déploiement, il faudra : (a) dire précisément ce qui changerait pour un utilisateur web, (b) proposer, si pertinent, de conditionner ces corrections au natif, (c) prévoir un **test web complet après déploiement** (connexion + journal en priorité).
