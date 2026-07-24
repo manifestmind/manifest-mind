@@ -1463,3 +1463,17 @@ La déclaration « **Sécurité des données** » de la Play Console est **exact
 - **Événements d'usage** → « **Activité dans l'appli** »
 - **Identifiant publicitaire** éventuel → revoir aussi la déclaration **AD_ID** (aujourd'hui « non »).
 Idem si on ajoute **Crashlytics/Sentry** (→ « Infos et performance ») ou le **push FCM** (→ token/FID).
+
+---
+
+## 🎵 CHANTIER MUSIQUE — LIVRÉ (web + natif), déploiement web fait (2026-07-24)
+
+**Fonctionnalité complète** : musique de fond en boucle, volume discret par défaut (0.15), icône haut-parleur + curseur en overlay global sur toutes les pages, persistance du volume.
+
+- **Blocs 0→4** : asset MP3 (`assets/audio/background-music.mp3`, renommé WhatsApp `.mpeg`, zéro ré-encodage) · `expo-audio ~1.1.1` **sans permission micro** (`microphonePermission:false`) · lecteur global `components/audio/BackgroundMusicProvider.tsx` monté dans `app/_layout.tsx` au-dessus de la navigation (ne redémarre jamais) · icône + curseur `components/audio/VolumeControl.tsx` · persistance volume (AsyncStorage).
+- **Démarrage** : natif = immédiat ; **web = au 1er geste** (autoplay navigateur bloqué, divergence assumée) + **chargement strict** (le MP3 n'est téléchargé qu'au 1er geste).
+- **SSR** : moteur audio isolé en **client-only** (sinon `useAudioPlayer` cassait le rendu statique → règle « tailles de routes » née de là, cf. CLAUDE.md).
+- **Curseur tactile (correctif validé au doigt)** — commit **`0438111`** : zone tactile élargie à **44 px** (au lieu du rail de 5 px) + `hitSlop`, corrige le clipping Android ; bords (~10 px) forcent 0/max → **mute et max atteignables au doigt** ; **bouton on/off intégré** (coupe / rétablit le dernier niveau) ; **mémorisation du dernier volume > 0** dans une 2ᵉ clé `music_last_volume` (l'unmute rétablit le vrai niveau même après redémarrage en état muet). Aucune dépendance ajoutée (curseur maison PanResponder).
+- **Build natif de validation** : EAS `f7101452` (commit `0438111`), installé via adb sur Honor réel → **curseur au doigt, bouton on/off, mute aux bords, fermeture : tout validé**.
+- **Déploiement WEB** (2026-07-24) : `firebase deploy **--only hosting**` (projet `manifestmind`, `dist`) → **Functions et règles Firestore NON touchées**. Vérifié en ligne : `manifestmind.web.app` et `manifest-mind.app` = HTTP 200 ; bundle servi `entry-fc73202b…` = code courant ; MP3 servi (200, `audio/mpeg`, 3 270 006 o). Réversible via `firebase hosting:rollback`.
+- **Corrections parties avec le déploiement web** : **n°3** (messages d'erreur de connexion) déployée telle quelle (décidé — identique sur cas réels, message plus juste sur codes exotiques). **n°5** (crash journal→célébration) **conditionnée au natif** (`Platform.OS`, commit `9afe0d0`) → flux web identique à l'avant-n°5. Le modèle 1 cycle était **déjà en ligne** (pas de bascule).
