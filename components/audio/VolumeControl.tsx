@@ -1,28 +1,28 @@
 // components/audio/VolumeControl.tsx
 //
-// Bloc 3 du chantier musique : contrôle du volume de la musique de fond.
+// Bloc 3/4 du chantier musique : contrôle du volume de la musique de fond.
 //
 // Overlay GLOBAL (monté une fois dans app/_layout.tsx, au-dessus du Stack) →
 // présent sur TOUTES les pages (y compris splash/onboarding : signale à
 // l'utilisateur que l'app a une musique, même téléphone en silencieux).
 //
 // - Icône haut-parleur VIOLET (#6B3FA0), jamais grisée, dans un cercle
-//   translucide (lisible sur fonds variés), en HAUT-GAUCHE (coin libre : le bas
-//   a la barre de nav, le haut-droite le compteur de points de celebration).
-// - Au tap : un curseur HORIZONTAL se déploie vers la droite. Gauche = silence
-//   total (0), droite = volume max (1.0). Réglage EN DIRECT via le context du
-//   lecteur (Bloc 2). À volume 0, le haut-parleur devient « barré » (toujours
-//   violet, pas grisé).
-// - Fermeture : re-tap sur l'icône, ou tap en dehors (fond invisible).
-// - Curseur « maison » (PanResponder) → aucune dépendance ajoutée, marche
-//   web ET natif.
+//   translucide, en HAUT-GAUCHE. Au tap : ouvre/ferme le panneau de réglage.
+// - Panneau : un bouton ON/OFF (mute) intégré + un curseur horizontal. Gauche =
+//   silence (0, croix affichée), droite = max (1.0). Réglage EN DIRECT via le
+//   context du lecteur (Bloc 2). Persistance au relâché + au mute (Bloc 4).
+// - Fermeture : re-tap sur l'icône, ou tap réellement EN DEHORS du panneau.
 //
-// ⚠️ La persistance du niveau entre sessions = Bloc 4 (ici, réglage en direct
-// seulement, départ au défaut 0.15).
+// 👆 TACTILE (correctif) : la pastille (16 px) et le rail (5 px) restent fins
+// VISUELLEMENT, mais la zone TACTILE est un conteneur transparent de 44 px de
+// haut (TOUCH_HEIGHT) qui porte les panHandlers + un hitSlop généreux. Étant le
+// PARENT, il rend aussi tactile le débordement de la pastille (clipping Android).
+// Les ~10 px de bord (EDGE) forcent 0 (à gauche) / max (à droite) → mute et max
+// atteignables au doigt. Un toucher dans cette zone ne ferme jamais le panneau.
 //
-// SSR : ne fait AUCUN appel navigateur au rendu (Svg + Views + PanResponder.create
-// only) → sûr pour le rendu statique web. useBackgroundMusic() peut renvoyer null
-// (avant montage du moteur / SSR) : géré.
+// Curseur « maison » (PanResponder) → aucune dépendance ajoutée, marche web ET
+// natif. SSR : le panneau n'est rendu que si `open` (faux au rendu statique) →
+// aucun impact sur le HTML statique ; l'icône seule se rend (Svg + Views).
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
@@ -38,15 +38,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_VOLUME, MUSIC_VOLUME_KEY, useBackgroundMusic } from './BackgroundMusicProvider';
 
 const PURPLE = '#6B3FA0';
-const TRACK_WIDTH = 120;
-const TRACK_HEIGHT = 5;
-const THUMB = 16;
+const TRACK_WIDTH = 120; // largeur VISUELLE du rail
+const TRACK_HEIGHT = 5; // hauteur VISUELLE du rail (fin)
+const THUMB = 16; // pastille VISUELLE (fine)
+const TOUCH_HEIGHT = 44; // hauteur de la ZONE TACTILE (≥ 44 px recommandé)
+const EDGE = 10; // marge de bord : toucher dans les 10 px force 0 (gauche) / 1 (droite)
+// 2ᵉ clé (locale à ce composant) : dernier volume > 0 de l'utilisateur, pour que
+// l'unmute rétablisse le VRAI dernier niveau même après un redémarrage en état muet.
+const LAST_VOLUME_KEY = 'music_last_volume';
 // DEFAULT_VOLUME et MUSIC_VOLUME_KEY sont importés de BackgroundMusicProvider
 // (source unique partagée avec le lecteur).
 
-function SpeakerIcon({ muted }: { muted: boolean }) {
+function SpeakerIcon({ muted, size = 22 }: { muted: boolean; size?: number }) {
   return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox="0 0 24 24">
       {/* Corps du haut-parleur (toujours plein violet) */}
       <Path d="M4 9 H7.5 L12 5 V19 L7.5 15 H4 Z" fill={PURPLE} />
       {muted ? (
@@ -83,9 +88,12 @@ export default function VolumeControl() {
   const [open, setOpen] = useState(false);
   const [volume, setVolume] = useState(DEFAULT_VOLUME);
 
-  // Miroir du volume courant, lu par les handlers du PanResponder (créé une fois).
+  // Miroir SYNCHRONE du volume (lu par persist() et les handlers du PanResponder).
   const volumeRef = useRef(volume);
   volumeRef.current = volume;
+
+  // Dernier volume > 0 connu, pour rétablir le son après un mute (bouton on/off).
+  const lastNonZeroRef = useRef(DEFAULT_VOLUME);
 
   // Bloc 4 — au démarrage : relire le niveau mémorisé pour positionner le curseur
   // (le lecteur démarre déjà au bon volume via BackgroundMusicProvider). On teste
@@ -94,10 +102,27 @@ export default function VolumeControl() {
     let cancelled = false;
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(MUSIC_VOLUME_KEY);
-        const parsed = raw != null ? parseFloat(raw) : NaN;
-        if (!cancelled && Number.isFinite(parsed)) {
-          setVolume(Math.min(1, Math.max(0, parsed)));
+        const [[, rawCur], [, rawLast]] = await AsyncStorage.multiGet([
+          MUSIC_VOLUME_KEY,
+          LAST_VOLUME_KEY,
+        ]);
+        if (cancelled) return;
+
+        // Dernier volume > 0 mémorisé → l'unmute rétablit le VRAI niveau même
+        // après un redémarrage en état muet (volume courant à 0).
+        const parsedLast = rawLast != null ? parseFloat(rawLast) : NaN;
+        if (Number.isFinite(parsedLast) && parsedLast > 0) {
+          lastNonZeroRef.current = Math.min(1, parsedLast);
+        }
+
+        // Volume courant : positionne le curseur (le lecteur démarre déjà au bon
+        // niveau via BackgroundMusicProvider). Number.isFinite pour respecter un 0.
+        const parsedCur = rawCur != null ? parseFloat(rawCur) : NaN;
+        if (Number.isFinite(parsedCur)) {
+          const c = Math.min(1, Math.max(0, parsedCur));
+          setVolume(c);
+          volumeRef.current = c;
+          if (c > 0) lastNonZeroRef.current = c;
         }
       } catch {
         /* storage indisponible : garder le défaut */
@@ -108,17 +133,44 @@ export default function VolumeControl() {
     };
   }, []);
 
-  // Applique une position tactile (relative à la piste) au volume [0..1].
-  const apply = (x: number) => {
-    const v = Math.max(0, Math.min(1, x / TRACK_WIDTH));
-    setVolume(v);
+  // Fixe le volume [0..1] : état + miroir synchrone + lecteur. Mémorise le dernier
+  // niveau > 0 (pour l'unmute).
+  const setLevel = (v: number) => {
+    const c = Math.max(0, Math.min(1, v));
+    if (c > 0) lastNonZeroRef.current = c;
+    volumeRef.current = c;
+    setVolume(c);
     const p = playerRef.current;
-    if (p) p.volume = v;
+    if (p) p.volume = c;
   };
 
-  // Bloc 4 — persistance AU RELÂCHÉ (pas à chaque micro-mouvement du curseur).
+  // Convertit une position tactile (relative à la zone) en volume. Les EDGE px de
+  // chaque bord forcent 0 / 1 → mute et max atteignables au doigt (remap linéaire
+  // de [EDGE, WIDTH-EDGE] vers [0, 1], clampé par setLevel).
+  const apply = (x: number) => {
+    const usable = TRACK_WIDTH - 2 * EDGE;
+    setLevel((x - EDGE) / usable);
+  };
+
+  // Bloc 4 — persistance AU RELÂCHÉ / au mute (pas à chaque micro-mouvement).
   const persist = () => {
-    AsyncStorage.setItem(MUSIC_VOLUME_KEY, String(volumeRef.current)).catch(() => {});
+    const v = volumeRef.current;
+    AsyncStorage.setItem(MUSIC_VOLUME_KEY, String(v)).catch(() => {});
+    // On ne mémorise le "dernier niveau" que s'il est > 0 : ainsi un mute (0)
+    // n'écrase pas le vrai dernier niveau, et l'unmute le retrouvera au relancement.
+    if (v > 0) {
+      AsyncStorage.setItem(LAST_VOLUME_KEY, String(v)).catch(() => {});
+    }
+  };
+
+  // Bouton on/off : coupe (v=0) ou rétablit le dernier volume > 0 mémorisé.
+  const toggleMute = () => {
+    if (volume > 0) {
+      setLevel(0);
+    } else {
+      setLevel(lastNonZeroRef.current > 0 ? lastNonZeroRef.current : DEFAULT_VOLUME);
+    }
+    persist();
   };
 
   const pan = useRef(
@@ -136,7 +188,9 @@ export default function VolumeControl() {
 
   return (
     <>
-      {/* Fond invisible plein écran : tap en dehors → ferme le curseur. */}
+      {/* Fond invisible plein écran : tap RÉELLEMENT en dehors → ferme le curseur.
+          Le panneau (zIndex supérieur) est au-dessus : un toucher dans le panneau
+          n'atteint jamais ce backdrop, donc ne ferme pas. */}
       {open && (
         <Pressable
           style={styles.backdrop}
@@ -158,9 +212,28 @@ export default function VolumeControl() {
 
         {open && (
           <View style={styles.panel}>
-            <View style={styles.track} {...pan.panHandlers}>
-              <View style={[styles.fill, { width: Math.max(0, volume * TRACK_WIDTH) }]} />
-              <View style={[styles.thumb, { left: volume * TRACK_WIDTH - THUMB / 2 }]} />
+            {/* Bouton on/off intégré (mute rapide sans glisser jusqu'au bord). */}
+            <Pressable
+              onPress={toggleMute}
+              style={styles.muteBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 10, right: 6 }}
+              accessibilityRole="button"
+              accessibilityLabel={volume === 0 ? 'Réactiver le son' : 'Couper le son'}
+            >
+              <SpeakerIcon muted={volume === 0} size={20} />
+            </Pressable>
+
+            {/* Zone TACTILE élargie (44 px, transparente) qui porte les panHandlers.
+                Parent du rail → le débordement de la pastille reste tactile (Android). */}
+            <View
+              style={styles.touchZone}
+              hitSlop={{ top: 20, bottom: 20, left: 12, right: 12 }}
+              {...pan.panHandlers}
+            >
+              <View style={styles.track}>
+                <View style={[styles.fill, { width: Math.max(0, volume * TRACK_WIDTH) }]} />
+                <View style={[styles.thumb, { left: volume * TRACK_WIDTH - THUMB / 2 }]} />
+              </View>
             </View>
           </View>
         )}
@@ -197,12 +270,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   panel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(107,63,160,0.12)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  muteBtn: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  touchZone: {
+    width: TRACK_WIDTH,
+    height: TOUCH_HEIGHT,
     justifyContent: 'center',
   },
   track: {
