@@ -1464,6 +1464,11 @@ La déclaration « **Sécurité des données** » de la Play Console est **exact
 - **Identifiant publicitaire** éventuel → revoir aussi la déclaration **AD_ID** (aujourd'hui « non »).
 Idem si on ajoute **Crashlytics/Sentry** (→ « Infos et performance ») ou le **push FCM** (→ token/FID).
 
+### 🔴 C. SHA Play App Signing À AJOUTER dans Firebase avant le test fermé (Google Sign-In natif)
+**SHA Play App Signing À AJOUTER dans Firebase AVANT le test fermé Play Store** — sinon Google Sign-In marchera via l'**APK adb** mais **cassera (DEVELOPER_ERROR / code 10) pour les installs depuis le Play Store**. Ce SHA **n'existe qu'une fois l'app créée dans la Play Console et Play App Signing activé**.
+→ **Étapes le moment venu** : récupérer le SHA dans **Play Console → Intégrité de l'app** → l'**ajouter dans Firebase** (Paramètres → app Android) → **re-télécharger `google-services.json`** → **re-build**.
+Contexte : le **SHA du keystore EAS** est déjà enregistré (`google-services.json` avec client OAuth Android type 1, commit `d366d1f`) → suffisant pour tester en **adb**, mais **PAS** pour les installs Play Store. Ce point C complète pour le Play Store.
+
 ---
 
 ## 🎵 CHANTIER MUSIQUE — LIVRÉ (web + natif), déploiement web fait (2026-07-24)
