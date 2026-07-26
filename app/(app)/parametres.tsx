@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getCycleContent } from '../../hooks/useCycleContent';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
@@ -367,6 +368,22 @@ export default function Parametres() {
     } catch {
       // fallback silencieux — on route quand même
     }
+
+    // 3bis. NATIF : effacer les FICHIERS photos (documentDirectory/photos/). Ils
+    //       survivent à AsyncStorage.clear() (qui ne vide que les références) →
+    //       sans ça, la promesse RGPD des pages de suppression serait fausse.
+    //       Suppression RÉCURSIVE du dossier = toutes les photos + orphelins, en
+    //       un seul appel (idempotent : pas d'erreur si le dossier n'existe pas).
+    //       Sur WEB, les photos sont des data-URI DANS AsyncStorage, déjà effacées
+    //       par clear() → rien à faire (bloc natif-only).
+    if (Platform.OS !== 'web') {
+      try {
+        await FileSystem.deleteAsync(FileSystem.documentDirectory + 'photos/', { idempotent: true });
+      } catch {
+        // dossier absent / storage indisponible — sans conséquence
+      }
+    }
+
     router.replace('/(onboarding)/welcome' as any);
   }
 
