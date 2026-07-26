@@ -1493,3 +1493,12 @@ Contexte : le **SHA du keystore EAS** est déjà enregistré (`google-services.j
 - **RESTE avant test fermé Play Store** : **SHA Play App Signing** à ajouter dans Firebase (cf. BLOQUANT C ci-dessus) — sinon DEVELOPER_ERROR pour les installs Play Store.
 - **Paiement natif = RevenueCat** (prochain chantier). `linkOrSignInWithGoogle` (conversion Google au paywall) reste `'unsupported'` en natif jusque-là.
 - **Web** : rien à recevoir de ce chantier (Google Sign-In web inchangé) ; pas de redéploiement.
+
+---
+
+## 👥 ACCÈS COMPLET TESTEURS — timing upload 1 vs upload 2 (à ne pas oublier)
+
+Pour le **test fermé** (**upload 2**, version complète **avec RevenueCat**), prévoir un **accès complet à toute l'app pour les comptes testeurs** (**paywall levé / accès premium accordé**), afin qu'ils puissent tester l'**entièreté** de l'application **sans blocage de paiement**.
+- **À implémenter au moment de la version testeurs, PAS sur l'upload 1** (technique/interne — sert à créer l'app dans la Play Console, activer Play App Signing et permettre la création des produits ; aucun testeur dessus).
+- **Mécanisme déjà décidé** (cf. plus haut, décision 2026-07-23) : **UN compte ManifestMind partagé** (e-mail + mot de passe) avec **`subscription_active:true` posé à la main dans Firestore** — comme le compte de démo. Progression LOCALE par appareil → un seul compte suffit pour les 12 testeurs. Réversible en fin de test.
+- **Séquence uploads** : **Upload 1** = app complète SAUF RevenueCat (musique, Google Sign-In, RGPD photos, expo-asset, versions alignées) → crée l'app + Play App Signing + produits. **Upload 2** = RevenueCat câblé + **accès complet testeurs** → démarre le test fermé (14 jours).
