@@ -32,6 +32,9 @@ import {
   type User,
 } from 'firebase/auth';
 import { auth } from './firebase';
+// Résolu par Metro : googleNative.web.ts sur web (stub, sans lib native),
+// googleNative.ts sur natif → la lib native n'entre jamais dans le bundle web.
+import { nativeGoogleIdToken } from './googleNative';
 
 export type GoogleSignInResult =
   // Session établie immédiatement (popup) → l'appelant finalise et route.
@@ -55,8 +58,26 @@ function buildProvider(): GoogleAuthProvider {
 }
 
 export async function signInWithGoogle(): Promise<GoogleSignInResult> {
-  if (Platform.OS !== 'web') return { status: 'unsupported' };
+  // ── NATIF (Android/iOS) : sélecteur Google natif → idToken → Firebase ──
+  // Métier réutilisé tel quel : l'appelant (auth.tsx) fait finalizeSignIn() sur
+  // 'signed-in'. signInWithCredential BASCULE sur l'UID Google (comme le
+  // signInWithPopup web) → useSubscriptionSync restaure l'abonnement.
+  if (Platform.OS !== 'web') {
+    const r = await nativeGoogleIdToken();
+    if (r.status === 'cancelled') return { status: 'cancelled' };
+    if (r.status === 'error') return { status: 'error', code: r.code };
+    try {
+      const credential = GoogleAuthProvider.credential(r.idToken);
+      const res = await signInWithCredential(auth, credential);
+      if (__DEV__) console.log('[google] natif OK uid=', res.user.uid, 'email=', res.user.email);
+      return { status: 'signed-in', user: res.user };
+    } catch (e: any) {
+      if (__DEV__) console.log('[google] signInWithCredential échoué', e?.code);
+      return { status: 'error', code: e?.code ?? 'auth/unknown' };
+    }
+  }
 
+  // ── WEB : inchangé (popup → repli redirect) ──
   try {
     const cred = await signInWithPopup(auth, buildProvider());
     if (__DEV__) console.log('[google] popup OK uid=', cred.user.uid, 'email=', cred.user.email);
