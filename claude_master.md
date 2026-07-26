@@ -1502,3 +1502,12 @@ Pour le **test fermé** (**upload 2**, version complète **avec RevenueCat**), p
 - **À implémenter au moment de la version testeurs, PAS sur l'upload 1** (technique/interne — sert à créer l'app dans la Play Console, activer Play App Signing et permettre la création des produits ; aucun testeur dessus).
 - **Mécanisme déjà décidé** (cf. plus haut, décision 2026-07-23) : **UN compte ManifestMind partagé** (e-mail + mot de passe) avec **`subscription_active:true` posé à la main dans Firestore** — comme le compte de démo. Progression LOCALE par appareil → un seul compte suffit pour les 12 testeurs. Réversible en fin de test.
 - **Séquence uploads** : **Upload 1** = app complète SAUF RevenueCat (musique, Google Sign-In, RGPD photos, expo-asset, versions alignées) → crée l'app + Play App Signing + produits. **Upload 2** = RevenueCat câblé + **accès complet testeurs** → démarre le test fermé (14 jours).
+
+---
+
+## 🌐 REDÉPLOIEMENT WEB — à faire À LA TOUTE FIN (après publication stores)
+
+**À faire À LA TOUTE FIN, une fois toutes les applications publiées sur les stores (Google ET Apple).**
+- **Raison** : certaines modifications natives (ex. **alignement des versions SDK 54**, commit `794b19b`) ont **légèrement modifié le bundle web local sans être déployées**. En **redéployant le web en une seule fois à la fin**, si un bug web apparaît, on saura qu'il vient de ces changements natifs — **point de contrôle unique pour isoler la cause**.
+- **NE PAS redéployer le web avant ça** ; le site en ligne reste sur **son bundle actuel** entre-temps (celui du déploiement musique du 2026-07-24, bundle `entry-fc73202b…`).
+- Rappel méthode : `npx expo export --platform web` → `firebase deploy --only hosting` (jamais Functions/Firestore) → vérif routes + tailles + test web complet (connexion, paiement Paddle, journal, musique).
