@@ -1482,3 +1482,14 @@ Contexte : le **SHA du keystore EAS** est déjà enregistré (`google-services.j
 - **Build natif de validation** : EAS `f7101452` (commit `0438111`), installé via adb sur Honor réel → **curseur au doigt, bouton on/off, mute aux bords, fermeture : tout validé**.
 - **Déploiement WEB** (2026-07-24) : `firebase deploy **--only hosting**` (projet `manifestmind`, `dist`) → **Functions et règles Firestore NON touchées**. Vérifié en ligne : `manifestmind.web.app` et `manifest-mind.app` = HTTP 200 ; bundle servi `entry-fc73202b…` = code courant ; MP3 servi (200, `audio/mpeg`, 3 270 006 o). Réversible via `firebase hosting:rollback`.
 - **Corrections parties avec le déploiement web** : **n°3** (messages d'erreur de connexion) déployée telle quelle (décidé — identique sur cas réels, message plus juste sur codes exotiques). **n°5** (crash journal→célébration) **conditionnée au natif** (`Platform.OS`, commit `9afe0d0`) → flux web identique à l'avant-n°5. Le modèle 1 cycle était **déjà en ligne** (pas de bascule).
+
+---
+
+## 🔐 GOOGLE SIGN-IN NATIF ANDROID — VALIDÉ au téléphone (2026-07-26)
+
+**Google Sign-In natif Android VALIDÉ au téléphone (build `4cb96501`, commit `30c848b`)** — sélecteur natif OK, fusion de comptes OK, abonnement retrouvé.
+- Confirmé au doigt : « Continuer avec Google » → **sélecteur de compte Google NATIF** s'ouvre ✅ · connexion → compte existant + **abonnement retrouvé** (fusion de comptes native OK) ✅ · blocage fin de cycle 1 → paiement (modèle 1 cycle normal) ✅ · profil/paramètres/points OK ✅ · musique présente ✅.
+- **Implémentation** : SHA-1/256 du keystore EAS enregistrés dans Firebase (`google-services.json` avec client OAuth Android type 1, commit `d366d1f`) · `@react-native-google-signin/google-signin ^16.1.2` + plugin (commit `becdadc`) · split `googleNative.ts`/`googleNative.web.ts` + branche native de `googleAuth.ts` (commit `30c848b`). **webClientId = client WEB type 3 (…4ejb…).** Branche web intacte, lib native absente du bundle web (vérifié).
+- **RESTE avant test fermé Play Store** : **SHA Play App Signing** à ajouter dans Firebase (cf. BLOQUANT C ci-dessus) — sinon DEVELOPER_ERROR pour les installs Play Store.
+- **Paiement natif = RevenueCat** (prochain chantier). `linkOrSignInWithGoogle` (conversion Google au paywall) reste `'unsupported'` en natif jusque-là.
+- **Web** : rien à recevoir de ce chantier (Google Sign-In web inchangé) ; pas de redéploiement.
