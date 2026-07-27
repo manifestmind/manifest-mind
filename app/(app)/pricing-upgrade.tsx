@@ -6,13 +6,16 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
-import { canPay, FREE_CYCLES, PADDLE_ACTIVE } from '../../services/config';
+import { canPay, FREE_CYCLES, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
+// Résolu par Metro : purchasesNative.web.ts sur web (stub), purchasesNative.ts
+// sur natif → react-native-purchases n'entre jamais dans le bundle web.
+import { nativePurchase, nativeRestore } from '../../services/purchasesNative';
 import { PRICES, formatUSD } from '../../services/prices';
 import { hasActiveSubscription } from '../../services/subscription';
 
@@ -175,20 +178,28 @@ export default function PricingUpgrade() {
       return;
     }
 
-    // ── Branche NATIVE → RevenueCat (futur) ───────────────────────────────
-    // Aujourd'hui : stub d'écriture optimiste, identique au comportement
-    // historique tant que RevenueCat n'est pas câblé. À remplacer par
-    // Purchases.purchaseProduct(...) puis basculer subscription_active='true'
-    // dans le callback success du SDK RevenueCat (cf. checklist pré-stores #1).
+    // ── Branche NATIVE → RevenueCat ───────────────────────────────────────
+    // Atteinte UNIQUEMENT si canPay()=STORES_ACTIVE=true (Phase B). En Phase A
+    // (STORES_ACTIVE=false), le garde-fou `!canPay()` ci-dessus a déjà renvoyé
+    // « Disponible prochainement » → on n'arrive JAMAIS ici (achat inerte).
+    // Comme le web : AUCUNE écriture optimiste de subscription_active — c'est le
+    // webhook RevenueCat → Firestore → useSubscriptionSync qui fait foi. On route
+    // vers l'écran d'activation, qui attend la clé (comme le checkout.completed web).
     try {
-      await AsyncStorage.multiSet([
-        ['selected_plan', selectedPlan],
-        ['subscription_active', 'true'],
-      ]);
+      await AsyncStorage.setItem('selected_plan', selectedPlan);
     } catch {
       // Écriture impossible — continuer quand même
     }
-    router.replace('/(app)/home' as any);
+    const r = await nativePurchase(
+      selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+      auth.currentUser?.uid ?? '',
+    );
+    if (r.status === 'cancelled') return; // achat annulé par l'utilisateur — silence
+    if (r.status !== 'purchased') {
+      showAuthToast(t.paiement.erreurTechnique.replace('{email}', SUPPORT_EMAIL), 'error');
+      return;
+    }
+    router.replace('/(app)/activation' as any);
   }
 
   // Bouton « Confirmer » — acquiert le VERROU (busyRef synchrone + busyKind pour
@@ -248,8 +259,21 @@ export default function PricingUpgrade() {
     }
   }
 
-  function handleRestore() {
-    // stub — intégration RevenueCat à venir
+  async function handleRestore() {
+    // Restauration NATIVE (le lien n'est affiché que sur natif). En Phase A
+    // (STORES_ACTIVE=false → canPay()=false sur natif), on affiche « Disponible
+    // prochainement » → restore INERTE. Le restore réel s'active en Phase B.
+    if (!canPay()) {
+      Alert.alert(t.commun.disponibleProchainement);
+      return;
+    }
+    const r = await nativeRestore(auth.currentUser?.uid ?? '');
+    if (r.status === 'restored') {
+      router.replace('/(app)/activation?restore=1' as any);
+      return;
+    }
+    // 'nothing' ou 'error' → message générique (affiné en Phase B).
+    showAuthToast(t.paiement.erreurTechnique.replace('{email}', SUPPORT_EMAIL), 'error');
   }
 
   return (
