@@ -290,3 +290,8 @@ export const paddleWebhook = onRequest(
     }
   },
 );
+
+// ─── Webhook Adapty (achats natifs stores) — fonction SÉPARÉE ────────────────
+// Défini dans son propre fichier ; ré-exporté ici uniquement pour que Firebase
+// découvre la fonction. N'altère en rien paddleWebhook ci-dessus.
+export { adaptyWebhook } from './adaptyWebhook';
