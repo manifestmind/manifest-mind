@@ -23,6 +23,9 @@ import { useTranslation } from '../../src/hooks/useTranslation';
 import { auth } from '../../services/firebase';
 import { hasActiveSubscription } from '../../services/subscription';
 import { SUPPORT_EMAIL } from '../../services/config';
+// Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
+// n'entre jamais dans le bundle web. Le bouton « Restaurer » est natif-only.
+import { nativeRestore } from '../../services/purchasesNative';
 
 const POLL_MS = 1000;
 // Au-delà, on considère que le webhook ne viendra pas dans un délai raisonnable
@@ -102,6 +105,9 @@ export default function Activation() {
   // Le succès survient PENDANT le check (avant le cooldown) → jamais bloqué.
   const [checking, setChecking] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  // Restauration native (bouton « Restaurer mes achats », phase slow, natif only).
+  const [restoring, setRestoring] = useState(false);
+  const [restoreMsg, setRestoreMsg] = useState<string | null>(null);
 
   async function onRetry() {
     if (checking || cooldown > 0) return;
@@ -109,6 +115,32 @@ export default function Activation() {
     const ok = await runCheck();
     setChecking(false);
     if (!ok) setCooldown(RETRY_COOLDOWN_S);
+  }
+
+  // « Restaurer mes achats » (NATIF) : re-synchronise Adapty via le compte Google
+  // Play → le webhook (re)pose subscription_active. NE DÉCLENCHE JAMAIS d'achat
+  // (restore seul → zéro risque de double-facturation). On relance ensuite la
+  // vérif serveur ; le polling en cours confirmera aussi. Débloque UNIQUEMENT sur
+  // subscription_active confirmé (runCheck), jamais sur la seule parole du client.
+  async function onRestore() {
+    if (restoring) return;
+    setRestoring(true);
+    setRestoreMsg(null);
+    try {
+      const r = await nativeRestore(auth.currentUser?.uid ?? '');
+      if (r.status === 'restored' || r.status === 'purchased') {
+        const ok = await runCheck();
+        if (!ok) setRestoreMsg(t.activation.restaureEnCours);
+      } else if (r.status === 'nothing') {
+        setRestoreMsg(t.activation.restaureAucun);
+      } else {
+        setRestoreMsg(t.activation.restaureEchec);
+      }
+    } catch {
+      setRestoreMsg(t.activation.restaureEchec);
+    } finally {
+      setRestoring(false);
+    }
   }
 
   // Décompte visible du cooldown, seconde par seconde.
@@ -323,22 +355,39 @@ export default function Activation() {
             au bon UID. Jamais d'octroi d'accès sur simple affirmation client. */}
         {phase === 'slow' ? (
           <View style={styles.actions}>
-            {/* 3 états VISIBLES, jamais muet : « Vérification… » pendant le
-                getDoc, puis « Réessayer dans Ns » (cooldown affiché), sinon
-                « Réessayer » actif. */}
-            <Pressable
-              style={[styles.btnPrimary, (checking || cooldown > 0) && { opacity: 0.6 }]}
-              onPress={onRetry}
-              disabled={checking || cooldown > 0}
-            >
-              <Text style={styles.btnPrimaryText}>
-                {checking
-                  ? t.activation.verification
-                  : cooldown > 0
-                    ? t.activation.reessayerDans.replace('{s}', String(cooldown))
-                    : t.activation.rafraichir}
-              </Text>
-            </Pressable>
+            {Platform.OS !== 'web' ? (
+              // NATIF : « Restaurer mes achats » en action PRINCIPALE. Re-déclenche
+              // Adapty→webhook (jamais d'achat), puis re-vérifie. Remplace
+              // « Réessayer » (qui ne fait que relire Firestore) : restore fait plus.
+              <Pressable
+                style={[styles.btnPrimary, restoring && { opacity: 0.6 }]}
+                onPress={onRestore}
+                disabled={restoring}
+              >
+                <Text style={styles.btnPrimaryText}>
+                  {restoring ? t.activation.restauration : t.activation.restaurerAchats}
+                </Text>
+              </Pressable>
+            ) : (
+              // WEB : INCHANGÉ — 3 états visibles « Vérification… » / « Réessayer
+              // dans Ns » (cooldown) / « Réessayer ».
+              <Pressable
+                style={[styles.btnPrimary, (checking || cooldown > 0) && { opacity: 0.6 }]}
+                onPress={onRetry}
+                disabled={checking || cooldown > 0}
+              >
+                <Text style={styles.btnPrimaryText}>
+                  {checking
+                    ? t.activation.verification
+                    : cooldown > 0
+                      ? t.activation.reessayerDans.replace('{s}', String(cooldown))
+                      : t.activation.rafraichir}
+                </Text>
+              </Pressable>
+            )}
+            {restoreMsg ? (
+              <Text style={styles.restoreMsg} numberOfLines={0}>{restoreMsg}</Text>
+            ) : null}
             {escalated ? (
               <Pressable style={styles.btnRecours} onPress={() => router.replace('/(onboarding)/auth' as any)}>
                 <Text style={styles.btnRecoursText}>{t.activation.jaiPaye}</Text>
@@ -452,5 +501,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
     marginTop: 2,
+  },
+  restoreMsg: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#3A3530',
+    textAlign: 'center',
+    lineHeight: 18,
+    width: '100%',
+    maxWidth: 340,
   },
 });
