@@ -1607,3 +1607,11 @@ G. **Build** — EAS production AAB (versionCode → **4**) ; puis test téléph
 - **Intl.NumberFormat** : très probablement OK (Hermes d'Expo avec ICU), mais à **confirmer sur ton téléphone** — repli option B automatique en filet.
 - Sujets **reportés** (documentés plus haut) : CGU au point de création (uniforme partout), preuve de consentement côté serveur, sync cloud de la progression, libellés « Google Play » → dépendants plateforme pour iOS, passage cosmétique commentaires « RevenueCat → Adapty ».
 - Au prochain **audit des tailles de routes** : s'attendre à un **décalage uniforme** (bundle partagé), PAS un effondrement.
+
+## ✅ AVANCEMENT PHASE B (2026-07-29)
+- **Placeholders remplis** (commit `b2c1c2d`) : `PLACEMENT_ID = 'main_paywall'`, `ADAPTY_API_KEY = 'public_live_…'` (clé PUBLIQUE SDK). **`STORES_ACTIVE` reste `false`**.
+- **`adaptyWebhook` DÉPLOYÉ** (europe-west1, 2ᵉ gén.) → **URL** : `https://europe-west1-manifestmind.cloudfunctions.net/adaptyWebhook`. `functions:list` = **2 fonctions** (adaptyWebhook + paddleWebhook), paddleWebhook **intact**. Les 2 secrets (`ADAPTY_WEBHOOK_AUTHORIZATION` + `ADAPTY_SANDBOX_WEBHOOK_AUTHORIZATION`, **même valeur**, versions/1) accessibles à la fonction.
+- ⚠️ **CLI Firebase = `npx firebase …`** sur cette machine (pas de binaire global).
+- 🔴 **Testeur de licence Google Play = événements SANDBOX** (doc Adapty) → dans Adapty, remplir **LES DEUX endpoints (production ET sandbox)** avec la **MÊME URL** + **MÊME valeur d'autorisation**, sinon les achats de test n'envoient AUCUN webhook. Le code n'a AUCUNE distinction sandbox/prod dans le traitement (un événement sandbox accorde bien `subscription_active`).
+- ⚠️ **Node.js 20 déprécié — décommission 2026-10-30** : paddleWebhook + adaptyWebhook en nodejs20 → prévoir une montée de runtime avant cette date (non urgent).
+- **RESTE** : (toi) remplir les 2 endpoints Adapty + cocher les 7 événements (dont `access_level_updated`) + test bouton Adapty → puis (moi, sur feu vert **explicite**) basculer `STORES_ACTIVE=true` (commit séparé) → build AAB.
