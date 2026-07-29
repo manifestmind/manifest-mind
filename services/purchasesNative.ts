@@ -47,6 +47,15 @@ async function ensureActivated(customerUserId: string) {
   await adapty.activate(ADAPTY_API_KEY, { customerUserId });
 }
 
+// Activation d'Adapty AU DÉMARRAGE (appelée par le root layout, natif +
+// STORES_ACTIVE). Idempotente : ensureActivated active une fois, puis ré-identifie
+// l'UID courant à chaque appel (utile après une conversion / changement de session).
+// À utiliser en FIRE-AND-FORGET côté appelant : ne doit jamais bloquer le démarrage.
+export async function nativeInitAdapty(appUserID: string): Promise<void> {
+  if (!appUserID) return;
+  await ensureActivated(appUserID);
+}
+
 // Sélectionne le produit correspondant au plan dans les produits du placement,
 // par `vendorProductId` (Product ID Google Play).
 function pickProduct(

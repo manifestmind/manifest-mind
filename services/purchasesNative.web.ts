@@ -20,3 +20,9 @@ export async function nativePurchase(): Promise<NativePurchaseResult> {
 export async function nativeRestore(): Promise<NativePurchaseResult> {
   return { status: 'error', code: 'web-not-supported' };
 }
+
+// no-op sur web : aucun SDK natif à activer. Le root layout garde déjà l'appel
+// derrière `Platform.OS !== 'web'`, mais ce stub garantit un module résolvable.
+export async function nativeInitAdapty(): Promise<void> {
+  // rien à faire sur web
+}

@@ -2,11 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, router, useSegments } from 'expo-router';
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
-import { getRedirectResult, isSignInWithEmailLink, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
+import { getRedirectResult, isSignInWithEmailLink, onAuthStateChanged, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { AuthToastHost, showAuthToast } from '../components/ui/AuthToast';
 import { auth } from '../services/firebase';
+import { STORES_ACTIVE } from '../services/config';
+// Résolu par Metro : purchasesNative.web.ts sur web (no-op) → react-native-adapty
+// n'entre jamais dans le bundle web.
+import { nativeInitAdapty } from '../services/purchasesNative';
 import { finalizeSignIn } from '../services/authSession';
 import { INITIAL_WEB_HREF } from '../services/initialUrl';
 import { useSubscriptionSync } from '../hooks/useSubscriptionSync';
@@ -18,6 +22,27 @@ import { initPwaInstall } from '../services/pwaInstall';
 
 function SubscriptionSync() {
   useSubscriptionSync();
+  return null;
+}
+
+// Active Adapty AU DÉMARRAGE (natif uniquement, gardé STORES_ACTIVE) et
+// ré-identifie l'UID Firebase à chaque changement de session → « Restaurer » et
+// l'achat disposent toujours du bon customerUserId, et les prix localisés chargent
+// vite.
+//
+// 🔒 JAMAIS BLOQUANT : fire-and-forget dans le listener, échec avalé (.catch) → si
+// Adapty est lent, injoignable ou hors ligne, le démarrage de l'app n'est NI
+// retardé NI bloqué (rien n'est attendu dans le chemin de rendu).
+// Web : return immédiat (no-op) ; et nativeInitAdapty résout le stub `.web`.
+// Phase A (STORES_ACTIVE=false) : inerte — s'activera à la bascule Phase B.
+function AdaptyBootstrap() {
+  useEffect(() => {
+    if (Platform.OS === 'web' || !STORES_ACTIVE) return;
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user?.uid) nativeInitAdapty(user.uid).catch(() => {});
+    });
+    return unsub;
+  }, []);
   return null;
 }
 
@@ -244,6 +269,7 @@ export default function RootLayout() {
     <LanguageProvider>
       <BackgroundMusicProvider>
       <AuthBootstrap />
+      <AdaptyBootstrap />
       <DeepLinkHandler />
       <NotificationRouter />
       <SubscriptionSync />
