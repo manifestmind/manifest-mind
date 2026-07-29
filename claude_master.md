@@ -1553,3 +1553,57 @@ Lancement **Android-only** → certains libellés nomment « **Google Play** » 
 - message activation `t.activation.restaureAucun` = « …sur ce compte **Google Play**… »
 
 ⚠️ **Le jour d'un passage iOS**, ces libellés seront **FAUX** (il faudrait « App Store »). À rendre **dépendants de la plateforme** (`Platform.OS` ou un placeholder `{store}` rempli selon la plateforme). Pas un blocage Android aujourd'hui.
+
+# ════════════════════════════════════════════════════════════════════════════
+# 🌙 RÉCAP FIN DE SESSION — 2026-07-28 (intégration Adapty, avant config console)
+# ════════════════════════════════════════════════════════════════════════════
+
+## Commits de la session (10, dans l'ordre)
+1. `77bd2ea` chore — swap dép : react-native-purchases → **react-native-adapty@4.0.1** + config plugin (app.json).
+2. `e45015b` feat — **intégration Adapty** : module natif `purchasesNative.ts` (getFlow/getPaywallProducts/makePurchase/restorePurchases) + Cloud Function `adaptyWebhook` + ré-export index.ts. STORES_ACTIVE reste false.
+3. `a5ce3f5` fix(webhook) — révocation via **`access_level_updated` UNIQUEMENT** (protège lifetime) + niveau premium strict + **anti hors-ordre** (borne `adapty_event_at_ms`, comparaison `<`) + journalisation de tout événement.
+4. `dff99a2` feat(native) — **activation Adapty au démarrage** (root layout, fire-and-forget, natif + STORES_ACTIVE, jamais bloquant).
+5. `65b37a6` fix(paywall) — branche native **onboarding `pricing.tsx` → `nativePurchase`** (fin du premium gratuit sur natif ; anti double-paiement ; plus d'écriture optimiste).
+6. `a8b8666` feat(paywall) — **prix localisés Adapty** sur paywall natif (`useLocalizedPrices`, Intl + détection runtime + repli option B, TOUT-OU-RIEN 3 produits) + filet UID pricing-upgrade.
+7. `ef517f4` fix(paywall) — `bottomText` marketing localisé natif (rattaché au **plan annuel**, repli masqué) ; web USD inchangé.
+8. `8252d63` feat(activation) — **bouton « Restaurer » natif** sur l'écran d'activation (recours post-achat).
+9. `7edb940` feat(activation) — **carte optionnelle de création de compte** après achat natif (`linkAnonymousEmail` link-only, UID conservé).
+10. `c5856e0` feat(parametres) — rangée **« Créer mon compte »** (natif+anonyme+abonné) + **masquage « Se déconnecter »** + e-mail affiché + **libellés Option A** (« Restaurer mes achats Google Play » / « J'ai déjà un abonnement — Me connecter »).
+
+## État exact du projet
+- **`STORES_ACTIVE = false`** (services/config.ts) → paiement natif INERTE (« Disponible prochainement »).
+- **Placeholders VIDES** : `ADAPTY_API_KEY = ''` et `PLACEMENT_ID = ''` (services/purchasesNative.ts).
+- **origin/master = `e45015b`** → **8 commits LOCAUX NON POUSSÉS** (a5ce3f5 → c5856e0). ⚠️ à pousser (`git push origin master`, ne déploie RIEN sur le web).
+- **Working tree propre** hormis `.claude/settings.local.json` (jamais committé) + `store-assets/` (untracked, assets stores).
+- **Web NON redéployé** : le site en ligne garde son ancien bundle. RIEN de cette session n'affecte le web en ligne.
+- Tout vert : `tsc` app + functions = 0 ; export web OK ; tailles de routes non effondrées (décalage uniforme = bundle partagé, PAS les i18n — cf. correction plus haut) ; Adapty ABSENT du bundle web à chaque lot.
+
+## RESTE À FAIRE — CODE (moi, feu vert à chaque étape)
+1. Remplir **`PLACEMENT_ID`** + **`ADAPTY_API_KEY`** (quand tu me les donnes).
+2. Basculer **`STORES_ACTIVE = true`** (avec ton feu vert EXPLICITE — c'est l'instant où le paiement natif s'active).
+3. Poser les secrets + **déployer `adaptyWebhook`** (`firebase deploy --only functions:adaptyWebhook` — ne touche NI paddleWebhook NI hosting NI règles).
+4. **Vérifs web** (tsc + export + tailles + grep) + **AUDIT GLOBAL final** avant build.
+→ Le reste du code natif est **FAIT** (recâblage, démarrage, restore, conversion, prix localisés, webhook).
+
+## RESTE À FAIRE — CONSOLE (toi)
+A. **Adapty** — Monetization : créer le **paywall** avec les 3 produits, puis le **placement** (noter son **identifiant** = `PLACEMENT_ID`). App settings → General/API keys : copier la **clé `public_live_…`**.
+B. **Adapty** — Integrations → Webhook : coller l'**URL** de `adaptyWebhook` (europe-west1) + valeur **Authorization** ; **COCHER les événements** : 🔴 `access_level_updated` (OBLIGATOIRE) + `subscription_started`, `subscription_renewed`, `subscription_renewal_reactivated`, `trial_started`, `trial_converted`, `non_subscription_purchase`.
+C. **Adapty** — App settings → **Transfer access** = *transférer au nouveau profil* (indispensable pour « Restaurer » après réinstallation/nouvel appareil).
+D. **Firebase** — poser les secrets : `firebase functions:secrets:set ADAPTY_WEBHOOK_AUTHORIZATION` (+ sandbox si test).
+E. **Firebase** — ajouter le **SHA Play App Signing** (bloquant C, sinon Google Sign-In casse pour installs Play Store).
+F. **Play Console** — confirmer les 3 produits (`mm_premium_monthly` 12,99 $ / `mm_premium_annual` 79 $ / `mm_premium_lifetime` 149 $) + te **licencier en testeur de licence**.
+G. **Build** — EAS production AAB (versionCode → **4**) ; puis test téléphone (achat réel + logs octroi/révocation + restore + conversion + e-mail).
+
+## À AVOIR SOUS LA MAIN la prochaine fois
+- La **clé `public_live_…`** (Adapty → App settings → General/API keys). ⚠️ PAS la Secret key.
+- Le **placement** créé (avec les 3 produits) + son **identifiant** exact.
+- La liste des **événements webhook** à cocher (ci-dessus, **access_level_updated obligatoire**).
+- Le réglage **Transfer access** = transférer au nouveau profil.
+- Ton **compte en testeur de licence** Play (renouvellements accélérés → tu verras octroi PUIS révocation en direct dans les logs Functions).
+
+## RISQUES / POINTS EN SUSPENS
+- **8 commits locaux non poussés** (cf. ci-dessus).
+- **`access_level_updated` = point unique de défaillance** : si non coché, plus aucune révocation (tout le monde garde le premium). Étape VÉRIFIÉE obligatoire.
+- **Intl.NumberFormat** : très probablement OK (Hermes d'Expo avec ICU), mais à **confirmer sur ton téléphone** — repli option B automatique en filet.
+- Sujets **reportés** (documentés plus haut) : CGU au point de création (uniforme partout), preuve de consentement côté serveur, sync cloud de la progression, libellés « Google Play » → dépendants plateforme pour iOS, passage cosmétique commentaires « RevenueCat → Adapty ».
+- Au prochain **audit des tailles de routes** : s'attendre à un **décalage uniforme** (bundle partagé), PAS un effondrement.
