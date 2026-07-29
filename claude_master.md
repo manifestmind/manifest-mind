@@ -1615,3 +1615,63 @@ G. **Build** — EAS production AAB (versionCode → **4**) ; puis test téléph
 - 🔴 **Testeur de licence Google Play = événements SANDBOX** (doc Adapty) → dans Adapty, remplir **LES DEUX endpoints (production ET sandbox)** avec la **MÊME URL** + **MÊME valeur d'autorisation**, sinon les achats de test n'envoient AUCUN webhook. Le code n'a AUCUNE distinction sandbox/prod dans le traitement (un événement sandbox accorde bien `subscription_active`).
 - ⚠️ **Node.js 20 déprécié — décommission 2026-10-30** : paddleWebhook + adaptyWebhook en nodejs20 → prévoir une montée de runtime avant cette date (non urgent).
 - **RESTE** : (toi) remplir les 2 endpoints Adapty + cocher les 7 événements (dont `access_level_updated`) + test bouton Adapty → puis (moi, sur feu vert **explicite**) basculer `STORES_ACTIVE=true` (commit séparé) → build AAB.
+
+## ✅ AVANCEMENT PHASE B — SUITE (2026-07-29 soir)
+- **Webhook Adapty ACTIF** : après un 401 (secret mal collé dans la saisie masquée PowerShell → un retour-ligne validait la saisie trop tôt) puis un 400, **reset propre des 2 secrets en version 2 + redéploiement scopé** (fonction bien épinglée sur `version:2`, prouvé via `firebase-debug.log`). Correctif code `a80f806` : la **requête de vérification Adapty = corps JSON `{}` strictement vide** → renvoie désormais **200 + `{ok:true,verification:true}`** (log repère **`[adapty] ✅ VERIFICATION endpoint`**), AUCUNE écriture ; un corps NON vide sans `event_type` reste en **400** (« événement malformé » — jamais confondu avec une vérification). Adapty a **accepté l'enregistrement**.
+- **`STORES_ACTIVE=true` BASCULÉ** (commit `c3f893b`, isolé) → paiement natif Adapty **armé**. Web protégé (3 barrières : `canPay()` court-circuite sur web AVANT de lire le flag ; init Adapty s'auto-exclut sur web ; split `.web.ts` garde Adapty hors bundle web — **prouvé** : Adapty absent de `dist/`). ⚠️ Drapeau **compilé** → pas d'interrupteur à distance ; retour arrière = `git revert c3f893b` + **rebuild**.
+
+## 🗺️ ORDRE RÉEL POUR TESTER LE PAIEMENT (corrigé 2026-07-29 après vérif doc Google Play Billing + Adapty)
+⚠️ **Le plan « tester sur mon téléphone AVANT tout envoi console » n'est pas tenable** : Google Play Billing est bloqué tant que l'app n'est pas connue de Play. Il faut un **socle console minimal + un upload sur la piste INTERNE** en amont. MAIS **la piste INTERNE n'est PAS le test fermé** : aucune revue Google, aucun compte à rebours, aucun engagement — privée, dispo en quelques minutes. On garde donc le principe (valider sur ton téléphone d'abord), juste après un upload interne léger.
+
+**Ordre à suivre :**
+1. **AUDIT GLOBAL** (moi) — *avant tout build*. ✅ fait le 2026-07-29 (verdicts : n'affecte pas le web / rien de cassé).
+2. **Build EAS** (toi déclenches) — AAB production (`autoIncrement` gère le versionCode côté EAS, `appVersionSource: remote`).
+3. **Play Console (one-time)** : app `com.manifestmind.app` + **3 produits ACTIFS** + toi **testeuse de licence** (Settings → License testing) + **upload AAB sur piste INTERNE** (déclenche l'enrôlement Play App Signing, rend les produits achetables).
+4. **SHA → Firebase** : sur la page *Signature de l'application*, copier **les DEUX certificats** (clé de signature de l'app + clé d'importation), chacun **SHA-1 + SHA-256**, → Firebase → *Paramètres du projet* → *Général* → app Android `com.manifestmind.app` → *Ajouter une empreinte*. Prend effet quasi immédiat, **pas de rebuild**. L'empreinte « clé de signature de l'app » n'apparaît qu'**après** l'upload (étape 3).
+5. **Opt-in** : ouvrir l'**URL d'opt-in** de la piste interne sur le compte Google du téléphone.
+6. **Installer + tester** (lien interne *ou* sideload EAS — les testeurs de licence contournent le « install depuis Play ») → achat RÉEL gratuit → vérifier webhook Adapty → `subscription_active` dans Firestore (+ octroi/révocation via renouvellements accélérés).
+7. *Plus tard seulement* : **test FERMÉ 14 j / 12 testeurs** — **c'est CE pas (et lui seul) qui démarre le compte à rebours** vers la prod.
+
+**🔴 DEUX PIÈGES À NE PAS OUBLIER (sinon la feuille d'achat échoue) :**
+- **Délai de propagation des produits** : après création/activation des 3 produits dans Play, **attendre quelques heures** (cache Google) avant de tester, sinon les produits ne se chargent pas.
+- **URL d'opt-in obligatoire** : *« Opening the opt-in URL marks your Play account for testing. If you don't complete this step, products will not load. »* (doc Adapty) — sans ouvrir ce lien sur le compte testeur, **aucun produit ne charge**, même socle en place.
+
+## 🧾 DÉCISIONS ASSUMÉES & DOCUMENTÉES (audit 2026-07-29)
+- **Asymétrie paywall natif — CHOIX ASSUMÉ, on ne corrige PAS.** La branche NATIVE de `pricing-upgrade.tsx` (cycle 8) n'a PAS le garde-fou logiciel `hasActiveSubscription` présent dans `pricing.tsx` natif. **On le laisse tel quel, volontairement**, pour deux raisons cumulées :
+  1. Sur natif, la conversion de compte se fait **après** l'achat (écran activation) → au paywall, l'utilisateur est **anonyme**, donc le garde-fou (qui teste l'UID courant) ne se déclencherait de toute façon pas.
+  2. **Surtout : c'est GOOGLE PLAY qui bloque un second achat du même produit.** Quiconque possède déjà l'abonnement reçoit un **« vous possédez déjà cet article »** de la feuille de paiement Play, **avant qu'un centime ne bouge**. Le garde-fou logiciel ne serait qu'une **commodité d'affichage, pas une protection financière** — le store couvre déjà le cas.
+  → Modifier l'écran de paiement à la veille d'un build pour un cas déjà couvert par le store = mauvais calcul (risque > bénéfice). **Ce n'est PAS un oubli.** Recours natif du client = bouton **« Restaurer »** (présent sur pricing-upgrade natif, cf. audit visibilité).
+- **Node.js 20 déprécié (décommission 2026-10-30) — CHANTIER À PRÉVOIR, hors périmètre aujourd'hui.** `paddleWebhook` + `adaptyWebhook` tournent en `nodejs20`. **On ne monte PAS le runtime maintenant** (aucun bénéfice immédiat, risque inutile avant le build). À planifier **avant fin octobre 2026** : passer `functions/package.json` `engines.node` à `22` (ou runtime supporté), `npm install`, `tsc` functions = 0, puis `firebase deploy --only functions` (les DEUX fonctions). À faire à froid, après la publication, sur feu vert dédié.
+
+## 🧭 RÉCAP FIN DE SESSION (2026-07-29 soir) — LE CODE EST TERMINÉ, RESTE LA CONSTRUCTION
+
+### État exact du projet
+- **`STORES_ACTIVE = true`** (commit `c3f893b`) → paiement natif Adapty **armé**.
+- **Placeholders remplis** : `PLACEMENT_ID = 'main_paywall'`, `ADAPTY_API_KEY = 'public_live_R76ZtGAr.9eGdj72wFhOYgZcHHqU9'` (clé PUBLIQUE SDK).
+- **Webhook `adaptyWebhook` déployé + ACTIF** (europe-west1, gen2, nodejs20). Secrets prod+sandbox en **version 2** (fonction épinglée dessus). Correctif vérification `{}`→200 (`a80f806`). Adapty a **accepté l'enregistrement**. `paddleWebhook` intact, jamais redéployé.
+- **Git : TOUT POUSSÉ sur `origin/master`.** Dernier commit = `f94134c`. Working tree propre (hormis `.claude/settings.local.json` jamais committé + `store-assets/` untracked).
+- **Vérifs au vert** : `tsc` app + functions = 0, `expo-doctor` 18/18, export web OK (41 routes variées 33,6–49 kB, **pas d'effondrement**), **Adapty absent du bundle web** (prouvé), `subscription_active` écrit **par les webhooks seuls**, aucun vestige RevenueCat exécutable (lib désinstallée).
+
+### Fait aujourd'hui (liste courte)
+1. Diagnostic + fix du 401 (secret mal collé → reset secrets v2 + redéploiement scopé).
+2. Fix du 400 : requête de vérification Adapty `{}` → 200 + JSON (`a80f806`).
+3. Bascule `STORES_ACTIVE=true` (`c3f893b`).
+4. Audit global complet (web / Paddle / Firestore / tsc / secrets / paywalls / subscription_active / versionCode / git) → verdicts : **n'affecte pas le web / rien de cassé**.
+5. Inventaire code mort RevenueCat → **aucun risque exécutable**, reste 100 % cosmétique (différé).
+6. Lien « Restaurer » natif rendu lisible (`f94134c`, style seul, web identique à l'octet près).
+7. Doc : feuille de route Phase B corrigée + 2 décisions assumées (asymétrie paywall, Node 20).
+
+### ▶️ PROCHAINE SESSION = LA CONSTRUCTION (moment dédié)
+- **Commande exacte** : `eas build --platform android --profile production`
+  (profil `production` → sortie **AAB** `.aab` ; `appVersionSource: remote` + `autoIncrement` → **versionCode auto-incrémenté côté EAS**, aucune saisie manuelle).
+- **À avoir sous la main** :
+  - EAS CLI connecté : vérifier `eas whoami` (sinon `eas login`). Projet déjà lié (`extra.eas.projectId = a4587dd4-6d9a-4b96-8091-cf1636292a84`).
+  - Laisser **EAS gérer le keystore** (clé d'importation) au 1ᵉʳ build production — répondre « yes » à la génération. C'est cette clé qui devient la clé d'importation Play.
+  - Rien à configurer côté Play Console AVANT le build (ça vient après — cf. ORDRE RÉEL plus haut).
+- **Durée** : build cloud EAS Android ≈ **10–25 min** (file d'attente + compilation ; le 1ᵉʳ peut être plus long). Ça tourne sur les serveurs EAS, pas en local.
+- **À vérifier une fois le `.aab` obtenu** :
+  1. Build **SUCCESS** (vert) dans le dashboard EAS + lien de téléchargement du `.aab`.
+  2. **versionCode** attribué (le noter) — doit être supérieur au précédent (garanti par autoIncrement).
+  3. Artefact = **app-bundle `.aab`** (pas APK), package **`com.manifestmind.app`**, **targetSdk 36** (via expo-build-properties).
+  4. Signé par le keystore EAS (clé d'importation).
+- **Ensuite (étapes console, une à la fois)** : upload piste **INTERNE** → 3 produits actifs + toi testeuse de licence → **SHA (2 certificats × SHA-1/SHA-256) → Firebase** → ouvrir l'**URL d'opt-in** → installer sur ton téléphone → **test achat réel** (gratuit) → vérifier webhook Adapty → `subscription_active` dans Firestore. ⚠️ Pièges : **délai de propagation des produits (qqs h)** + **URL d'opt-in obligatoire**. Le **test fermé 14 j** ne vient qu'APRÈS et n'est PAS déclenché par la piste interne.
