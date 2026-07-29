@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import { deleteUser, sendSignInLinkToEmail, signOut } from 'firebase/auth';
+import { deleteUser, onAuthStateChanged, sendSignInLinkToEmail, signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { isPaywalled } from '../../services/access';
@@ -21,16 +21,21 @@ import {
   Animated,
   Alert,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { canPay } from '../../services/config';
+import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function Chevron({ color = '#C4A8D4' }: { color?: string }) {
   return (
@@ -71,6 +76,17 @@ export default function Parametres() {
   // silencieux sur react-native-web — la boîte ne s'affichait jamais, donc la
   // déconnexion et la suppression de compte ne s'exécutaient tout simplement pas.
   const [dialog, setDialog] = useState<'signout' | 'delete' | 'reauth' | null>(null);
+  // État d'auth (Q3) : isAnonymous pilote « Créer mon compte » vs « Se déconnecter » ;
+  // userEmail affiche l'adresse une fois le compte permanent.
+  const [isAnonymous, setIsAnonymous] = useState<boolean | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  // Modal « Créer mon compte » (natif + anonyme + abonné).
+  const [convertVisible, setConvertVisible] = useState(false);
+  const [convEmail, setConvEmail] = useState('');
+  const [convPassword, setConvPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [convBusy, setConvBusy] = useState(false);
+  const [convErr, setConvErr] = useState<string | null>(null);
 
   useEffect(() => {
     const t0 = setTimeout(() => {
@@ -117,6 +133,46 @@ export default function Parametres() {
       }
     })();
   }, []);
+
+  // Suit l'état d'auth : isAnonymous pilote la rangée « Créer mon compte » vs
+  // « Se déconnecter » ; userEmail affiche l'adresse une fois le compte permanent.
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setIsAnonymous(user ? user.isAnonymous : null);
+      setUserEmail(user && !user.isAnonymous ? (user.email ?? null) : null);
+    });
+    return unsub;
+  }, []);
+
+  // Conversion anonyme → permanent (LINK-ONLY, MÊME UID) via le modal « Créer mon
+  // compte ». Succès → onAuthStateChanged met à jour isAnonymous/userEmail (la
+  // rangée disparaît, « Se déconnecter » réapparaît, e-mail affiché). « E-mail déjà
+  // pris » → jamais de bascule d'UID (message « autre adresse »).
+  async function handleConvertCreate() {
+    if (convBusy) return;
+    const email = convEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { setConvErr(t.compte.errEmailInvalide); return; }
+    if (convPassword.length < 6) { setConvErr(t.compte.errPasswordCourt); return; }
+    setConvErr(null);
+    setConvBusy(true);
+    try {
+      const res = await linkAnonymousEmail(email, convPassword, lang);
+      if (res.ok) {
+        setConvertVisible(false);
+        setConvEmail('');
+        setConvPassword('');
+        showAuthToast(t.compte.convertSucces, 'success');
+      } else if (res.code === 'auth/email-already-in-use' || res.code === 'auth/credential-already-in-use') {
+        setConvErr(t.compte.convertEmailPris);
+      } else {
+        setConvErr(mapConversionError(res.code, t.compte));
+      }
+    } catch {
+      setConvErr(t.compte.errGenerique);
+    } finally {
+      setConvBusy(false);
+    }
+  }
 
   // ── Notification helpers ─────────────────────────────────────────────────
   async function requestPermissions(): Promise<boolean> {
@@ -606,15 +662,32 @@ export default function Parametres() {
 
         <View>
           <Text style={styles.sectionLabel}>{t.parametres.sections.compte}</Text>
+          {Platform.OS !== 'web' && userEmail ? <Text style={styles.accountEmail}>{userEmail}</Text> : null}
 
-          {/* Ligne 1 — Se déconnecter */}
-          <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={() => setDialog('signout')}>
-            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
-              <Path d="M13 3h4v14h-4M9 14l4-4-4-4M3 10h10" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.compte.deconnecter}</Text>
-            <Chevron />
-          </Pressable>
+          {/* Ligne 1 — natif + anonyme + ABONNÉ : « Créer mon compte » À LA PLACE de
+              « Se déconnecter » (qui, pour un anonyme, détruirait son seul accès).
+              Après conversion → plus anonyme → « Se déconnecter » réapparaît. Web /
+              compte permanent : « Se déconnecter » (inchangé). */}
+          {Platform.OS !== 'web' && isAnonymous === true && subscriptionActive ? (
+            <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={() => { setConvErr(null); setConvertVisible(true); }}>
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path d="M10 3a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM4 18a6 6 0 0 1 12 0" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </Svg>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{t.compte.convertCreer}</Text>
+                <Text style={styles.rowSub}>{t.compte.convertTitre}</Text>
+              </View>
+              <Chevron />
+            </Pressable>
+          ) : (
+            <Pressable style={[styles.rowBase, styles.rowFirst]} onPress={() => setDialog('signout')}>
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path d="M13 3h4v14h-4M9 14l4-4-4-4M3 10h10" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.compte.deconnecter}</Text>
+              <Chevron />
+            </Pressable>
+          )}
 
           {/* Ligne 2 — Exporter mes données (RGPD portabilité, point 15).
               Placée juste au-dessus de la suppression : les deux droits RGPD
@@ -724,6 +797,63 @@ export default function Parametres() {
 
       {/* Modale d'instructions iOS (point 4-bis) — déclenchée par la rangée « Installer » */}
       <IosInstallModal visible={installIosModal} onClose={() => setInstallIosModal(false)} />
+
+      {/* Modal « Créer mon compte » (Q3, natif + anonyme + abonné) — link-only,
+          MÊME UID. Succès → onAuthStateChanged bascule isAnonymous → la rangée
+          disparaît, « Se déconnecter » réapparaît, e-mail affiché. */}
+      <Modal
+        visible={convertVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { if (!convBusy) setConvertVisible(false); }}
+      >
+        <View style={styles.convBackdrop}>
+          <View style={styles.convCard}>
+            <Text style={styles.convTitle}>{t.compte.convertTitre}</Text>
+            <Text style={styles.convMessage}>{t.compte.convertMessage}</Text>
+            <TextInput
+              style={styles.convInput}
+              placeholder={t.compte.emailPlaceholder}
+              placeholderTextColor="#A09088"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              value={convEmail}
+              onChangeText={setConvEmail}
+              editable={!convBusy}
+            />
+            <View style={styles.convPwRow}>
+              <TextInput
+                style={[styles.convInput, { flex: 1 }]}
+                placeholder={t.compte.passwordPlaceholder}
+                placeholderTextColor="#A09088"
+                secureTextEntry={!showPass}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="newPassword"
+                value={convPassword}
+                onChangeText={setConvPassword}
+                editable={!convBusy}
+              />
+              <Pressable onPress={() => setShowPass((v) => !v)} style={styles.convToggle} disabled={convBusy}>
+                <Text style={styles.convToggleText}>{showPass ? t.compte.masquer : t.compte.afficher}</Text>
+              </Pressable>
+            </View>
+            {convErr ? <Text style={styles.convErr}>{convErr}</Text> : null}
+            <Pressable
+              style={[styles.convBtnPrimary, convBusy && { opacity: 0.6 }]}
+              onPress={handleConvertCreate}
+              disabled={convBusy}
+            >
+              <Text style={styles.convBtnPrimaryText}>{t.compte.convertCreer}</Text>
+            </Pressable>
+            <Pressable onPress={() => { if (!convBusy) setConvertVisible(false); }} disabled={convBusy} style={styles.convCancelBtn}>
+              <Text style={styles.convCancelText}>{t.compte.annuler}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Time Picker */}
       {showTimePicker && (
@@ -938,6 +1068,101 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
     color: '#C4A8D4',
+  },
+
+  // Compte : e-mail affiché + modal « Créer mon compte » (Q3)
+  accountEmail: {
+    fontFamily: 'Jost',
+    fontSize: 12,
+    color: '#7A7068',
+    marginTop: -4,
+    marginBottom: 2,
+  },
+  convBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  convCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#F0EAE0',
+    borderRadius: 18,
+    padding: 20,
+    gap: 12,
+  },
+  convTitle: {
+    fontFamily: 'serif',
+    fontSize: 20,
+    fontStyle: 'italic',
+    color: '#2A2520',
+    textAlign: 'center',
+  },
+  convMessage: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#3A3530',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  convInput: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#2A2520',
+  },
+  convPwRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  convToggle: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  convToggleText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#6B3FA0',
+  },
+  convErr: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#8A3A3A',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  convBtnPrimary: {
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 999,
+    backgroundColor: '#3A3530',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  convBtnPrimaryText: {
+    color: '#F0EAE0',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  convCancelBtn: {
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  convCancelText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    color: '#A09088',
   },
 
   // Navbar

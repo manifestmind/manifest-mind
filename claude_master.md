@@ -1545,3 +1545,11 @@ Les traductions (`src/i18n/translations.ts`) vivent dans le **bundle JS**, PAS d
 Le consentement CGU/Confidentialité est capturé **UNE fois à l'onboarding** (`app/(onboarding)/privacy.tsx`, étape 3/5, case **OBLIGATOIRE** + liens cliquables via `WebBrowser.openBrowserAsync` + horodatage). Les écrans qui **CRÉENT un compte** (auth, formulaires paywalls, carte post-achat Q2) **ne re-montrent PAS** les CGU — ils s'appuient sur ce consentement amont. Cohérent et couvert (écran obligatoire, tous les chemins y passent).
 - **À évaluer plus tard (PAS ce soir)** : faut-il une mention CGU **au** point de création de compte ? Si oui, la mettre **PARTOUT** (auth + paywalls + carte) de façon **uniforme** — jamais sur un seul écran (asymétrie).
 - **⚠️ Point RGPD / preuve** : le consentement est stocké en **LOCAL** (`AsyncStorage 'legal_accepted'` + horodatage) → il **DISPARAÎT à la réinstallation** et il n'existe **AUCUNE trace côté serveur**. Suffit en pratique (écran obligatoire rejoué à chaque install), mais si un jour il faut **PROUVER** un consentement, il n'y a rien. À évaluer plus tard.
+
+## 📱 NOTE iOS — libellés « Google Play » en dur (noté 2026-07-28)
+
+Lancement **Android-only** → certains libellés nomment « **Google Play** » en dur (clair + exact aujourd'hui) :
+- `t.parametres.abonnement.restaurer` = « Restaurer mes achats **Google Play** »
+- message activation `t.activation.restaureAucun` = « …sur ce compte **Google Play**… »
+
+⚠️ **Le jour d'un passage iOS**, ces libellés seront **FAUX** (il faudrait « App Store »). À rendre **dépendants de la plateforme** (`Platform.OS` ou un placeholder `{store}` rempli selon la plateforme). Pas un blocage Android aujourd'hui.
