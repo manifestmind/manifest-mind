@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signInAnonymously, signOut } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
-import { canPay, PADDLE_ACTIVE } from '../../services/config';
+import { canPay, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
@@ -15,6 +15,9 @@ import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
 import { PRICES, formatUSD } from '../../services/prices';
 import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
+// Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
+// n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
+import { nativePurchase } from '../../services/purchasesNative';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -215,21 +218,46 @@ export default function Pricing() {
       return;
     }
 
-    // ── Branche NATIVE → RevenueCat (futur) ────────────────────────────────
-    // Aujourd'hui : stub d'écriture optimiste, identique au comportement
-    // historique tant que RevenueCat n'est pas câblé. À remplacer par
-    // Purchases.purchaseProduct(...) puis basculer subscription_active='true'
-    // dans le callback success du SDK RevenueCat (cf. checklist pré-stores #1).
+    // ── Branche NATIVE → Adapty ────────────────────────────────────────────
+    // Achat RÉEL obligatoire : aucun premium gratuit. On garantit un UID Firebase
+    // (anonyme si besoin) pour que l'achat soit attribuable (customerUserId) et que
+    // le webhook Adapty puisse écrire users/{uid}.subscription_active. AUCUNE
+    // écriture optimiste : Firestore (webhook → useSubscriptionSync) fait foi.
+    const existing = auth.currentUser?.uid;
+    let uid: string;
+    if (existing) {
+      uid = existing;
+    } else {
+      try {
+        uid = (await signInAnonymously(auth)).user.uid;
+      } catch {
+        showAuthToast(t.compte.errGenerique, 'error');
+        return;
+      }
+    }
+    // Garde-fou anti double-paiement (symétrique du web) : déjà abonné → restauration.
+    if (await hasActiveSubscription(uid)) {
+      if (__DEV__) console.log('[pricing] abonnement déjà actif → aucun paiement, restauration');
+      router.replace('/(app)/activation?restore=1' as any);
+      return;
+    }
+    const r = await nativePurchase(selectedPlan as 'mensuel' | 'annuel' | 'lifetime', uid);
+    if (r.status === 'cancelled') return; // annulé par l'utilisateur — on reste sur l'écran
+    if (r.status !== 'purchased') {
+      showAuthToast(t.paiement.erreurTechnique.replace('{email}', SUPPORT_EMAIL), 'error');
+      return;
+    }
+    // Succès : on marque l'onboarding fait + le plan (affichage), SANS écrire
+    // subscription_active (c'est le webhook). L'écran d'activation attend la clé.
     try {
       await AsyncStorage.multiSet([
         ['selected_plan', selectedPlan],
-        ['subscription_active', 'true'],
         ['onboarding_completed', 'true'],
       ]);
     } catch {
       // fallback silencieux — on continue la navigation
     }
-    router.push('/(onboarding)/auth');
+    router.replace('/(app)/activation' as any);
   }
 
   // Bouton « Confirmer » — acquiert le VERROU (busyRef synchrone + busyKind pour
