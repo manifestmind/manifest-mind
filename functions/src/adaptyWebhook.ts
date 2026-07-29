@@ -227,7 +227,28 @@ export const adaptyWebhook = onRequest(
 
     const eventType = event.event_type;
     if (!eventType) {
-      logger.warn('[adapty] event missing event_type');
+      // Deux cas TRÈS différents pour un JSON valide sans event_type :
+      //
+      // (a) REQUÊTE DE VÉRIFICATION Adapty (clic « Enregistrer » dans le dashboard) :
+      //     corps = objet strictement VIDE `{}`. Adapty attend un 2XX + un corps
+      //     JSON valide (+ Content-Type application/json). On répond 200 JSON et on
+      //     n'écrit ABSOLUMENT RIEN (return immédiat, aucun accès Firestore).
+      //     res.json() pose automatiquement `Content-Type: application/json`.
+      //
+      // (b) VRAI événement MALFORMÉ : corps NON vide mais sans event_type. Un vrai
+      //     événement Adapty porte toujours des champs (profile_id, event_datetime,
+      //     event_properties…) → objet non vide → on GARDE le 400 pour qu'il reste
+      //     VISIBLE et ne soit JAMAIS confondu avec une vérification.
+      const isEmptyBody = event !== null && typeof event === 'object' && Object.keys(event).length === 0;
+      if (isEmptyBody) {
+        // Log volontairement très reconnaissable (préfixe ✅ VERIFICATION) pour le
+        // repérer d'un coup d'œil dans les journaux et confirmer que la vérification
+        // Adapty est bien passée par ici.
+        logger.info('[adapty] ✅ VERIFICATION endpoint (corps {} vide) → 200, aucune écriture Firestore');
+        res.status(200).json({ ok: true, verification: true });
+        return;
+      }
+      logger.warn('[adapty] corps non vide sans event_type → 400 (événement malformé)');
       res.status(400).send('Bad Request');
       return;
     }
