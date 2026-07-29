@@ -39,3 +39,33 @@ export function formatUSD(montant: number, lang: Lang): string {
   }
   return `${brut.replace('.', ',')}\u00A0$`;
 }
+
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Formatage localis\u00E9 d'un montant (NATIF \u2014 prix Adapty/Play localis\u00E9s).
+// \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Utilise Intl.NumberFormat (style currency) avec le currencyCode d'Adapty \u2192
+// symbole + s\u00E9parateurs + d\u00E9cimales corrects selon la devise (le yen/won sans
+// d\u00E9cimales, etc.), sans formateur maison fragile.
+//
+// D\u00C9TECTION RUNTIME + REPLI : renvoie `null` si
+//   - Intl l\u00E8ve une exception (Hermes sans ICU, code devise invalide\u2026), OU
+//   - la sortie ne contient AUCUN chiffre non-nul (Intl absent/stub renvoyant du
+//     vide, OU montant arrondi \u00E0 Z\u00C9RO dans la devise \u2014 ex. \u00AB 0,00 \u20AC \u00BB).
+// L'appelant retombe alors sur l'option B (afficher le total tel quel, jamais un
+// prix bricol\u00E9 ni un \u00AB 0,00 \u00BB).
+export function formatLocalizedMoney(
+  amount: number,
+  currencyCode: string,
+  lang: Lang,
+): string | null {
+  try {
+    if (!currencyCode || !Number.isFinite(amount)) return null;
+    const s = new Intl.NumberFormat(lang, { style: 'currency', currency: currencyCode }).format(amount);
+    // Doit contenir au moins un chiffre NON nul, sinon Intl indisponible/stub ou
+    // arrondi \u00E0 z\u00E9ro \u2192 on ne l'affiche pas.
+    if (!/[1-9]/.test(s)) return null;
+    return s;
+  } catch {
+    return null;
+  }
+}

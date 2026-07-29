@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 import { canPay, FREE_CYCLES, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
@@ -16,7 +16,7 @@ import { openCheckout, mapCheckoutError } from '../../services/paddle';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub), purchasesNative.ts
 // sur natif → react-native-purchases n'entre jamais dans le bundle web.
 import { nativePurchase, nativeRestore } from '../../services/purchasesNative';
-import { PRICES, formatUSD } from '../../services/prices';
+import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +26,9 @@ export default function PricingUpgrade() {
   const { lang } = useLanguage();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
+  // Prix affichés : natif+STORES_ACTIVE = localisés Adapty (tout-ou-rien) ; web ou
+  // natif inerte = USD indicatifs (inchangé). Voir src/hooks/useLocalizedPrices.
+  const { cards, pricesReady, phase: pricesPhase, retry: retryPrices } = useLocalizedPrices(lang);
   const [isFreemiumExpired, setIsFreemiumExpired] = useState(false);
   // Conversion inline : si l'utilisateur est anonyme (essai) ou absent, on lui
   // demande email + mot de passe pour créer son compte permanent avant de payer.
@@ -185,6 +188,21 @@ export default function PricingUpgrade() {
     // Comme le web : AUCUNE écriture optimiste de subscription_active — c'est le
     // webhook RevenueCat → Firestore → useSubscriptionSync qui fait foi. On route
     // vers l'écran d'activation, qui attend la clé (comme le checkout.completed web).
+    // Filet « garantir un UID » — symétrie stricte avec pricing.tsx : l'achat doit
+    // être attribuable (customerUserId) et le webhook doit pouvoir écrire
+    // users/{uid}. Au cycle 8 l'anonyme d'essai existe déjà ; on le crée au besoin.
+    const existingUid = auth.currentUser?.uid;
+    let uid: string;
+    if (existingUid) {
+      uid = existingUid;
+    } else {
+      try {
+        uid = (await signInAnonymously(auth)).user.uid;
+      } catch {
+        showAuthToast(t.compte.errGenerique, 'error');
+        return;
+      }
+    }
     try {
       await AsyncStorage.setItem('selected_plan', selectedPlan);
     } catch {
@@ -192,7 +210,7 @@ export default function PricingUpgrade() {
     }
     const r = await nativePurchase(
       selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
-      auth.currentUser?.uid ?? '',
+      uid,
     );
     if (r.status === 'cancelled') return; // achat annulé par l'utilisateur — silence
     if (r.status !== 'purchased') {
@@ -349,7 +367,7 @@ export default function PricingUpgrade() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>{formatUSD(PRICES.lifetime, lang)}</Text>
+                <Text style={styles.priceAmount}>{cards.lifetime}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
@@ -374,14 +392,16 @@ export default function PricingUpgrade() {
               <View style={styles.planInfo}>
                 <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
                 <Text style={styles.planSubtitle}>
-                  {t.pricing.plans.annuel.sousTitre
-                    .replace('{prixAn}', formatUSD(PRICES.annuel, lang))
-                    .replace('{prixCycle}', formatUSD(PRICES.annuelParCycle, lang))}
+                  {cards.annualPrixAn !== null
+                    ? t.pricing.plans.annuel.sousTitre
+                        .replace('{prixAn}', cards.annualPrixAn)
+                        .replace('{prixCycle}', cards.annualPrixCycle ?? '')
+                    : t.pricing.plans.annuel.sousTitreAn}
                 </Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{formatUSD(PRICES.annuelParMois, lang)}</Text>
-                <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
+                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{cards.annualBig}</Text>
+                <Text style={styles.priceUnit}>{cards.annualUnit === 'an' ? t.pricing.plans.annuel.uniteAn : t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -405,7 +425,7 @@ export default function PricingUpgrade() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>{formatUSD(PRICES.mensuel, lang)}</Text>
+                <Text style={styles.priceAmount}>{cards.monthly}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>
@@ -493,10 +513,19 @@ export default function PricingUpgrade() {
           </View>
         ) : null}
 
+        {pricesPhase === 'error' ? (
+          <View style={styles.priceError}>
+            <Text style={styles.priceErrorText}>{t.pricing.prixErreur}</Text>
+            <Pressable style={styles.priceRetryBtn} onPress={retryPrices}>
+              <Text style={styles.priceRetryText}>{t.pricing.reessayer}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <Pressable
-          style={[styles.btnPrimary, busyKind !== null && { opacity: 0.5 }]}
+          style={[styles.btnPrimary, (busyKind !== null || !pricesReady) && { opacity: 0.5 }]}
           onPress={handlePurchase}
-          disabled={busyKind !== null}
+          disabled={busyKind !== null || !pricesReady}
         >
           <Text style={styles.btnPrimaryText}>
             {busyKind === 'confirm' ? t.paiement.chargement : t.pricingUpgrade.confirmer}
@@ -801,6 +830,36 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     textAlign: 'center',
+  },
+  priceError: {
+    width: '100%',
+    backgroundColor: '#FBEEEE',
+    borderWidth: 0.5,
+    borderColor: '#D9A0A0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    alignItems: 'center',
+  },
+  priceErrorText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#8A3A3A',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  priceRetryBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 1.2,
+    borderColor: '#6B3FA0',
+  },
+  priceRetryText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B3FA0',
   },
   btnReconnexion: {
     width: '100%',

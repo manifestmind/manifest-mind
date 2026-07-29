@@ -190,6 +190,8 @@ export const translations = {
           // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
           sousTitre: 'Facturé {prixAn}/an · soit {prixCycle}/cycle',
           unite: '/mois',
+          uniteAn: '/an',
+          sousTitreAn: 'Facturé une fois par an',
         },
         mensuel: {
           titre: 'Mensuel',
@@ -206,6 +208,8 @@ export const translations = {
       ],
       cta: 'Je transforme ma vie maintenant →',
       bottomText: 'Moins de 0,50 $ pour changer ta vie',
+      prixErreur: 'Prix indisponibles — vérifie ta connexion, puis réessaie.',
+      reessayer: 'Réessayer',
       dejaCompte: 'J\'ai déjà un abonnement — Me reconnecter',
       restaurer: 'Restaurer un achat',
       // Question posée au clic « essai gratuit » quand l'appareil porte le
@@ -774,6 +778,8 @@ export const translations = {
           // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
           sousTitre: 'Billed {prixAn}/year · {prixCycle}/cycle',
           unite: '/mo',
+          uniteAn: '/yr',
+          sousTitreAn: 'Billed once a year',
         },
         mensuel: {
           titre: 'Monthly',
@@ -790,6 +796,8 @@ export const translations = {
       ],
       cta: 'Transform my life now →',
       bottomText: 'Less than $0.50 to change your life',
+      prixErreur: 'Prices unavailable — check your connection, then retry.',
+      reessayer: 'Retry',
       dejaCompte: 'I already have a subscription — Log in',
       restaurer: 'Restore a purchase',
       retourAbonne: {
@@ -1336,6 +1344,8 @@ export const translations = {
           // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
           sousTitre: 'Facturado {prixAn}/año · {prixCycle}/ciclo',
           unite: '/mes',
+          uniteAn: '/año',
+          sousTitreAn: 'Facturado una vez al año',
         },
         mensuel: {
           titre: 'Mensual',
@@ -1352,6 +1362,8 @@ export const translations = {
       ],
       cta: 'Transformar mi vida ahora →',
       bottomText: 'Menos de 0,50 $ para cambiar tu vida',
+      prixErreur: 'Precios no disponibles — comprueba tu conexión y reinténtalo.',
+      reessayer: 'Reintentar',
       dejaCompte: 'Ya tengo una suscripción — Iniciar sesión',
       restaurer: 'Restaurar una compra',
       retourAbonne: {

@@ -26,3 +26,13 @@ export async function nativeRestore(): Promise<NativePurchaseResult> {
 export async function nativeInitAdapty(): Promise<void> {
   // rien à faire sur web
 }
+
+// Types + stub prix : jamais utilisés sur web (le paywall web affiche PRICES/USD).
+export type NativePriceInfo = { localized: string; amount: number; currencyCode: string };
+export type NativePricesResult =
+  | { ok: true; prices: Record<'mensuel' | 'annuel' | 'lifetime', NativePriceInfo> }
+  | { ok: false };
+
+export async function nativeGetPrices(): Promise<NativePricesResult> {
+  return { ok: false };
+}

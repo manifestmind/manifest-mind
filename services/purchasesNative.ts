@@ -121,3 +121,40 @@ export async function nativeRestore(appUserID: string): Promise<NativePurchaseRe
     return { status: 'error', code };
   }
 }
+
+// Prix LOCALISÉS d'un produit (total formaté par le store + montant + devise).
+export type NativePriceInfo = {
+  localized: string; // ex. « 12,99 € » — prix total formaté par Google Play
+  amount: number; // montant numérique dans la devise locale
+  currencyCode: string; // ex. 'EUR', 'USD', 'JPY'
+};
+export type NativePricesResult =
+  | { ok: true; prices: Record<'mensuel' | 'annuel' | 'lifetime', NativePriceInfo> }
+  | { ok: false };
+
+// Récupère les prix LOCALISÉS des 3 produits du placement. TOUT-OU-RIEN : renvoie
+// ok:false si Adapty échoue OU si un seul des 3 produits manque / n'a pas de prix
+// localisé complet (localized + amount + devise) → le paywall bloque l'achat et
+// propose « Réessayer ». Jamais de paywall partiel, jamais d'achat à prix incertain.
+export async function nativeGetPrices(appUserID: string): Promise<NativePricesResult> {
+  try {
+    await ensureActivated(appUserID);
+    const flow = await adapty.getFlow(PLACEMENT_ID);
+    const products = await adapty.getPaywallProducts(flow);
+    const plans = ['mensuel', 'annuel', 'lifetime'] as const;
+    const prices = {} as Record<'mensuel' | 'annuel' | 'lifetime', NativePriceInfo>;
+    for (const plan of plans) {
+      const price = pickProduct(products, plan)?.price;
+      const localized = price?.localizedString;
+      const amount = price?.amount;
+      const currencyCode = price?.currencyCode;
+      if (!localized || typeof amount !== 'number' || !currencyCode) {
+        return { ok: false };
+      }
+      prices[plan] = { localized, amount, currencyCode };
+    }
+    return { ok: true, prices };
+  } catch {
+    return { ok: false };
+  }
+}

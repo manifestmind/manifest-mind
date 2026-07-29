@@ -1526,3 +1526,12 @@ Pour le **test fermé** (**upload 2**, version complète **avec RevenueCat**), p
 4. **VÉRIFICATION en test** (license tester, renouvellements accélérés Google) : dans les logs Firebase Functions, observer successivement l'**octroi** (`subscription_active=true`) PUIS la **révocation** (`subscription_active=false (access_level_updated)`).
 
 Le webhook **journalise tout événement reçu** (`[adapty] reçu event=… at=… uid=…`) → diagnostic complet dans les logs Functions.
+
+## 🔴 RÈGLE PERMANENTE — le placement Adapty doit TOUJOURS contenir les 3 produits — noté 2026-07-28
+
+Le paywall natif affiche les prix localisés en **TOUT-OU-RIEN** (`nativeGetPrices` renvoie `ok:false` si un seul des 3 produits manque → boutons d'achat désactivés + « Prix indisponibles, réessaie »). **Conséquence :** le placement Adapty (celui pointé par `PLACEMENT_ID`) doit **TOUJOURS contenir EXACTEMENT ces 3 produits** :
+- `mm_premium_monthly`
+- `mm_premium_annual`
+- `mm_premium_lifetime`
+
+⚠️ **Si tu en retires un un jour dans le dashboard Adapty (ou son paywall), le paywall natif se BLOQUE ENTIÈREMENT** (plus aucun achat possible). C'est volontaire (jamais de prix faux ni de paywall partiel), mais à ne PAS oublier lors d'une future modification du catalogue.

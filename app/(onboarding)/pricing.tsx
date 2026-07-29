@@ -13,7 +13,7 @@ import { convertOrSignIn, mapConversionError, needsAccount } from '../../service
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
-import { PRICES, formatUSD } from '../../services/prices';
+import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
@@ -28,6 +28,9 @@ export default function Pricing() {
   const { lang } = useLanguage();
   const insets = useSafeAreaInsets();
   const [selectedPlan, setSelectedPlan] = useState('annuel');
+  // Prix affichés : natif+STORES_ACTIVE = localisés Adapty (tout-ou-rien) ; web ou
+  // natif inerte = USD indicatifs (inchangé). Voir src/hooks/useLocalizedPrices.
+  const { cards, pricesReady, phase: pricesPhase, retry: retryPrices } = useLocalizedPrices(lang);
   // Conversion inline pour un plan payant choisi directement à l'onboarding
   // (même mécanique qu'au cycle 8) : compte permanent email+password avant Paddle.
   const [accountEmail, setAccountEmail] = useState('');
@@ -454,7 +457,7 @@ export default function Pricing() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.lifetime.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>{formatUSD(PRICES.lifetime, lang)}</Text>
+                <Text style={styles.priceAmount}>{cards.lifetime}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.lifetime.unite}</Text>
               </View>
             </View>
@@ -479,14 +482,16 @@ export default function Pricing() {
               <View style={styles.planInfo}>
                 <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
                 <Text style={styles.planSubtitle}>
-                  {t.pricing.plans.annuel.sousTitre
-                    .replace('{prixAn}', formatUSD(PRICES.annuel, lang))
-                    .replace('{prixCycle}', formatUSD(PRICES.annuelParCycle, lang))}
+                  {cards.annualPrixAn !== null
+                    ? t.pricing.plans.annuel.sousTitre
+                        .replace('{prixAn}', cards.annualPrixAn)
+                        .replace('{prixCycle}', cards.annualPrixCycle ?? '')
+                    : t.pricing.plans.annuel.sousTitreAn}
                 </Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{formatUSD(PRICES.annuelParMois, lang)}</Text>
-                <Text style={styles.priceUnit}>{t.pricing.plans.annuel.unite}</Text>
+                <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{cards.annualBig}</Text>
+                <Text style={styles.priceUnit}>{cards.annualUnit === 'an' ? t.pricing.plans.annuel.uniteAn : t.pricing.plans.annuel.unite}</Text>
               </View>
             </View>
           </Pressable>
@@ -510,7 +515,7 @@ export default function Pricing() {
                 <Text style={styles.planSubtitle}>{t.pricing.plans.mensuel.sousTitre}</Text>
               </View>
               <View style={styles.planPrice}>
-                <Text style={styles.priceAmount}>{formatUSD(PRICES.mensuel, lang)}</Text>
+                <Text style={styles.priceAmount}>{cards.monthly}</Text>
                 <Text style={styles.priceUnit}>{t.pricing.plans.mensuel.unite}</Text>
               </View>
             </View>
@@ -604,10 +609,21 @@ export default function Pricing() {
           </View>
         ) : null}
 
+        {/* Erreur de prix : seulement si un plan PAYANT est choisi (le plan gratuit
+            n'a pas besoin des prix Adapty → jamais bloqué). */}
+        {pricesPhase === 'error' && selectedPlan !== 'free' ? (
+          <View style={styles.priceError}>
+            <Text style={styles.priceErrorText}>{t.pricing.prixErreur}</Text>
+            <Pressable style={styles.priceRetryBtn} onPress={retryPrices}>
+              <Text style={styles.priceRetryText}>{t.pricing.reessayer}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <Pressable
-          style={[styles.btnPrimary, busyKind !== null && { opacity: 0.5 }]}
+          style={[styles.btnPrimary, (busyKind !== null || (selectedPlan !== 'free' && !pricesReady)) && { opacity: 0.5 }]}
           onPress={handlePurchase}
-          disabled={busyKind !== null}
+          disabled={busyKind !== null || (selectedPlan !== 'free' && !pricesReady)}
         >
           <Text style={styles.btnPrimaryText}>
             {busyKind === 'confirm'
@@ -961,6 +977,36 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     textAlign: 'center',
+  },
+  priceError: {
+    width: '100%',
+    backgroundColor: '#FBEEEE',
+    borderWidth: 0.5,
+    borderColor: '#D9A0A0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    alignItems: 'center',
+  },
+  priceErrorText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#8A3A3A',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  priceRetryBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 1.2,
+    borderColor: '#6B3FA0',
+  },
+  priceRetryText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B3FA0',
   },
   bottomText: {
     fontFamily: 'serif',
