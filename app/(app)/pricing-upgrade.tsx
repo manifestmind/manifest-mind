@@ -895,8 +895,8 @@ const styles = StyleSheet.create({
   },
   restoreText: {
     fontFamily: 'Jost',
-    fontSize: 10,
-    color: '#A09088',
+    fontSize: 13,
+    color: '#6B3FA0',
     textDecorationLine: 'underline',
   },
   gererCompteLink: {
