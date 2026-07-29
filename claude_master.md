@@ -1535,3 +1535,7 @@ Le paywall natif affiche les prix localisés en **TOUT-OU-RIEN** (`nativeGetPric
 - `mm_premium_lifetime`
 
 ⚠️ **Si tu en retires un un jour dans le dashboard Adapty (ou son paywall), le paywall natif se BLOQUE ENTIÈREMENT** (plus aucun achat possible). C'est volontaire (jamais de prix faux ni de paywall partiel), mais à ne PAS oublier lors d'une future modification du catalogue.
+
+## 📐 CORRECTION AUDIT — tailles de routes web statiques (noté 2026-07-28)
+
+Les traductions (`src/i18n/translations.ts`) vivent dans le **bundle JS**, PAS dans le HTML statique par route (prouvé : ajouter une clé i18n → delta ZÉRO sur les routes, et le texte de la clé est absent du HTML). ⚠️ Le **+270 octets/route** observé au lot 3 (prix localisés) venait d'un **élément partagé régénéré avec le bundle** (référence/bootstrap), **PAS des clés i18n** — ne pas reprendre « ce sont les clés i18n » comme hypothèse. Pour l'audit de l'étape 6 : sur un changement de code partagé, s'attendre à un **décalage UNIFORME** des tailles (normal tant que les tailles restent **variées** = pas d'effondrement).

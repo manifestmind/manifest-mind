@@ -642,7 +642,16 @@ export default function Pricing() {
           <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
         </Pressable>
 
-        <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
+        {/* Web : texte USD statique inchangé. Natif option A : « par jour »
+            localisé, EXPLICITEMENT rattaché au plan annuel (vrai quel que soit le
+            plan choisi). Natif repli (option B / erreur / chargement) : masqué. */}
+        {pricesPhase === 'web' ? (
+          <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
+        ) : pricesPhase === 'ready' && cards.annualPrixCycle ? (
+          <Text style={styles.bottomText}>
+            {t.pricing.bottomTextJour.replace('{prix}', cards.annualPrixCycle)}
+          </Text>
+        ) : null}
 
         {/* « Restaurer un achat » est un concept de store natif (App Store /
             Play Store, via RevenueCat en Phase 2). Sur web, la source de vérité
