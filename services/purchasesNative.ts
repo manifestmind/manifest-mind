@@ -13,12 +13,14 @@
 import { adapty, AdaptyError } from 'react-native-adapty';
 import type { AdaptyPaywallProduct } from 'react-native-adapty';
 
-// ⏳ Clé publique Android RevenueCat → Adapty (format `public_live_…`).
-// À REMPLIR en Phase B (fournie au moment de basculer STORES_ACTIVE=true).
-const ADAPTY_API_KEY = '';
-// ⏳ ID du placement Adapty qui expose le paywall (les 3 produits). À REMPLIR en
-// Phase B (créé dans le dashboard Adapty : Placements → paywall → produits).
-const PLACEMENT_ID = '';
+// Clé PUBLIQUE SDK Adapty (format `public_live_…`) — conçue pour être embarquée
+// dans l'app cliente. AUCUNE clé secrète ici (les secrets serveur vivent dans
+// Secret Manager côté Cloud Functions). Chemin NATIF uniquement (le web résout le
+// stub purchasesNative.web.ts → cette valeur n'entre jamais dans le bundle web).
+const ADAPTY_API_KEY = 'public_live_R76ZtGAr.9eGdj72wFhOYgZcHHqU9';
+// ID du placement Adapty qui expose le paywall (les 3 produits), créé et publié
+// dans le dashboard (audience « Tous les utilisateurs », statut En direct).
+const PLACEMENT_ID = 'main_paywall';
 // Niveau d'accès Adapty (« access level ») qui déverrouille le premium.
 // Défini côté dashboard, symétrique de l'entitlement RevenueCat.
 const ACCESS_LEVEL_ID = 'premium';
