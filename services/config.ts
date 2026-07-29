@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 // stores natifs (iOS / Android). Tant que `false`, sur native, le bouton
 // d'achat affiche "Disponible prochainement". Sans effet sur web (voir
 // PADDLE_ACTIVE).
-export const STORES_ACTIVE = false;
+export const STORES_ACTIVE = true;
 
 // Bascule à `true` une fois Paddle.js + webhook Firebase Functions câblés
 // pour les paiements web. Tant que `false`, sur web, le bouton d'achat
