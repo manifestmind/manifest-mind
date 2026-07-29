@@ -11,6 +11,7 @@ import {
   EmailAuthProvider,
   createUserWithEmailAndPassword,
   linkWithCredential,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   type User,
 } from 'firebase/auth';
@@ -100,5 +101,37 @@ export async function convertOrSignIn(
       }
     }
     return { ok: false, code: code || 'auth/unknown' };
+  }
+}
+
+// Conversion LINK-ONLY (carte post-achat natif Q2) : upgrade EN PLACE du compte
+// anonyme → UID CONSERVÉ (l'abonnement qu'on vient de payer reste sur SON doc).
+// N'utilise PAS convertOrSignIn : celle-ci, sur « e-mail déjà pris », se CONNECTE
+// à un autre compte → bascule d'UID → abonnement orphelin. Ici, « e-mail déjà
+// pris » = erreur propre renvoyée telle quelle, on ne bascule JAMAIS d'UID.
+// Après le link : e-mail de vérification (langue = auth.languageCode posée juste
+// avant l'envoi). L'envoi est NON critique : le compte est créé même s'il échoue.
+export async function linkAnonymousEmail(
+  email: string,
+  password: string,
+  lang: string,
+): Promise<ConversionResult> {
+  const user = auth.currentUser;
+  if (!user || !user.isAnonymous) {
+    return { ok: false, code: 'mm/not-anonymous' };
+  }
+  try {
+    const cred = EmailAuthProvider.credential(email, password);
+    const res = await linkWithCredential(user, cred);
+    try {
+      auth.languageCode = lang;
+      await sendEmailVerification(res.user);
+    } catch {
+      // E-mail de vérification non critique : le compte EST créé (même UID). On
+      // ne fait pas échouer la conversion pour un échec d'envoi.
+    }
+    return { ok: true, user: res.user };
+  } catch (e: any) {
+    return { ok: false, code: e?.code ?? 'auth/unknown' };
   }
 }

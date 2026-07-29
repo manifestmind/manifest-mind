@@ -1539,3 +1539,9 @@ Le paywall natif affiche les prix localisés en **TOUT-OU-RIEN** (`nativeGetPric
 ## 📐 CORRECTION AUDIT — tailles de routes web statiques (noté 2026-07-28)
 
 Les traductions (`src/i18n/translations.ts`) vivent dans le **bundle JS**, PAS dans le HTML statique par route (prouvé : ajouter une clé i18n → delta ZÉRO sur les routes, et le texte de la clé est absent du HTML). ⚠️ Le **+270 octets/route** observé au lot 3 (prix localisés) venait d'un **élément partagé régénéré avec le bundle** (référence/bootstrap), **PAS des clés i18n** — ne pas reprendre « ce sont les clés i18n » comme hypothèse. Pour l'audit de l'étape 6 : sur un changement de code partagé, s'attendre à un **décalage UNIFORME** des tailles (normal tant que les tailles restent **variées** = pas d'effondrement).
+
+## 📌 SUJET À ÉVALUER PLUS TARD — CGU au moment de la création de compte (noté 2026-07-28)
+
+Le consentement CGU/Confidentialité est capturé **UNE fois à l'onboarding** (`app/(onboarding)/privacy.tsx`, étape 3/5, case **OBLIGATOIRE** + liens cliquables via `WebBrowser.openBrowserAsync` + horodatage). Les écrans qui **CRÉENT un compte** (auth, formulaires paywalls, carte post-achat Q2) **ne re-montrent PAS** les CGU — ils s'appuient sur ce consentement amont. Cohérent et couvert (écran obligatoire, tous les chemins y passent).
+- **À évaluer plus tard (PAS ce soir)** : faut-il une mention CGU **au** point de création de compte ? Si oui, la mettre **PARTOUT** (auth + paywalls + carte) de façon **uniforme** — jamais sur un seul écran (asymétrie).
+- **⚠️ Point RGPD / preuve** : le consentement est stocké en **LOCAL** (`AsyncStorage 'legal_accepted'` + horodatage) → il **DISPARAÎT à la réinstallation** et il n'existe **AUCUNE trace côté serveur**. Suffit en pratique (écran obligatoire rejoué à chaque install), mais si un jour il faut **PROUVER** un consentement, il n'y a rien. À évaluer plus tard.

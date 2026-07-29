@@ -16,7 +16,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -26,6 +26,10 @@ import { SUPPORT_EMAIL } from '../../services/config';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web. Le bouton « Restaurer » est natif-only.
 import { nativeRestore } from '../../services/purchasesNative';
+import { useLanguage } from '../../src/i18n/LanguageContext';
+import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const POLL_MS = 1000;
 // Au-delà, on considère que le webhook ne viendra pas dans un délai raisonnable
@@ -54,6 +58,7 @@ type Phase = 'waiting' | 'activated' | 'slow';
 
 export default function Activation() {
   const t = useTranslation();
+  const { lang } = useLanguage();
   const insets = useSafeAreaInsets();
   // ?restore=1 → l'utilisateur n'a RIEN payé : on a détecté qu'il était déjà
   // abonné (garde-fou de services/subscription.ts) et on lui rouvre son espace.
@@ -108,6 +113,14 @@ export default function Activation() {
   // Restauration native (bouton « Restaurer mes achats », phase slow, natif only).
   const [restoring, setRestoring] = useState(false);
   const [restoreMsg, setRestoreMsg] = useState<string | null>(null);
+  // Carte Q2 « crée ton compte » (post-achat, natif + anonyme, une seule fois).
+  const [convertVisible, setConvertVisible] = useState(false);
+  const [convEmail, setConvEmail] = useState('');
+  const [convPassword, setConvPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [convBusy, setConvBusy] = useState(false);
+  const [convErr, setConvErr] = useState<string | null>(null);
+  const [convMsg, setConvMsg] = useState<string | null>(null);
 
   async function onRetry() {
     if (checking || cooldown > 0) return;
@@ -140,6 +153,48 @@ export default function Activation() {
       setRestoreMsg(t.activation.restaureEchec);
     } finally {
       setRestoring(false);
+    }
+  }
+
+  // ── Carte Q2 : conversion anonyme → permanent (LINK-ONLY, UID conservé) ──────
+  // Pose le drapeau « déjà proposée » puis route home. Utilisé par « Plus tard »
+  // ET après un succès de création.
+  async function finishConvertAndGoHome() {
+    try { await AsyncStorage.setItem('account_prompt_shown', 'true'); } catch {}
+    router.replace('/(app)/home' as any);
+  }
+
+  function handleConvertLater() {
+    if (convBusy) return;
+    finishConvertAndGoHome();
+  }
+
+  async function handleConvertCreate() {
+    if (convBusy) return;
+    const email = convEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) { setConvErr(t.compte.errEmailInvalide); return; }
+    if (convPassword.length < 6) { setConvErr(t.compte.errPasswordCourt); return; }
+    setConvErr(null);
+    setConvBusy(true);
+    try {
+      const res = await linkAnonymousEmail(email, convPassword, lang);
+      if (res.ok) {
+        // UID CONSERVÉ (link in-place) → l'abonnement reste sur son doc. On laisse
+        // lire la confirmation, puis home. Le form reste figé (convBusy) jusque-là.
+        setConvMsg(t.compte.convertSucces);
+        setTimeout(() => finishConvertAndGoHome(), 1600);
+        return;
+      }
+      // « E-mail déjà pris » : JAMAIS de bascule d'UID → message « autre adresse ».
+      if (res.code === 'auth/email-already-in-use' || res.code === 'auth/credential-already-in-use') {
+        setConvErr(t.compte.convertEmailPris);
+      } else {
+        setConvErr(mapConversionError(res.code, t.compte));
+      }
+      setConvBusy(false);
+    } catch {
+      setConvErr(t.compte.errGenerique);
+      setConvBusy(false);
     }
   }
 
@@ -225,12 +280,37 @@ export default function Activation() {
   // instantanément, puis SUCCESS_HOLD_MS pour lire la confirmation.
   useEffect(() => {
     if (phase !== 'activated') return;
-    const elapsed = Date.now() - mountedAt;
-    const delay = Math.max(SUCCESS_HOLD_MS, MIN_VISIBLE_MS - elapsed);
-    if (__DEV__) console.log(`[activation] route vers /home dans ${delay}ms`);
-    const timeout = setTimeout(() => router.replace('/(app)/home' as any), delay);
-    return () => clearTimeout(timeout);
-  }, [phase, mountedAt]);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    (async () => {
+      // EXCEPTION natif : compte anonyme + pas une restauration + carte pas déjà
+      // proposée → on AFFICHE la carte Q2 « crée ton compte » au lieu de router
+      // (l'utilisateur choisit). Sinon → route auto vers home (INCHANGÉ).
+      let showCard = false;
+      if (Platform.OS !== 'web' && !isRestore && auth.currentUser?.isAnonymous) {
+        try {
+          showCard = (await AsyncStorage.getItem('account_prompt_shown')) !== 'true';
+        } catch {
+          showCard = false;
+        }
+      }
+      if (cancelled) return;
+      if (showCard) {
+        setConvertVisible(true); // on attend l'action utilisateur — pas de route auto
+        return;
+      }
+      const elapsed = Date.now() - mountedAt;
+      const delay = Math.max(SUCCESS_HOLD_MS, MIN_VISIBLE_MS - elapsed);
+      if (__DEV__) console.log(`[activation] route vers /home dans ${delay}ms`);
+      timer = setTimeout(() => {
+        if (!cancelled) router.replace('/(app)/home' as any);
+      }, delay);
+    })();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [phase, mountedAt, isRestore]);
 
   useEffect(() => {
     if (phase !== 'waiting') {
@@ -310,14 +390,69 @@ export default function Activation() {
               </Text>
             </>
           ) : phase === 'activated' ? (
-            <>
-              <Text style={styles.title} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.succesTitre}
-              </Text>
-              <Text style={styles.message} numberOfLines={0} adjustsFontSizeToFit={false}>
-                {t.activation.succesMessage}
-              </Text>
-            </>
+            convertVisible ? (
+              // Carte Q2 (natif + anonyme) : proposition OPTIONNELLE de créer un
+              // compte permanent. « Plus tard » ou succès → home ; l'accès n'est
+              // JAMAIS conditionné à la création.
+              <>
+                <Text style={styles.title} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.compte.convertTitre}
+                </Text>
+                <Text style={styles.message} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.compte.convertMessage}
+                </Text>
+                <TextInput
+                  style={styles.convInput}
+                  placeholder={t.compte.emailPlaceholder}
+                  placeholderTextColor="#A09088"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                  value={convEmail}
+                  onChangeText={setConvEmail}
+                  editable={!convBusy}
+                />
+                <View style={styles.convPwRow}>
+                  <TextInput
+                    style={[styles.convInput, { flex: 1 }]}
+                    placeholder={t.compte.passwordPlaceholder}
+                    placeholderTextColor="#A09088"
+                    secureTextEntry={!showPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="newPassword"
+                    value={convPassword}
+                    onChangeText={setConvPassword}
+                    editable={!convBusy}
+                  />
+                  <Pressable onPress={() => setShowPass((v) => !v)} style={styles.convToggle} disabled={convBusy}>
+                    <Text style={styles.convToggleText}>{showPass ? t.compte.masquer : t.compte.afficher}</Text>
+                  </Pressable>
+                </View>
+                {convErr ? <Text style={styles.convErr} numberOfLines={0}>{convErr}</Text> : null}
+                {convMsg ? <Text style={styles.convOk} numberOfLines={0}>{convMsg}</Text> : null}
+                <Pressable
+                  style={[styles.btnPrimary, convBusy && { opacity: 0.6 }]}
+                  onPress={handleConvertCreate}
+                  disabled={convBusy}
+                >
+                  <Text style={styles.btnPrimaryText}>{t.compte.convertCreer}</Text>
+                </Pressable>
+                <Pressable onPress={handleConvertLater} disabled={convBusy} style={styles.convLaterBtn}>
+                  <Text style={styles.convLaterText}>{t.compte.convertPlusTard}</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={styles.title} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.activation.succesTitre}
+                </Text>
+                <Text style={styles.message} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.activation.succesMessage}
+                </Text>
+              </>
+            )
           ) : (
             <>
               <Text style={styles.confirmation} numberOfLines={0} adjustsFontSizeToFit={false}>
@@ -510,5 +645,59 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     width: '100%',
     maxWidth: 340,
+  },
+  convInput: {
+    width: '100%',
+    backgroundColor: 'white',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#2A2520',
+  },
+  convPwRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  convToggle: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  convToggleText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#6B3FA0',
+  },
+  convErr: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#8A3A3A',
+    textAlign: 'center',
+    lineHeight: 18,
+    width: '100%',
+    maxWidth: 340,
+  },
+  convOk: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#5A8050',
+    textAlign: 'center',
+    lineHeight: 18,
+    width: '100%',
+    maxWidth: 340,
+  },
+  convLaterBtn: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  convLaterText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    color: '#A09088',
+    textDecorationLine: 'underline',
   },
 });
