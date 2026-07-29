@@ -115,23 +115,35 @@ function verifyAdaptyAuthorization(
 //   - null  → ne pas toucher (on ack + log)
 //
 // Source autoritaire = `access_level_updated` (porte is_active + access_level_id).
-// Les événements de cycle de vie sont mappés en filet de sécurité, en évitant
-// toute révocation prématurée (annulation de renouvellement / grâce / incident
-// de facturation = l'accès reste ACTIF jusqu'à l'expiration réelle → no-op).
+// RÈGLE DE RÉVOCATION : SEUL `access_level_updated(is_active=false)` peut passer
+// subscription_active à false (il connaît l'état NET du premium, lifetime inclus).
+// Tous les autres événements « négatifs » (expiration, remboursement, annulation,
+// grâce, incident, pause) sont NO-OP → jamais de coupure à tort. Les grants
+// accordent EN PLUS de access_level_updated(is_active=true) → ceinture + bretelles
+// sur l'octroi, source unique et autoritaire sur la révocation.
 
 function deriveAdaptySubscriptionActive(
   eventType: string | undefined,
   props: AdaptyEvent['event_properties'],
 ): boolean | null {
   switch (eventType) {
-    // Événement d'état autoritaire : reflète l'état courant de l'access level.
+    // 🔑 SOURCE AUTORITAIRE UNIQUE. Reflète l'état NET du niveau d'accès premium
+    // (tous produits confondus, lifetime inclus). SEUL événement autorisé à
+    // RÉVOQUER (is_active=false) → jamais de coupure à tort. Il ACCORDE aussi
+    // (is_active=true) → ceinture + bretelles sur l'octroi avec les grants.
     case 'access_level_updated':
-      if (props?.access_level_id && props.access_level_id !== PREMIUM_ACCESS_LEVEL) {
-        return null; // un autre access level → non concerné
-      }
+      // STRICT : on n'agit QUE sur le niveau 'premium'. Tout autre niveau — ou un
+      // access_level_id ABSENT — → no-op, pour qu'un futur 2e niveau d'accès dans
+      // Adapty ne touche JAMAIS subscription_active.
+      if (props?.access_level_id !== PREMIUM_ACCESS_LEVEL) return null;
       return !!props?.is_active;
 
-    // Activation (abonnements + essais + lifetime via non_subscription_purchase).
+    // GRANTS (activation rapide) → true. Toujours sûrs : recevoir un achat / essai
+    // / renouvellement signifie que l'accès est dû. (La révocation ne vient JAMAIS
+    // d'ici — cf. bloc NO-OP ci-dessous.)
+    // ⚠️ Hypothèse MONO-NIVEAU : aujourd'hui tous les produits mappent 'premium'.
+    // Si un 2e niveau d'accès est ajouté un jour, rendre ces grants conscients du
+    // niveau (ou ne se fier qu'à access_level_updated, qui, lui, porte le niveau).
     case 'subscription_started':
     case 'subscription_renewed':
     case 'subscription_renewal_reactivated':
@@ -141,15 +153,16 @@ function deriveAdaptySubscriptionActive(
     case 'non_subscription_purchase':
       return true;
 
-    // Fin réelle de l'accès → révocation.
+    // ⚠️ NO-OP sur TOUS les événements « négatifs » (fin de période, remboursement,
+    // annulation de renouvellement, grâce, incident de facturation, pause). On ne
+    // révoque JAMAIS sur un événement granulaire : il ignore les AUTRES droits de
+    // l'utilisateur (ex. un mensuel qui expire alors qu'un LIFETIME est actif → ne
+    // doit PAS couper l'accès). La révocation réelle vient uniquement de
+    // access_level_updated(is_active=false), qui connaît l'état NET du premium.
     case 'subscription_expired':
     case 'trial_expired':
     case 'subscription_refunded':
     case 'non_subscription_purchase_refunded':
-      return false;
-
-    // Accès CONSERVÉ jusqu'à expiration → ne rien changer ici (l'expiration
-    // effective enverra subscription_expired / access_level_updated is_active=false).
     case 'subscription_renewal_cancelled':
     case 'trial_renewal_cancelled':
     case 'entered_grace_period':
@@ -219,6 +232,13 @@ export const adaptyWebhook = onRequest(
       return;
     }
 
+    // Journalisation de TOUT événement reçu (type + horodatage + uid) AVANT tout
+    // traitement — visibilité complète pour diagnostiquer, y compris les
+    // événements no-op ou inconnus.
+    logger.info(
+      `[adapty] reçu event=${eventType} at=${event.event_datetime ?? '?'} uid=${event.customer_user_id ?? 'none'}`,
+    );
+
     // 4. Extraction de l'UID Firebase (customer_user_id posé côté app)
     const firebaseUid = event.customer_user_id;
     if (!firebaseUid) {
@@ -237,25 +257,63 @@ export const adaptyWebhook = onRequest(
       return;
     }
 
+    // Horodatage de l'événement (ms). Sert à ignorer les événements HORS-ORDRE :
+    // une révocation ne doit jamais être annulée par un octroi plus ANCIEN arrivé
+    // en retard. Absent/illisible → on applique quand même (best effort) sans
+    // faire avancer la borne d'ordre.
+    const eventMs = event.event_datetime ? Date.parse(event.event_datetime) : NaN;
+
     try {
       const userRef = db.collection('users').doc(firebaseUid);
-      const update: Record<string, unknown> = {
-        subscription_active: newSubActive,
-        adapty_event_type: eventType,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      };
-      if (event.profile_id) update.adapty_profile_id = event.profile_id;
-      if (event.event_properties?.access_level_id) {
-        update.adapty_access_level_id = event.event_properties.access_level_id;
-      }
-      if (event.event_properties?.vendor_product_id) {
-        update.adapty_vendor_product_id = event.event_properties.vendor_product_id;
-      }
-      if (event.event_properties?.transaction_id) {
-        update.adapty_transaction_id = event.event_properties.transaction_id;
-      }
+      // Transaction : lit la borne d'ordre (adapty_event_at_ms) et IGNORE tout
+      // événement STRICTEMENT antérieur au dernier ÉCRIT (protège du hors-ordre),
+      // sinon écrit (création-si-absent via merge).
+      //
+      // Comparaison « < » (PAS « ≤ ») VOLONTAIRE : un événement de MÊME horodatage
+      // est TOUJOURS traité → jamais de révocation perdue si elle partage la ms
+      // d'un autre événement (ex. subscription_expired + access_level_updated=false
+      // à la même ms). Rejouer un doublon exact réécrit la même valeur → idempotent
+      // en effet (un écrit de trop, négligeable). Principe : en cas de doute,
+      // traiter un événement en trop plutôt qu'en perdre un.
+      //
+      // Rappel : les no-op ne passent JAMAIS ici (return avant la transaction) →
+      // SEULS les événements qui écrivent font avancer la borne.
+      const outcome = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(userRef);
+        const lastMs = snap.exists
+          ? (snap.get('adapty_event_at_ms') as number | undefined)
+          : undefined;
+        if (typeof lastMs === 'number' && !Number.isNaN(eventMs) && eventMs < lastMs) {
+          return 'stale' as const;
+        }
+        const update: Record<string, unknown> = {
+          subscription_active: newSubActive,
+          adapty_event_type: eventType,
+          updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        };
+        if (!Number.isNaN(eventMs)) update.adapty_event_at_ms = eventMs;
+        if (event.profile_id) update.adapty_profile_id = event.profile_id;
+        if (event.event_properties?.access_level_id) {
+          update.adapty_access_level_id = event.event_properties.access_level_id;
+        }
+        if (event.event_properties?.vendor_product_id) {
+          update.adapty_vendor_product_id = event.event_properties.vendor_product_id;
+        }
+        if (event.event_properties?.transaction_id) {
+          update.adapty_transaction_id = event.event_properties.transaction_id;
+        }
+        tx.set(userRef, update, { merge: true });
+        return 'applied' as const;
+      });
 
-      await userRef.set(update, { merge: true });
+      if (outcome === 'stale') {
+        logger.warn(
+          `[adapty] event ${eventType} (at=${event.event_datetime ?? '?'}) IGNORÉ ` +
+            `(hors-ordre / ≤ dernier traité) pour users/${firebaseUid}`,
+        );
+        res.status(200).send('OK (stale, ignored)');
+        return;
+      }
 
       logger.info(
         `[adapty] users/${firebaseUid} updated: subscription_active=${newSubActive} (${eventType})`,

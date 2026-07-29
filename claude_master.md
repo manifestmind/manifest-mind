@@ -1511,3 +1511,18 @@ Pour le **test fermé** (**upload 2**, version complète **avec RevenueCat**), p
 - **Raison** : certaines modifications natives (ex. **alignement des versions SDK 54**, commit `794b19b`) ont **légèrement modifié le bundle web local sans être déployées**. En **redéployant le web en une seule fois à la fin**, si un bug web apparaît, on saura qu'il vient de ces changements natifs — **point de contrôle unique pour isoler la cause**.
 - **NE PAS redéployer le web avant ça** ; le site en ligne reste sur **son bundle actuel** entre-temps (celui du déploiement musique du 2026-07-24, bundle `entry-fc73202b…`).
 - Rappel méthode : `npx expo export --platform web` → `firebase deploy --only hosting` (jamais Functions/Firestore) → vérif routes + tailles + test web complet (connexion, paiement Paddle, journal, musique).
+
+## 🔴 PHASE B — ÉTAPE BLOQUANTE VÉRIFIÉE : activer `access_level_updated` (webhook Adapty) — noté 2026-07-28
+
+**Archi webhook Adapty :** la RÉVOCATION de `subscription_active` (→ false) ne se fait QUE via **`access_level_updated(is_active=false)`** — le seul événement qui connaît l'état NET du niveau d'accès premium (tous produits confondus, **lifetime inclus**). Les événements « négatifs » granulaires (expiration, remboursement, annulation, grâce, incident, pause) sont **no-op** dans `adaptyWebhook` → jamais de coupure à tort (ex. un mensuel qui expire alors qu'un lifetime est actif). Les grants accordent EN PLUS de `access_level_updated(is_active=true)` (ceinture + bretelles sur l'octroi).
+
+**⚠️ POINT UNIQUE DE DÉFAILLANCE :** si `access_level_updated` n'est PAS coché dans la config webhook Adapty, **plus AUCUNE révocation** → tout le monde garderait le premium à vie, sans alerte. **DONC étape OBLIGATOIRE et VÉRIFIÉE de la Phase B :**
+
+1. **Dashboard Adapty → l'app → App Settings → Integrations → Webhook** : poser l'URL de la fonction `adaptyWebhook` (europe-west1) + la valeur `Authorization` (= secret `ADAPTY_WEBHOOK_AUTHORIZATION`).
+2. Dans la **liste des événements**, COCHER au minimum :
+   - 🔴 **`access_level_updated`** (OBLIGATOIRE — révocation ET octroi)
+   - grants (activation rapide) : `subscription_started`, `subscription_renewed`, `subscription_renewal_reactivated`, `trial_started`, `trial_converted`, `non_subscription_purchase`
+3. **Réglage « Transfer access »** (App Settings) : régler sur **transférer l'accès au NOUVEAU profil** — nécessaire pour que « Restaurer » accorde l'accès sur un nouvel UID anonyme après réinstallation / changement d'appareil.
+4. **VÉRIFICATION en test** (license tester, renouvellements accélérés Google) : dans les logs Firebase Functions, observer successivement l'**octroi** (`subscription_active=true`) PUIS la **révocation** (`subscription_active=false (access_level_updated)`).
+
+Le webhook **journalise tout événement reçu** (`[adapty] reçu event=… at=… uid=…`) → diagnostic complet dans les logs Functions.
