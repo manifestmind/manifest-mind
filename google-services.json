@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "481097482104-bkm0b21604ag94r4k2rg5oduncgo3tt7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.manifestmind.app",
+            "certificate_hash": "a9c9556df8e9ab9f83cac1b72a143bea14dcc0d0"
+          }
+        },
+        {
           "client_id": "481097482104-fbalda2mhqec021qb1aksn1259805uav.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
