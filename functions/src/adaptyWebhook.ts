@@ -56,6 +56,11 @@ const ADAPTY_SANDBOX_WEBHOOK_AUTHORIZATION = defineSecret('ADAPTY_SANDBOX_WEBHOO
 // symétrique de l'entitlement RevenueCat / du champ subscription_active).
 const PREMIUM_ACCESS_LEVEL = 'premium';
 
+// Product ID Google Play de l'ACHAT À VIE (achat unique, non-consommable). Sert à
+// poser/retirer le drapeau `has_lifetime` (bouclier anti-coupure). À garder
+// synchronisé avec PRODUCT_ID_BY_PLAN.lifetime de services/purchasesNative.ts.
+const LIFETIME_PRODUCT_ID = 'mm_premium_lifetime';
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type AdaptyEvent = {
@@ -114,13 +119,15 @@ function verifyAdaptyAuthorization(
 //   - false → désactiver
 //   - null  → ne pas toucher (on ack + log)
 //
-// Source autoritaire = `access_level_updated` (porte is_active + access_level_id).
-// RÈGLE DE RÉVOCATION : SEUL `access_level_updated(is_active=false)` peut passer
-// subscription_active à false (il connaît l'état NET du premium, lifetime inclus).
-// Tous les autres événements « négatifs » (expiration, remboursement, annulation,
-// grâce, incident, pause) sont NO-OP → jamais de coupure à tort. Les grants
-// accordent EN PLUS de access_level_updated(is_active=true) → ceinture + bretelles
-// sur l'octroi, source unique et autoritaire sur la révocation.
+// RÈGLE DE RÉVOCATION (révisée 2026-07-30) : Adapty n'émet PAS `access_level_updated`
+// à l'expiration — comportement DOCUMENTÉ (« Adapty doesn't send access_level_updated
+// upon subscription expiration — refer to expires_at to end the subscriptions on your
+// side »). On révoque donc sur les événements de PERTE explicites (subscription_expired
+// / subscription_refunded / trial_expired / non_subscription_purchase_refunded) → false.
+// Les événements qui ne coupent PAS l'accès (résiliation de renouvellement, grâce,
+// incident, pause) restent NO-OP. La PROTECTION du lifetime contre la perte d'un
+// ABONNEMENT est faite par le bouclier `has_lifetime` dans la transaction (handler),
+// pas ici : cette fonction n'exprime que l'INTENTION (true / false / null).
 
 function deriveAdaptySubscriptionActive(
   eventType: string | undefined,
@@ -153,16 +160,19 @@ function deriveAdaptySubscriptionActive(
     case 'non_subscription_purchase':
       return true;
 
-    // ⚠️ NO-OP sur TOUS les événements « négatifs » (fin de période, remboursement,
-    // annulation de renouvellement, grâce, incident de facturation, pause). On ne
-    // révoque JAMAIS sur un événement granulaire : il ignore les AUTRES droits de
-    // l'utilisateur (ex. un mensuel qui expire alors qu'un LIFETIME est actif → ne
-    // doit PAS couper l'accès). La révocation réelle vient uniquement de
-    // access_level_updated(is_active=false), qui connaît l'état NET du premium.
+    // 🔻 PERTE D'ACCÈS explicite → false (intention de révocation). Le bouclier
+    // `has_lifetime` (dans la transaction) empêche qu'une perte d'ABONNEMENT ne coupe
+    // un titulaire du lifetime. `non_subscription_purchase_refunded` = remboursement
+    // du lifetime lui-même → effacera le drapeau ET coupera (non soumis au bouclier).
     case 'subscription_expired':
-    case 'trial_expired':
     case 'subscription_refunded':
+    case 'trial_expired':
     case 'non_subscription_purchase_refunded':
+      return false;
+
+    // ⚠️ NO-OP : ces événements NE coupent PAS l'accès. Résilier le renouvellement
+    // laisse l'accès actif jusqu'à l'expiration (c'est subscription_expired qui
+    // coupera) ; grâce / incident / pause maintiennent l'accès le temps de la reprise.
     case 'subscription_renewal_cancelled':
     case 'trial_renewal_cancelled':
     case 'entered_grace_period':
@@ -278,50 +288,80 @@ export const adaptyWebhook = onRequest(
       return;
     }
 
-    // Horodatage de l'événement (ms). Sert à ignorer les événements HORS-ORDRE :
-    // une révocation ne doit jamais être annulée par un octroi plus ANCIEN arrivé
-    // en retard. Absent/illisible → on applique quand même (best effort) sans
-    // faire avancer la borne d'ordre.
+    // ── Classification (bouclier lifetime + maintenance du drapeau) ──────────
+    // isLifetimeGrant  : achat du lifetime → posera has_lifetime=true.
+    // isLifetimeRefund : remboursement du lifetime → effacera has_lifetime ET coupera.
+    //   (Mono-produit : le SEUL achat non-abonnement est le lifetime. À revoir si un
+    //    2e produit ponctuel apparaît.)
+    // isSubscriptionLoss : perte d'un ABONNEMENT (expiration/remboursement/essai, ou
+    //   access_level_updated=false) → SOUMISE au bouclier lifetime. Le remboursement du
+    //   lifetime, lui, a isSubscriptionLoss=false → il n'est JAMAIS bloqué par le
+    //   bouclier (Réserve 1 : il efface le drapeau et coupe dans la même écriture).
+    //
+    // ⚠️ LIMITE CONNUE & ASSUMÉE (double possession) : si un utilisateur détient à la
+    // fois le lifetime ET un abonnement actif et se fait rembourser le lifetime, l'accès
+    // est coupé bien que l'abonnement tourne encore. Cas composé très rare, auto-réparé
+    // au prochain événement d'abonnement. Choix documenté (cf. claude_master.md).
+    const props = event.event_properties;
+    const isLifetimeGrant =
+      eventType === 'non_subscription_purchase' && props?.vendor_product_id === LIFETIME_PRODUCT_ID;
+    const isLifetimeRefund = eventType === 'non_subscription_purchase_refunded';
+    const isSubscriptionLoss = newSubActive === false && !isLifetimeRefund;
+
+    // Horodatage de l'événement (ms), pour l'ordre. Absent/illisible → best effort
+    // sans faire avancer la borne.
     const eventMs = event.event_datetime ? Date.parse(event.event_datetime) : NaN;
 
     try {
       const userRef = db.collection('users').doc(firebaseUid);
-      // Transaction : lit la borne d'ordre (adapty_event_at_ms) et IGNORE tout
-      // événement STRICTEMENT antérieur au dernier ÉCRIT (protège du hors-ordre),
-      // sinon écrit (création-si-absent via merge).
+      // Transaction : borne d'ordre (adapty_event_at_ms) + bouclier lifetime.
       //
-      // Comparaison « < » (PAS « ≤ ») VOLONTAIRE : un événement de MÊME horodatage
-      // est TOUJOURS traité → jamais de révocation perdue si elle partage la ms
-      // d'un autre événement (ex. subscription_expired + access_level_updated=false
-      // à la même ms). Rejouer un doublon exact réécrit la même valeur → idempotent
-      // en effet (un écrit de trop, négligeable). Principe : en cas de doute,
-      // traiter un événement en trop plutôt qu'en perdre un.
-      //
-      // Rappel : les no-op ne passent JAMAIS ici (return avant la transaction) →
-      // SEULS les événements qui écrivent font avancer la borne.
+      // ORDRE — PRIORITÉ À LA RÉVOCATION SUR ÉGALITÉ (Réserve 2) :
+      //   - STRICTEMENT antérieur au dernier écrit → périmé, rejeté (tout type) : une
+      //     expiration en retard ne coupe pas un abo re-souscrit ENTRE-temps ; un octroi
+      //     en retard ne ressuscite pas un accès révoqué.
+      //   - MÊME horodatage (Adapty n'a qu'une précision à la SECONDE) : la révocation
+      //     PASSE, l'octroi CÈDE (`newSubActive === true` → 'stale'). Ainsi une coupure
+      //     ne peut JAMAIS être écrasée par un octroi de même seconde. Principe : perdre
+      //     un octroi (auto-réparé au prochain event) plutôt qu'une coupure.
+      //   - Plus récent → traité (tout type). Re-souscription = octroi plus récent → gagne.
       const outcome = await db.runTransaction(async (tx) => {
         const snap = await tx.get(userRef);
         const lastMs = snap.exists
           ? (snap.get('adapty_event_at_ms') as number | undefined)
           : undefined;
-        if (typeof lastMs === 'number' && !Number.isNaN(eventMs) && eventMs < lastMs) {
-          return 'stale' as const;
+        if (typeof lastMs === 'number' && !Number.isNaN(eventMs)) {
+          if (eventMs < lastMs) return 'stale' as const;
+          if (eventMs === lastMs && newSubActive === true) return 'stale' as const;
         }
+
+        // 🛡️ BOUCLIER LIFETIME : une perte d'ABONNEMENT ne coupe pas un titulaire du
+        // lifetime. (Le remboursement du lifetime a isSubscriptionLoss=false → il
+        // n'entre pas ici : il effacera le drapeau ET coupera, plus bas.)
+        const hasLifetime = snap.exists ? snap.get('has_lifetime') === true : false;
+        if (isSubscriptionLoss && hasLifetime) {
+          return 'protected-lifetime' as const;
+        }
+
         const update: Record<string, unknown> = {
           subscription_active: newSubActive,
           adapty_event_type: eventType,
           updated_at: admin.firestore.FieldValue.serverTimestamp(),
         };
         if (!Number.isNaN(eventMs)) update.adapty_event_at_ms = eventMs;
+        // Maintenance du drapeau lifetime (Réserve 1 : le remboursement EFFACE le
+        // drapeau ET coupe — non soumis au bouclier ci-dessus).
+        if (isLifetimeGrant) update.has_lifetime = true;
+        if (isLifetimeRefund) update.has_lifetime = false;
         if (event.profile_id) update.adapty_profile_id = event.profile_id;
-        if (event.event_properties?.access_level_id) {
-          update.adapty_access_level_id = event.event_properties.access_level_id;
+        if (props?.access_level_id) {
+          update.adapty_access_level_id = props.access_level_id;
         }
-        if (event.event_properties?.vendor_product_id) {
-          update.adapty_vendor_product_id = event.event_properties.vendor_product_id;
+        if (props?.vendor_product_id) {
+          update.adapty_vendor_product_id = props.vendor_product_id;
         }
-        if (event.event_properties?.transaction_id) {
-          update.adapty_transaction_id = event.event_properties.transaction_id;
+        if (props?.transaction_id) {
+          update.adapty_transaction_id = props.transaction_id;
         }
         tx.set(userRef, update, { merge: true });
         return 'applied' as const;
@@ -330,9 +370,19 @@ export const adaptyWebhook = onRequest(
       if (outcome === 'stale') {
         logger.warn(
           `[adapty] event ${eventType} (at=${event.event_datetime ?? '?'}) IGNORÉ ` +
-            `(hors-ordre / ≤ dernier traité) pour users/${firebaseUid}`,
+            `(périmé, ou octroi de même seconde qu'une écriture — la révocation prime) ` +
+            `pour users/${firebaseUid}`,
         );
         res.status(200).send('OK (stale, ignored)');
+        return;
+      }
+
+      if (outcome === 'protected-lifetime') {
+        logger.info(
+          `[adapty] event ${eventType} IGNORÉ — accès LIFETIME protégé ` +
+            `(has_lifetime=true) pour users/${firebaseUid}`,
+        );
+        res.status(200).send('OK (lifetime protected)');
         return;
       }
 
