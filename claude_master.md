@@ -1688,3 +1688,17 @@ Découverts au 2ᵉ test téléphone : l'abonnement expirait mais `subscription_
 3. **⚠️ LIMITE ASSUMÉE — double possession.** Le bouclier `has_lifetime` protège le lifetime contre la perte d'un ABONNEMENT. Mais si quelqu'un détient lifetime **+** abonnement actif et se fait **rembourser le lifetime** (`non_subscription_purchase_refunded`), le drapeau est effacé et l'accès coupé **bien que l'abonnement tourne encore**. Cas composé très rare, auto-réparé au prochain événement d'abonnement. **Choix documenté, pas un oubli.** (Parade possible si un jour nécessaire : suivre deux drapeaux indépendants `has_active_subscription` + `has_lifetime` et calculer `subscription_active = l'un OU l'autre`.)
 
 **Rappel d'architecture confirmé** : la révocation est écrite par le **webhook seul** ; borne anti hors-ordre avec **priorité à la révocation sur égalité d'horodatage** (Adapty = précision seconde) → une coupure n'est jamais écrasée par un octroi de même seconde.
+
+## 🎧 NOTE POUR PLUS TARD — SON EN ARRIÈRE-PLAN / ÉCRAN ÉTEINT (à évaluer À FROID, après le test fermé)
+- Constaté (2026-08-01) : le son des séances **s'arrête quand l'app passe en arrière-plan**. Or les visualisations guidées se font **les yeux fermés** → si le son se coupe aussi quand **l'écran s'éteint**, c'est un **vrai défaut d'expérience**.
+- ⚠️ **Ce serait alors une FONCTIONNALITÉ à implémenter** (lecture audio en arrière-plan / écran éteint via service de premier plan `mediaPlayback` d'expo-audio), **PAS** une autorisation à « remettre ». À ne PAS confondre avec le nettoyage des permissions ci-dessous : on RETIRE `FOREGROUND_SERVICE_MEDIA_PLAYBACK` pour la soumission Google **parce qu'elle est déclarée mais inutilisée** ; si un jour on veut vraiment le son écran éteint, il faudra RÉ-implémenter la fonctionnalité (et re-justifier la permission auprès de Google avec une vraie vidéo de démo).
+- À évaluer à froid après le test fermé. Ne pas traiter maintenant.
+
+## 🧹 PERMISSIONS ANDROID — sources & nettoyage (analyse 2026-08-01, non traité)
+Manifeste **non committé** → généré au build (prebuild EAS), permissions **fusionnées depuis les libs**. Sources identifiées :
+- **`expo-audio`** déclare : `RECORD_AUDIO` (🔴 sensible, INUTILISÉE — l'app ne s'enregistre pas), `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (🔴 signalée par Google, inutilisée — son coupé en arrière-plan), `MODIFY_AUDIO_SETTINGS`. Plugin expose `recordAudioAndroid` / `microphonePermission` (déjà false).
+- **`AD_ID`** (`com.google.android.gms.permission.AD_ID`, 🔴 signalée par Google) : **AAR transitif d'Adapty** (lit le Google Advertising ID pour l'attribution ; `@adapty/core` a « Disables Google AdvertisingID collection »). Absente d'app.json et des manifestes node_modules.
+- **`CAMERA`** (`expo-image-picker`, 🟠 sensible, INUTILISÉE — l'app n'appelle que `launchImageLibraryAsync`, jamais `launchCameraAsync`).
+- `SYSTEM_ALERT_WINDOW` = manifeste **debug** de react-native → **absente du build de prod**, non concernée.
+- Normales/nécessaires (garder) : INTERNET, ACCESS_NETWORK_STATE, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, READ/WRITE_EXTERNAL_STORAGE.
+- **Retrait propre** = `expo.android.blockedPermissions` (app.json) + option plugin `recordAudioAndroid:false`. **Nécessite un rebuild (versionCode 6). N'affecte PAS le web** (config android only). À traiter sur feu vert explicite.
