@@ -40,6 +40,16 @@ export async function nativeGoogleIdToken(): Promise<NativeGoogleResult> {
   ensureConfigured();
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    // Forcer le SÉLECTEUR de compte. Sans ça, signIn() ré-utilise SILENCIEUSEMENT
+    // le dernier compte Google autorisé → aucun sélecteur, l'utilisateur ne voit pas
+    // avec quel compte il se connecte (source de la confusion « rien ne se passe,
+    // et j'atterris au paywall du mauvais compte »).
+    // ⚠️ signOut() ici = celui de GoogleSignin (session Google Sign-In LOCALE de
+    // cette app) — PAS signOut(auth) de Firebase : `auth.currentUser` reste intact,
+    // et rien n'est touché sur les autres apps Google (Gmail/YouTube) ni au niveau
+    // de l'appareil. Erreur éventuelle (ex. aucune session à fermer) ignorée → on
+    // enchaîne sur signIn() dans tous les cas.
+    await GoogleSignin.signOut().catch(() => {});
     const response = await GoogleSignin.signIn();
 
     if (isCancelledResponse(response)) return { status: 'cancelled' };
