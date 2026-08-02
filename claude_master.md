@@ -1702,3 +1702,7 @@ Manifeste **non committé** → généré au build (prebuild EAS), permissions *
 - `SYSTEM_ALERT_WINDOW` = manifeste **debug** de react-native → **absente du build de prod**, non concernée.
 - Normales/nécessaires (garder) : INTERNET, ACCESS_NETWORK_STATE, VIBRATE, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, READ/WRITE_EXTERNAL_STORAGE.
 - **Retrait propre** = `expo.android.blockedPermissions` (app.json) + option plugin `recordAudioAndroid:false`. **Nécessite un rebuild (versionCode 6). N'affecte PAS le web** (config android only). À traiter sur feu vert explicite.
+
+## 📸 NOTE POUR PLUS TARD — PRENDRE une photo dans l'app (fonctionnalité future)
+- Si un jour on veut permettre de **PRENDRE une photo directement dans l'app** pour le vision board (au lieu de la choisir dans la galerie), il faudra **REMETTRE la permission `CAMERA`** (retirer `android.permission.CAMERA` de `blockedPermissions`) **ET** brancher `ImagePicker.launchCameraAsync` dans le code.
+- Aujourd'hui le code n'appelle QUE `launchImageLibraryAsync` (galerie) → le retrait de CAMERA ne change **rien**. Mais c'est écrit ici pour ne pas chercher pendant des heures le jour venu : **CAMERA retirée = choix assumé tant qu'on ne prend pas de photo in-app.**
