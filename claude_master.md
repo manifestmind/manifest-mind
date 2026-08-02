@@ -1706,3 +1706,40 @@ Manifeste **non committé** → généré au build (prebuild EAS), permissions *
 ## 📸 NOTE POUR PLUS TARD — PRENDRE une photo dans l'app (fonctionnalité future)
 - Si un jour on veut permettre de **PRENDRE une photo directement dans l'app** pour le vision board (au lieu de la choisir dans la galerie), il faudra **REMETTRE la permission `CAMERA`** (retirer `android.permission.CAMERA` de `blockedPermissions`) **ET** brancher `ImagePicker.launchCameraAsync` dans le code.
 - Aujourd'hui le code n'appelle QUE `launchImageLibraryAsync` (galerie) → le retrait de CAMERA ne change **rien**. Mais c'est écrit ici pour ne pas chercher pendant des heures le jour venu : **CAMERA retirée = choix assumé tant qu'on ne prend pas de photo in-app.**
+
+## ✉️ LIEN E-MAIL « CASSÉ » = FAUX PROBLÈME (élucidé 2026-08-01) — NE PAS REPARTIR SUR CETTE PISTE
+- **Symptôme** (sur UN seul téléphone) : le lien de vérification d'e-mail (`manifestmind.firebaseapp.com/__/auth/action`) affichait une **page noire Expo Router** (« route inconnue »).
+- **CAUSE RÉELLE = un SERVICE WORKER de l'app web**, enregistré sur le domaine `firebaseapp.com` lors d'une **vieille visite**, sur **ce seul appareil**. Il servait la coquille du SPA pour **toutes** les URLs du domaine, y compris celle du gestionnaire Firebase.
+- **CE N'ÉTAIT PAS** `firebase.json` (la règle attrape-tout n'était PAS en cause) **NI** l'app Android (une URL tapée à la main dans un navigateur n'est **jamais** capturée par une app).
+- **Preuves** : ordinateur → page Firebase FR parfaite ; téléphone en navigation **privée** → OK ; après **effacement cookies/données du domaine** sur le téléphone → OK.
+- **Conséquences** : **chantier hébergement ANNULÉ** — AUCUNE modif `firebase.json`, AUCUN redéploiement prod (le geste le plus risqué de la liste disparaît). **Les vrais utilisateurs n'ont JAMAIS été touchés** (leur service worker vit sur `manifest-mind.app`, pas `firebaseapp.com` où pointent les liens e-mail). **Vérification d'e-mail ET réinitialisation de mot de passe fonctionnent normalement.**
+- ⚠️ **Distinct** de la contingence Google-Sign-In redirect Safari (`authDomain`/rewrite `/__/auth/handler`, points 24/28) — sujet séparé, non affecté par cette conclusion.
+
+## 🧭 RÉCAP FIN DE SESSION (2026-08-01)
+### Fait aujourd'hui
+1. **LOT 2 — sélecteur de compte Google natif** : `GoogleSignin.signOut()` avant `signIn()` (commit `01ed73d`) → fini la connexion silencieuse au mauvais compte.
+2. **Retrait de 5 permissions Android inutilisées** (commit `a233dfe`) via `app.json` (`blockedPermissions` + `recordAudioAndroid:false`) : `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `FOREGROUND_SERVICE`, `RECORD_AUDIO`, `CAMERA`, `AD_ID`. Retrait de media-playback **prouvé sûr par LECTURE du code natif expo-audio** (service démarré uniquement par `setActiveForLockScreen(true)`, jamais appelé par l'app).
+3. **Reconstruction EAS versionCode 6** (les DEUX correctifs à bord) → AAB livré.
+4. **Analyse permissions** (sources : expo-audio, Adapty, expo-image-picker) + 3 notes docs (photo in-app, son écran éteint, permissions).
+5. **Faux problème « lien e-mail cassé » élucidé** (service worker local) → chantier hébergement annulé.
+
+### État exact du projet
+- **Android : versionCode 6 EN EXAMEN chez Google** (délai annoncé ~7 jours). versionCodes 4/5 = builds antérieurs ; **6 = le candidat** (sélecteur Google + 5 permissions retirées).
+- **Web : EN PRODUCTION** sur `manifest-mind.app`, **premiers vrais utilisateurs** (ce jour : 3 anonymes + 1 compte e-mail). Paddle actif. **NON redéployé aujourd'hui** (et à ne pas toucher).
+- **Serveur** : `adaptyWebhook` **EN LIGNE** au commit `8798ebd` (révocation sur `subscription_expired` + bouclier lifetime), **RTDN Adapty actives**. `paddleWebhook` **intact**. Règles Firestore **intactes**.
+- **Git** : tout committé et poussé sur `master` (branche unique).
+
+### Reste à faire — dans l'ordre
+**A. DÉPEND de l'approbation Google (attente ~7 j) :**
+1. Attendre le verdict de l'examen. Si approuvé → suite test fermé / promotion.
+2. (après install v6) re-tester : **sélecteur Google** s'ouvre · **son des séances** joue (confirme le retrait media-playback) · **galerie** vision-board/profil OK (CAMERA retirée) · confirmer que **les 5 permissions ont disparu** du manifeste (liste Play Console).
+
+**B. PEUT avancer sans Google (non bloquant) :**
+- Surveiller les vrais utilisateurs web (support e-mail).
+- Différés documentés : Node.js 20 EOL (avant 2026-10-30) · sync cloud progression · uniformisation CGU · cosmétique commentaires « RevenueCat → Adapty » · contingence Google-Sign-In redirect Safari (points 24/28, seulement si le repli casse au re-test).
+
+### Vigilances pour la reprise
+- 🔴 **NE PAS toucher au web en prod / `firebase.json`** — le « problème lien e-mail » était un faux problème (service worker local), pas la peine d'y revenir.
+- 🔴 **Android en examen** : ne rien reconstruire ni re-soumettre sauf nécessité réelle (chaque nouvelle version = manip pour les testeurs une fois installés).
+- 🔴 **Webhook corrigé en ligne** : ne pas redéployer `adaptyWebhook` sans raison.
+- Si Google redemandait une permission : vérifier le **manifeste réel de l'AAB v6** (les 5 doivent être absentes).
