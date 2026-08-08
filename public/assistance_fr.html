@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assistance — ManifestMind</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+@keyframes breatheEye{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.93)}}
+@keyframes irisAppear{0%,35%{transform:scale(0);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pupilAppear{0%,50%{transform:scale(0);opacity:0}80%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes refletAppear{0%,65%{opacity:0}100%{opacity:1}}
+@keyframes thirdEye{0%,70%{opacity:0;transform:scale(0)}85%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:.9}}
+@keyframes dashDraw{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes softPulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.45;transform:scale(1.03)}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#E8E0D8;color:#3A3530;font-family:'Jost',sans-serif;font-weight:300;line-height:1.8;min-height:100vh;}
+.hero{background:#F0EAE0;border-bottom:0.5px solid #D4C4B8;padding:60px 32px 52px;text-align:center;position:relative;overflow:hidden;}
+.orb{position:absolute;border-radius:50%;animation:softPulse 6s ease-in-out infinite;}
+.hero-inner{position:relative;z-index:1}
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:24px;animation:fadeUp .6s ease .1s both;}
+.app-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.3rem;color:#2A2520;letter-spacing:.04em;}
+.app-tagline{font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:300;color:#7A7068;letter-spacing:.18em;text-transform:uppercase;}
+.hero h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:2.2rem;color:#2A2520;letter-spacing:.02em;margin-bottom:8px;animation:fadeUp .6s ease .3s both;opacity:0;}
+.hero .subtitle{font-size:0.72rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9A8878;animation:fadeUp .6s ease .5s both;opacity:0;}
+.update-badge{display:inline-block;margin-top:14px;background:#DDD0F8;border:0.5px solid #C4A8D4;color:#6B3FA0;font-size:0.7rem;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.08em;padding:3px 14px;border-radius:20px;animation:fadeUp .6s ease .7s both;opacity:0;}
+.container{max-width:700px;margin:0 auto;padding:48px 28px 80px;}
+.intro-box{background:rgba(221,208,248,.4);border:0.5px solid #C4A8D4;border-left:3px solid #6B3FA0;border-radius:0 10px 10px 0;padding:18px 22px;margin-bottom:48px;font-size:0.9rem;color:#4A3060;line-height:1.7;}
+section{margin-bottom:40px;padding-bottom:40px;border-bottom:0.5px solid #C4A8D4;}
+section:last-of-type{border-bottom:none}
+.section-number{font-size:0.62rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#9B72C8;margin-bottom:5px;}
+h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:400;font-size:1.55rem;color:#2A2520;margin-bottom:14px;line-height:1.3;}
+p{font-size:0.9rem;color:#3A3530;margin-bottom:12px;line-height:1.75;}
+ul{padding-left:0;list-style:none;margin-bottom:12px}
+ul li{font-size:0.9rem;padding:5px 0 5px 18px;position:relative;color:#3A3530;line-height:1.65;}
+ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:300;}
+.highlight{background:rgba(221,208,248,.35);border:0.5px solid #C4A8D4;border-radius:8px;padding:14px 18px;margin:14px 0;font-size:0.87rem;color:#4A3060;line-height:1.65;}
+a.link{color:#6B3FA0;font-weight:500;text-decoration:none;}
+.contact-box{background:#F0EAE0;border:0.5px solid #C4A8D4;border-radius:16px;padding:32px;text-align:center;margin-top:48px;}
+.contact-box h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.4rem;font-weight:300;color:#2A2520;margin-bottom:6px;}
+.contact-sub{font-size:0.8rem;color:#7A7068;margin:6px 0 18px;}
+.contact-btn{display:inline-block;background:#3A3530;color:#F0EAE0;text-decoration:none;font-size:0.82rem;font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.12em;text-transform:uppercase;padding:11px 28px;border-radius:50px;}
+.footer{text-align:center;padding:24px;font-size:0.7rem;color:#9A8878;letter-spacing:.08em;border-top:0.5px solid #C4A8D4;background:#F0EAE0;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="orb" style="width:200px;height:200px;background:#B8D4B0;top:-60px;right:-60px;opacity:.25"></div>
+  <div class="orb" style="width:120px;height:120px;background:#C4A8D4;bottom:-30px;left:-40px;animation-delay:1s;opacity:.2"></div>
+  <div class="orb" style="width:80px;height:80px;background:#E8C890;top:40px;left:10%;animation-delay:2s;opacity:.18"></div>
+  <div class="hero-inner">
+    <div class="logo-wrap">
+      <svg width="110" height="85" viewBox="0 0 56 44" style="overflow:visible" aria-label="ManifestMind">
+        <ellipse cx="28" cy="22" rx="20" ry="13" fill="none" stroke="#C4A8D4" stroke-width=".4" opacity=".5" style="transform-origin:28px 22px;animation:breatheEye 4s ease-in-out 2s infinite"/>
+        <clipPath id="ec"><path d="M8 22 Q28 6 48 22 Q28 38 8 22Z"/></clipPath>
+        <path d="M8 22 Q28 6 48 22 Q28 38 8 22Z" fill="#FAF6F0"/>
+        <circle cx="28" cy="22" r="10.5" fill="#DDD0F8" style="transform-origin:28px 22px;animation:irisAppear .6s cubic-bezier(.34,1.56,.64,1) .5s both;clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="8" fill="#9B72C8" opacity=".75" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="5.8" fill="#6B3FA0" opacity=".9" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="22" r="3" fill="#1A0E30" style="clip-path:url(#ec)"/>
+        <circle cx="30.5" cy="19.5" r="1.3" fill="white" opacity=".9" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="15.5" r="1.8" fill="#EAC870" style="clip-path:url(#ec)"/>
+        <circle cx="28" cy="15.5" r=".8" fill="#C89A30" style="clip-path:url(#ec)"/>
+        <path d="M8 22 Q28 6 48 22" fill="none" stroke="#3A2850" stroke-width="1.4" stroke-linecap="round" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .1s forwards"/>
+        <path d="M8 22 Q28 38 48 22" fill="none" stroke="#3A2850" stroke-width=".9" stroke-linecap="round" opacity=".5" style="stroke-dasharray:60;stroke-dashoffset:60;animation:dashDraw .7s ease .2s forwards"/>
+      </svg>
+      <p class="app-name">ManifestMind</p>
+      <p class="app-tagline">Bien-être &amp; Intentions</p>
+    </div>
+    <h1>Assistance</h1>
+    <p class="subtitle">Comment obtenir de l'aide</p>
+    <span class="update-badge">Dernière mise à jour : août 2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="intro-box">
+    Bienvenue&nbsp;! Cette page répond aux questions les plus fréquentes et t'indique comment nous joindre. Nous sommes une petite équipe et nous lisons chaque message avec attention.
+  </div>
+
+  <section>
+    <div class="section-number">01</div>
+    <h2>Nous contacter</h2>
+    <p>La meilleure façon d'obtenir de l'aide est de nous écrire, depuis l'adresse e-mail de ton compte&nbsp;:</p>
+    <p style="text-align:center;margin:18px 0;"><a class="link" style="font-size:1.05rem;" href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a></p>
+    <div class="highlight">
+      Nous répondons <strong>sous 2 jours ouvrés</strong> (souvent bien plus vite).
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">02</div>
+    <h2>Comment restaurer un achat déjà effectué&nbsp;?</h2>
+    <ul>
+      <li><strong>Sur l'application (Android / iOS)&nbsp;:</strong> Paramètres → <strong>« Restaurer mes achats »</strong>. Ton accès premium, rattaché à ton compte Google&nbsp;Play ou App&nbsp;Store, est réappliqué.</li>
+      <li><strong>Sur le web&nbsp;:</strong> reconnecte-toi avec l'e-mail (ou Google) de ton compte — ton abonnement est restauré automatiquement.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-number">03</div>
+    <h2>Comment créer un compte après avoir acheté&nbsp;?</h2>
+    <ul>
+      <li><strong>Sur l'application&nbsp;:</strong> juste après l'achat, l'écran de confirmation te propose <strong>« Créer mon compte »</strong> (e-mail + mot de passe). Ton achat et ta progression sont conservés — c'est le même profil.</li>
+      <li><strong>Sur le web&nbsp;:</strong> ton compte est créé au moment du paiement.</li>
+    </ul>
+    <p>Créer un compte te permet de retrouver ton abonnement si tu changes d'appareil.</p>
+  </section>
+
+  <section>
+    <div class="section-number">04</div>
+    <h2>Mon abonnement n'apparaît plus, que faire&nbsp;?</h2>
+    <p>Commence par <strong>« Restaurer mes achats »</strong> (application) ou <strong>reconnecte-toi</strong> (web). La synchronisation se refait depuis notre serveur en quelques instants.</p>
+    <p>Si l'abonnement ne revient pas, écris-nous&nbsp;: nous vérifions pour toi.</p>
+  </section>
+
+  <section>
+    <div class="section-number">05</div>
+    <h2>Comment annuler mon abonnement&nbsp;?</h2>
+    <p>Cela dépend de l'endroit où tu l'as souscrit&nbsp;:</p>
+    <ul>
+      <li><strong>Android (Google&nbsp;Play)&nbsp;:</strong> ouvre le Play&nbsp;Store → ton avatar → <strong>Paiements et abonnements</strong> → <strong>Abonnements</strong> → ManifestMind → <strong>Résilier l'abonnement</strong>.</li>
+      <li><strong>iPhone / iPad (App&nbsp;Store)&nbsp;:</strong> Réglages → ton nom → <strong>Abonnements</strong> → ManifestMind → <strong>Annuler l'abonnement</strong>.</li>
+      <li><strong>Web (Paddle)&nbsp;:</strong> utilise le lien de gestion figurant dans l'e-mail de confirmation Paddle, ou écris-nous et nous nous en occupons.</li>
+    </ul>
+    <div class="highlight">
+      La résiliation arrête le renouvellement&nbsp;; ton accès reste actif jusqu'à la fin de la période déjà payée.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">06</div>
+    <h2>Si je change de téléphone, est-ce que je retrouve tout&nbsp;?</h2>
+    <p><strong>Ton abonnement te suit&nbsp;:</strong> reconnecte-toi (ou « Restaurer mes achats ») sur le nouvel appareil pour retrouver ton accès premium.</p>
+    <p>En revanche, <strong>ton journal, ton Vision&nbsp;Board et ta progression</strong> (cycles complétés, points) sont enregistrés <strong>sur ton appareil</strong> et <strong>ne se transfèrent pas</strong> automatiquement d'un téléphone à l'autre.</p>
+    <div class="highlight">
+      Une sauvegarde dans le cloud est à l'étude pour une future version. En attendant, ces données restent locales à chaque appareil.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">07</div>
+    <h2>Y a-t-il un essai gratuit&nbsp;?</h2>
+    <p>Oui&nbsp;: <strong>le premier cycle est entièrement gratuit</strong>, sans carte bancaire. Ensuite, l'accès complet nécessite un abonnement.</p>
+  </section>
+
+  <section>
+    <div class="section-number">08</div>
+    <h2>J'ai oublié mon mot de passe, que faire&nbsp;?</h2>
+    <p>Sur l'écran de connexion, touche <strong>« Mot de passe oublié&nbsp;? »</strong> et saisis ton e-mail&nbsp;: tu reçois un lien de réinitialisation.</p>
+    <p>Si tu t'es inscrite avec Google, tu n'as pas de mot de passe&nbsp;: utilise simplement <strong>« Continuer avec Google »</strong>.</p>
+  </section>
+
+  <section>
+    <div class="section-number">09</div>
+    <h2>Comment changer la langue de l'application&nbsp;?</h2>
+    <p><strong>Paramètres → Langue</strong>, puis choisis Français, English ou Español. Le changement est immédiat.</p>
+  </section>
+
+  <section>
+    <div class="section-number">10</div>
+    <h2>Comment gérer les rappels et notifications&nbsp;?</h2>
+    <p>Dans <strong>Paramètres</strong>, active ou désactive les rappels et choisis l'heure qui te convient.</p>
+  </section>
+
+  <section>
+    <div class="section-number">11</div>
+    <h2>Le son s'arrête quand mon écran s'éteint&nbsp;?</h2>
+    <p>Aujourd'hui, la musique d'ambiance <strong>se met en pause lorsque l'écran s'éteint</strong> ou que l'application passe en arrière-plan.</p>
+    <p>En attendant une amélioration, pendant ta visualisation&nbsp;: <strong>garde l'écran allumé</strong> — tu peux augmenter le délai de mise en veille dans les réglages de ton téléphone, ou effleurer l'écran de temps à autre.</p>
+    <div class="highlight">
+      La lecture audio écran éteint est prévue pour une future version.
+    </div>
+  </section>
+
+  <section>
+    <div class="section-number">12</div>
+    <h2>Comment obtenir un remboursement&nbsp;?</h2>
+    <p>Consulte notre <a class="link" href="remboursement_fr.html">politique de remboursement</a>. Pour toute demande, écris-nous à contact@manifest-mind.app.</p>
+  </section>
+
+  <section>
+    <div class="section-number">13</div>
+    <h2>Comment supprimer mon compte&nbsp;?</h2>
+    <p>Tu peux supprimer ton compte et toutes tes données à tout moment, gratuitement. Voir la procédure détaillée&nbsp;: <a class="link" href="suppression_compte_fr.html">Suppression de compte</a>.</p>
+  </section>
+
+  <section>
+    <div class="section-number">Liens utiles</div>
+    <h2>Documents et procédures</h2>
+    <ul>
+      <li><a class="link" href="politique_confidentialite_fr.html">Politique de confidentialité</a></li>
+      <li><a class="link" href="suppression_compte_fr.html">Suppression de compte</a></li>
+      <li><a class="link" href="conditions_utilisation_fr.html">Conditions d'utilisation</a></li>
+      <li><a class="link" href="remboursement_fr.html">Politique de remboursement</a></li>
+    </ul>
+  </section>
+
+  <div class="contact-box">
+    <h3>Une question sans réponse ici&nbsp;?</h3>
+    <p class="contact-sub">Écris-nous depuis l'adresse e-mail de ton compte — nous te répondons sous 2 jours ouvrés.</p>
+    <a class="contact-btn" href="mailto:contact@manifest-mind.app">contact@manifest-mind.app</a>
+  </div>
+
+</div>
+
+<div class="footer">
+  © 2026 ManifestMind — Tous droits réservés
+</div>
+
+</body>
+</html>
