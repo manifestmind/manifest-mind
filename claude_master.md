@@ -1743,3 +1743,10 @@ Manifeste **non committé** → généré au build (prebuild EAS), permissions *
 - 🔴 **Android en examen** : ne rien reconstruire ni re-soumettre sauf nécessité réelle (chaque nouvelle version = manip pour les testeurs une fois installés).
 - 🔴 **Webhook corrigé en ligne** : ne pas redéployer `adaptyWebhook` sans raison.
 - Si Google redemandait une permission : vérifier le **manifeste réel de l'AAB v6** (les 5 doivent être absentes).
+
+## 🌐 WEB PROD REDÉPLOYÉE (2026-08-07) — cible de rollback notée
+- **Motif** : ajout des **3 pages d'assistance** (`assistance_fr.html` / `support_en.html` / `ayuda_es.html`) pour les fiches App Store / Google Play (commit `ad62a76`). Servies en statique à `manifest-mind.app/<nom>.html`.
+- **Déploiement** : `firebase deploy --only hosting` (**hébergement SEUL** ; `functions`/`paddleWebhook`/`adaptyWebhook`/règles Firestore **NON touchés**). Validé au préalable sur **canal de prévisualisation** (depuis supprimé).
+- **Nouvelle version live** : **`5aa8fc87543e149a`** (mise en ligne 2026-08-08 02:10 UTC).
+- 🛟 **CIBLE DE ROLLBACK = version du 24 juillet : `3431317910ee9824`** (release 2026-07-24 22:34 UTC) — l'état vu par les vrais utilisateurs AVANT ce déploiement. **Rollback en un clic** : Console Firebase → Hosting → Historique des versions → cette version → « Effectuer un rollback ». (Pas de commande CLI `hosting:rollback`.)
+- **Vérifs** : tailles de routes **strictement identiques** au précédent export (l'app web n'a pas changé — seulement +3 fichiers statiques). **À retester sur `manifest-mind.app`** : **connexion Google** + **ouverture Paddle** (intestables sur le canal temporaire ; ne sont touchés par AUCUN code de ce déploiement).
