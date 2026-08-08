@@ -85,7 +85,20 @@
           "recordAudioAndroid": false
         }
       ],
-      "@react-native-google-signin/google-signin",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ManifestMind accède à tes photos pour te permettre d'ajouter des images à ton Vision Board et de choisir ta photo de profil.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.481097482104-1ilap9tomf03e9rm11nakreo0sl47o0j"
+        }
+      ],
       "expo-asset",
       "react-native-adapty"
     ],

@@ -23,10 +23,16 @@ import {
 const WEB_CLIENT_ID =
   '481097482104-4ejbttk32beo5vsbdabajf41airk3am8.apps.googleusercontent.com';
 
+// Client OAuth iOS (type 2) de GoogleService-Info.plist (champ CLIENT_ID).
+// Requis par GoogleSignin sur iOS pour délivrer un idToken. Identifiant PUBLIC
+// (comme la config Firebase), non sensible. Android IGNORE ce champ.
+const IOS_CLIENT_ID =
+  '481097482104-1ilap9tomf03e9rm11nakreo0sl47o0j.apps.googleusercontent.com';
+
 let configured = false;
 function ensureConfigured() {
   if (configured) return;
-  GoogleSignin.configure({ webClientId: WEB_CLIENT_ID });
+  GoogleSignin.configure({ webClientId: WEB_CLIENT_ID, iosClientId: IOS_CLIENT_ID });
   configured = true;
 }
 
