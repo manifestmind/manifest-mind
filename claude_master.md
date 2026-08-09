@@ -1768,3 +1768,41 @@ Manifeste **non committé** → généré au build (prebuild EAS), permissions *
 - **Le laisser ne coûte RIEN** (aucun effet sur le comportement de l'app, sa taille, l'examen des stores). Si un jour Google modularise ces libs par défaut, le réglage devient **redondant mais inoffensif** (no-op).
 - **Seul moment pour re-tester s'il est encore nécessaire** : quand on montera `@react-native-google-signin/google-signin` ou l'Expo SDK — optionnel, sans pression.
 - **iOS-only** : n'écrit que `ios/Podfile.properties.json` (lu par CocoaPods). Vérifié : **aucun impact web** (tailles de routes identiques) **ni Android** (11 permissions du manifeste identiques à la v6).
+
+## 🍏 ÉTAT DE RÉFÉRENCE iOS — 8 AOÛT 2026 (POINT DE RETOUR AVANT « SE CONNECTER AVEC APPLE »)
+> **Pourquoi ce repère** : la 1ʳᵉ construction iOS fonctionne sur TestFlight. Avant d'ajouter Apple Sign-In (prochaine session), on fige cet état : si quelque chose casse après, **on saura exactement d'où on partait**.
+
+### Coordonnées exactes de la construction
+- **Commit** : `349a516` (complet `349a51607b296de13b3662b0c5d9b20769f40fd8`) = HEAD au 2026-08-08.
+- **Build EAS** : ID `aa0514d9-9ab6-4afb-b3df-4368d44996d8` · **Version 1.0.0, build number 3** · profil `production` (store) · SDK 54.0.0 · Fingerprint `af74bb6043b9f8e4b456c927e206ad00128e9c8f` · terminé 2026-08-08 21:41.
+- Logs : `expo.dev/accounts/manifestminds-team/projects/manifestmind/builds/aa0514d9-9ab6-4afb-b3df-4368d44996d8`.
+- *(Le build n°2, commit `759a526`, a ÉCHOUÉ à `pod install` — c'était AVANT le fix `extraPods`/`modular_headers` du commit `2cab2d3`. Le n°3 avec le fix passe.)*
+
+### ✅ CE QUI FONCTIONNE (vérifié sur iPhone via TestFlight)
+- Cycle 1 gratuit complet · Journal · Vision board · Accueil · Profil · Paramètres.
+- Changement de langue entre les 3 langues.
+- Toutes les pages légales ouvrent les bons documents hébergés.
+- Fenêtres d'indication du parcours (onboarding tooltips).
+- Retour au paywall à la fin du cycle 1.
+- **Connexion Google** : sélecteur, authentification sur le téléphone, connexion aboutie, messages reçus.
+- **Ajout de photo** au vision board et au profil, avec la demande d'autorisation (galerie).
+- Son des séances.
+- **Notifications** : test envoyé et reçu.
+
+### ❌ CE QUI NE FONCTIONNE PAS (et pourquoi — AUCUN n'est un défaut de code)
+- **Prix « indisponibles »** : les 2 abonnements (`mm_premium_annual`, `mm_premium_monthly`) sont bloqués en **brouillon** chez Apple tant qu'une version d'app n'est pas soumise à l'examen (règle du 1ᵉʳ abonnement auto-renouvelable). Paywall **tout-ou-rien** → « indisponibles » même si le lifetime est prêt. Débloqué seulement après soumission → donc après Apple Sign-In (règle 4.8).
+- **« Se connecter avec Apple »** : ABSENT de l'écran de première connexion (conversion) ; PRÉSENT mais **inactif** (stub toast) sur l'écran de reconnexion (`auth.tsx` « Ravi de te revoir »). Détail complet dans la section chantier Apple.
+- **Libellés** disent encore « Google Play » (à neutraliser, prévu v7).
+
+### Configuration consoles en place (2026-08-08)
+Compte développeur actif · contrats + formulaires fiscaux validés · app créée (bundle `com.manifestmind.app`) · 3 produits configurés (`mm_premium_lifetime` sorti du brouillon, les 2 abonnements en brouillon) · Adapty connecté à Apple · certificats + profil générés par EAS · TestFlight opérationnel (utilisatrice testeuse interne).
+
+## 🚨 RÈGLE — VÉRIFIER LE COMPTE DE DÉMONSTRATION AVANT CHAQUE SOUMISSION (Google ET Apple)
+- **Incident (2026-08-08)** : le compte de démonstration remis aux examinateurs Google était **MORT depuis le 1ᵉʳ août** — son abonnement de test avait expiré, `subscription_active` était repassé à `false`. Découvert **par hasard** pendant le test iOS ; sans ça, on l'aurait appris par un **refus d'examen**.
+- **Réparation faite** : `has_lifetime = true` + `subscription_active = true` sur ce compte → désormais **protégé en permanence par le bouclier lifetime** (le webhook ne révoque jamais un compte `has_lifetime`).
+- **RÈGLE À APPLIQUER** : **AVANT CHAQUE SOUMISSION** (Google comme Apple), **vérifier que le compte de démonstration est actif** (`subscription_active = true`). Ne jamais supposer qu'il l'est encore.
+
+## 🔇 À VÉRIFIER PLUS TARD — icône de sourdine du paywall (repéré 2026-08-08)
+- Sur une capture du paywall, l'icône de son (haut-gauche) apparaissait **haut-parleur BARRÉ** → l'app a son propre bouton de sourdine.
+- **Question ouverte** : cette sourdine est-elle **activée PAR DÉFAUT à la première ouverture** ? Si oui, une nouvelle utilisatrice n'entendrait **rien** sans comprendre pourquoi.
+- **À tester sur une installation NEUVE** (état par défaut du flag de sourdine). Non bloquant, mais UX potentiellement pénalisante.
