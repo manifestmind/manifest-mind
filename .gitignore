@@ -34,8 +34,8 @@ yarn-error.*
 .env
 .env*.local
 
-# Firebase config (contiennent des clés sensibles)
-GoogleService-Info.plist
+# Configuration cliente Firebase (identifiants publics) : google-services.json et
+# GoogleService-Info.plist sont committés — ce ne sont PAS des secrets.
 
 # Firebase Functions backend
 functions/lib/
