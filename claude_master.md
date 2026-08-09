@@ -1806,3 +1806,14 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - Sur une capture du paywall, l'icône de son (haut-gauche) apparaissait **haut-parleur BARRÉ** → l'app a son propre bouton de sourdine.
 - **Question ouverte** : cette sourdine est-elle **activée PAR DÉFAUT à la première ouverture** ? Si oui, une nouvelle utilisatrice n'entendrait **rien** sans comprendre pourquoi.
 - **À tester sur une installation NEUVE** (état par défaut du flag de sourdine). Non bloquant, mais UX potentiellement pénalisante.
+
+## 🍎 CHANTIER « SE CONNECTER AVEC APPLE » — AVANCEMENT (2026-08-09)
+- **Commit 1** (`0aebcd0`) : deps `expo-apple-authentication` + `expo-crypto` (nonce SHA-256) ; `app.json ios.usesAppleSignIn:true` ; services `appleNative.ts` (+`.web.ts` stub) + `appleAuth.ts`. Isolé, aucun écran touché.
+- **Commit 2** (`b9eddff`) : branchement du bouton **existant** d'`auth.tsx` (reconnexion « Ravi de te revoir ») ; stub toast → vrai `signInWithApple` ; clé orpheline `alertApple` supprimée (FR/EN/ES) → `appleErreur` (calquée sur le message d'échec d'achat, avec l'adresse de contact). Bouton toujours `Platform.OS==='ios'`.
+- Preuves à chaque commit : `tsc` 0 · routes HTML web identiques · 11 permissions Android identiques v6.
+- **Reste (feux verts séparés)** : activer le provider Apple dans Firebase (champs OAuth **vides** — iOS natif, cf. [doc](https://firebase.google.com/docs/auth/ios/apple)) · build EAS iOS · test TestFlight.
+- Pods : `expo-apple-authentication`/`expo-crypto` ne dépendent **que d'ExpoModulesCore** (déjà modulaire) → **pas de conflit AppCheckCore attendu**. Le fix `extraPods` (GoogleUtilities/RecaptchaInterop) reste en place.
+
+### ⏸️ REPORTÉ (confort UX post-lancement, NON exigé par 4.8) — Apple sur l'écran d'activation
+- La carte de conversion post-achat (`activation.tsx`, « crée ton compte ») est en **e-mail + mot de passe uniquement**. La règle 4.8 ne se déclenche **que pour un login SOCIAL tiers** (Google…), **pas** pour l'e-mail/mot de passe → **aucune obligation** d'y mettre Apple.
+- Amélioration UX possible un jour (un acheteur iOS pourrait préférer Apple à un mot de passe), mais **non requise**. Ne pas alourdir le chantier actuel. Un utilisateur Apple peut de toute façon se connecter via `auth.tsx`.
