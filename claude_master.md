@@ -1758,3 +1758,13 @@ Manifeste **non committé** → généré au build (prebuild EAS), permissions *
 - **Ce que la restriction protège** : le **quota / la facture** (empêcher un tiers de consommer tes quotas avec ta clé), pas les données.
 - **Rattachement** : c'est exactement le **point 24 / PHASE G « restriction clé API »** (cf. détails lignes ~690-691 : referrers HTTP pour la clé web + restrictions d'app par bundle/package + SHA pour les clés mobiles + API restrictions). La nouveauté = il y a maintenant **3 clés clientes** à restreindre (web + Android + iOS), pas seulement la web.
 - **Prudence à l'exécution** : mal réglées, les restrictions **cassent l'auth** (oublier `manifestmind.firebaseapp.com/*` casse Google/magic-link). Suivre la liste exacte du point 24 avant d'appliquer.
+
+## 🍎 BUILD iOS — RÉGLAGE `extraPods` / `modular_headers` (2026-08-08) — À CONSERVER
+- **Où** : `app.json` → plugin `expo-build-properties` → `ios.extraPods` (commit `2cab2d3`) :
+  `{ "name": "GoogleUtilities", "modular_headers": true }` + `{ "name": "RecaptchaInterop", "modular_headers": true }`.
+- **Pourquoi** : au 1ᵉʳ build iOS, `pod install` échouait — `AppCheckCore` (pod **Swift**, tiré par `GoogleSignIn` via `@react-native-google-signin/google-signin`) dépend de `GoogleUtilities` et `RecaptchaInterop`, qui **ne définissent pas de module map** → intégration en **bibliothèque statique** impossible. Le réglage force le module map pour ces deux pods (équivaut à `:modular_headers => true` dans le Podfile). C'est le fix **CIBLÉ** (pas le `use_modular_headers!` global) recommandé par CocoaPods, livré par le mécanisme **first-party** d'Expo (traçé dans `expo-modules-autolinking/scripts/ios/autolinking_manager.rb` l.112).
+- **Statut = CONFIGURATION NORMALE, PAS une dette urgente.** Ce n'est ni un hack, ni un Podfile édité à la main, ni une version figée.
+- **À CONSERVER** tant que la chaîne de dépendances est la même. **Le retirer = le build iOS recasse.**
+- **Le laisser ne coûte RIEN** (aucun effet sur le comportement de l'app, sa taille, l'examen des stores). Si un jour Google modularise ces libs par défaut, le réglage devient **redondant mais inoffensif** (no-op).
+- **Seul moment pour re-tester s'il est encore nécessaire** : quand on montera `@react-native-google-signin/google-signin` ou l'Expo SDK — optionnel, sans pression.
+- **iOS-only** : n'écrit que `ios/Podfile.properties.json` (lu par CocoaPods). Vérifié : **aucun impact web** (tailles de routes identiques) **ni Android** (11 permissions du manifeste identiques à la v6).
