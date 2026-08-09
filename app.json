@@ -14,7 +14,10 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:manifestmind.firebaseapp.com"
-      ]
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.manifestmind.app",
