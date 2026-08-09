@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { auth } from '../../services/firebase';
 import { signInWithGoogle } from '../../services/googleAuth';
+import { signInWithApple } from '../../services/appleAuth';
 import { finalizeSignIn } from '../../services/authSession';
+import { SUPPORT_EMAIL } from '../../services/config';
 import { useTranslation } from '../../src/hooks/useTranslation';
 
 // Codes Firebase qui signifient VRAIMENT « identifiants invalides » (et rien
@@ -32,11 +34,30 @@ export default function Auth() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [appleBusy, setAppleBusy] = useState(false);
 
-  const handleAppleSignIn = () => {
-    // Stub inchangé (OAuth Apple à implémenter en session dédiée) — on rend juste
-    // le message visible sur web via le toast au lieu d'une Alert muette.
-    showAuthToast(`${t.auth.alertApple.titre} — ${t.auth.alertApple.corps}`, 'info');
+  const handleAppleSignIn = async () => {
+    if (appleBusy) return; // anti double-tap (comme googleBusy)
+    setAppleBusy(true);
+    const res = await signInWithApple();
+    setAppleBusy(false);
+
+    switch (res.status) {
+      case 'signed-in':
+        // Session établie : useSubscriptionSync (monté dans _layout) restaure
+        // subscription_active depuis users/{uid}, comme pour Google natif.
+        await finalizeSignIn();
+        return;
+      case 'cancelled':
+        // L'utilisateur a fermé la feuille Apple — silence, on reste sur l'écran.
+        return;
+      case 'unsupported':
+        // Bouton déjà gardé iOS ; filet si Sign in with Apple indisponible.
+        return;
+      default:
+        showAuthToast(t.auth.appleErreur.replace('{email}', SUPPORT_EMAIL), 'error');
+        return;
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -251,7 +272,11 @@ export default function Auth() {
               prochainement » ferait mauvaise impression (et remarque possible à
               l'examen Google). Code conservé → réactivation auto en phase iOS. */}
           {Platform.OS === 'ios' ? (
-            <Pressable style={styles.appleButton} onPress={handleAppleSignIn}>
+            <Pressable
+              style={[styles.appleButton, appleBusy && { opacity: 0.5 }]}
+              onPress={handleAppleSignIn}
+              disabled={appleBusy}
+            >
               <Svg width="14" height="14" viewBox="0 0 18 18">
                 <Path d="M14.5 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.7-3.1.7-.7 0-1.7-.7-2.8-.7-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.4 1.1 8.5.7 1 1.5 2.2 2.6 2.1 1-.04 1.4-.7 2.7-.7 1.2 0 1.6.7 2.7.7 1.1-.02 1.8-1.1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4-.04-.01-2.1-.8-2.1-3.4z" fill="white"/>
               </Svg>
