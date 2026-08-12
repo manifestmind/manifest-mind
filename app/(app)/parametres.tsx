@@ -714,9 +714,25 @@ export default function Parametres() {
         <View>
           <Text style={styles.sectionLabel}>{t.parametres.sections.legal}</Text>
 
-          {/* Ligne 1 — Politique de confidentialité */}
+          {/* Ligne 0 — Aide (support). PREMIÈRE rangée. Sur les 3 plateformes
+              (amélioration pour TOUTES les utilisatrices, pas une exigence store
+              → PAS de garde de plateforme). URL résolue par la langue active. */}
           <Pressable
             style={[styles.rowBase, styles.rowFirst]}
+            onPress={async () => { try { await Linking.openURL(t.legal.supportUrl); } catch {} }}
+          >
+            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+              <Circle cx="10" cy="10" r="8" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+              <Path d="M7.7 7.8a2.3 2.3 0 1 1 3.4 2c-.7.4-1.1.8-1.1 1.6" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+              <Circle cx="10" cy="14.6" r="0.8" fill="#6B3FA0" />
+            </Svg>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.aide}</Text>
+            <Chevron />
+          </Pressable>
+
+          {/* Ligne 1 — Politique de confidentialité */}
+          <Pressable
+            style={[styles.rowBase, styles.rowMiddle]}
             onPress={async () => { try { await Linking.openURL(t.legal.privacyUrl); } catch {} }}
           >
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">

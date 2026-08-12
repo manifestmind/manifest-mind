@@ -32,6 +32,7 @@ export const translations = {
       privacyUrl: 'https://manifest-mind.app/politique_confidentialite_fr.html',
       termsUrl: 'https://manifest-mind.app/conditions_utilisation_fr.html',
       refundUrl: 'https://manifest-mind.app/remboursement_fr.html',
+      supportUrl: 'https://manifest-mind.app/assistance_fr.html',
     },
 
     // ── Installation PWA (point 4-bis) ──────────────────────────────────────────
@@ -458,7 +459,7 @@ export const translations = {
         notifications: 'Notifications',
         abonnement: 'Abonnement',
         compte: 'Compte',
-        legal: 'Légal',
+        legal: 'Aide & mentions légales',
       },
       langueApp: 'Langue de l\'application',
       notifs: {
@@ -485,6 +486,7 @@ export const translations = {
         supprimer: 'Supprimer mon compte',
       },
       legalLinks: {
+        aide: 'Aide',
         confidentialite: 'Politique de confidentialité',
         conditions: 'Conditions d\'utilisation',
         remboursement: 'Politique de remboursement',
@@ -641,6 +643,7 @@ export const translations = {
       privacyUrl: 'https://manifest-mind.app/privacy_policy_en.html',
       termsUrl: 'https://manifest-mind.app/terms_of_use_en.html',
       refundUrl: 'https://manifest-mind.app/refund_policy_en.html',
+      supportUrl: 'https://manifest-mind.app/support_en.html',
     },
 
     install: {
@@ -1045,7 +1048,7 @@ export const translations = {
         notifications: 'Notifications',
         abonnement: 'Subscription',
         compte: 'Account',
-        legal: 'Legal',
+        legal: 'Help & legal',
       },
       langueApp: 'App language',
       notifs: {
@@ -1072,6 +1075,7 @@ export const translations = {
         supprimer: 'Delete my account',
       },
       legalLinks: {
+        aide: 'Help',
         confidentialite: 'Privacy Policy',
         conditions: 'Terms of Use',
         remboursement: 'Refund policy',
@@ -1220,6 +1224,7 @@ export const translations = {
       privacyUrl: 'https://manifest-mind.app/politica_privacidad_es.html',
       termsUrl: 'https://manifest-mind.app/terminos_uso_es.html',
       refundUrl: 'https://manifest-mind.app/politica_reembolso_es.html',
+      supportUrl: 'https://manifest-mind.app/ayuda_es.html',
     },
 
     install: {
@@ -1624,7 +1629,7 @@ export const translations = {
         notifications: 'Notificaciones',
         abonnement: 'Suscripción',
         compte: 'Cuenta',
-        legal: 'Legal',
+        legal: 'Ayuda e información legal',
       },
       langueApp: 'Idioma de la app',
       notifs: {
@@ -1651,6 +1656,7 @@ export const translations = {
         supprimer: 'Eliminar mi cuenta',
       },
       legalLinks: {
+        aide: 'Ayuda',
         confidentialite: 'Política de privacidad',
         conditions: 'Términos de uso',
         remboursement: 'Política de reembolso',
