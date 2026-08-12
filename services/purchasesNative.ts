@@ -46,7 +46,16 @@ async function ensureActivated(customerUserId: string) {
     if (customerUserId) await adapty.identify(customerUserId);
     return;
   }
-  await adapty.activate(ADAPTY_API_KEY, { customerUserId });
+  // Coupe la collecte des identifiants PUBLICITAIRES : IDFA (iOS) + AdvertisingID
+  // (Android). L'IP reste ACTIVE volontairement (Adapty en a besoin pour résoudre
+  // le storefront / la devise ; cf. écart pays iOS non résolu). Aligne le build
+  // avec la déclaration de confidentialité : Adapty 4.0.1 ne collecte alors que
+  // « Purchase History » (cf. son manifeste PrivacyInfo.xcprivacy) → pas de Device ID.
+  await adapty.activate(ADAPTY_API_KEY, {
+    customerUserId,
+    ios: { idfaCollectionDisabled: true },
+    android: { adIdCollectionDisabled: true },
+  });
 }
 
 // Activation d'Adapty AU DÉMARRAGE (appelée par le root layout, natif +
