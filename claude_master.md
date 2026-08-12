@@ -1839,3 +1839,10 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **Règle Apple 3.1.2** : pour un abonnement auto-renouvelable, le **binaire** doit inclure titre + durée + prix + **liens FONCTIONNELS vers Privacy Policy ET Terms of Use (EULA)** — au point d'achat. **L'acceptation en onboarding NE SUFFIT PAS.** Motif de refus très fréquent.
 - **Prix/durée/description** : présents sur les cartes (natif + web) → OK.
 - **Correctif prévu V7 (NON codé)** : ajouter une rangée de liens (Confidentialité + Conditions) sur les DEUX paywalls, via les URLs existantes `t.legal.privacyUrl` / `t.legal.termsUrl` (par langue, pages en ligne sur manifest-mind.app) ouvertes par `Linking.openURL`, visibles sur natif. Fichiers partagés → preuves web+Android à faire au codage.
+- **✅ FAIT (commit `c905972`, 2026-08-12)** : liens Confidentialité/Conditions + mention « renouvellement automatique » (mensuel/annuel uniquement, jamais à-vie) sur les 2 paywalls. Ici les liens sont **volontairement visibles AUSSI sur web** (la transparence abonnement vaut pour les utilisateurs web) — 6 pages HTTP 200 vérifiées, 11 permissions Android identiques v6.
+
+## 🔴 RÈGLE — NE PAS TOUCHER AU WEB QUAND AUCUNE RÈGLE NE L'EXIGE (2026-08-12)
+- **Contexte** : le site `manifest-mind.app` est **EN PRODUCTION avec de vrais utilisateurs**. Il fonctionne. On ne change PAS ce qui marche.
+- **Règle** : un ajout qui **ne concerne QUE le mobile** (stores) doit être **derrière une garde de plateforme** — exactement comme les boutons « Continuer avec Google » de `pricing.tsx`/`pricing-upgrade.tsx` (`Platform.OS === 'web' ? … : null`) ou le bouton Apple d'`auth.tsx` (`Platform.OS === 'ios'`). **NE JAMAIS** rendre visible sur le web un élément qui n'y est pas requis.
+- **Exception = seulement si une RÈGLE l'exige aussi côté web** (ex. transparence abonnement Apple 3.1.2 + Google : les liens légaux du paywall SONT requis pour les utilisateurs web aussi → rendus sur web à dessein, commit `c905972`).
+- **Réflexe avant tout ajout partagé** : « cet élément est-il exigé sur le web ? » Si non → garde de plateforme. Si oui → le rendre sur web ET le prouver (tailles de routes).
