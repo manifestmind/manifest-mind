@@ -1827,3 +1827,15 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **Impact examen** : FAIBLE — l'App Review est majoritairement **US**, où Adapty (US) == StoreKit (US) → prix cohérents, pas de tromperie visible. (Réserve : storefront de l'examinateur non garanti à 100 %.)
 - **🔴 RÈGLE — NE PAS refaire « Option A » sans ce test** : après **approbation** des produits, RE-VÉRIFIER sur un **compte FR** que **prix affiché == prix feuille Apple**. Très probablement l'écart disparaît (Adapty synchronise les prix localisés live une fois les produits approuvés). **SI l'écart PERSISTE** après approbation sur compte FR → **ALORS** un correctif client devient nécessaire ET justifié (bloquer si devise/storefront incohérents). **PAS AVANT.** Personne ne repart sur Option A sans avoir refait ce test.
 - **Rappel technique lié** : les prix sont récupérés à l'EXÉCUTION par Adapty (aucun rebuild nécessaire pour un changement de prix ; l'app installée récupère les nouveaux prix au prochain affichage du paywall).
+
+## 🧭 PARCOURS PAYWALL — LE VRAI (2026-08-12) — NE PLUS SE TROMPER (3ᵉ fois interdite)
+- **Ordre réel** : (1) **onboarding** qui explique l'app ET où l'utilisateur **accepte les politiques de confidentialité** → (2) **le paywall DIRECTEMENT**, avec les **QUATRE options visibles ENSEMBLE dès ce 1ᵉʳ écran** : **cycle gratuit** (1er cycle offert) · **à vie** · **annuel** · **mensuel**.
+- **Le cycle gratuit est UNE OPTION parmi les quatre**, PAS une étape imposée avant de voir les prix.
+- **FAUX (erreurs déjà commises 2×)** : « le paywall apparaît au 2ᵉ cycle » / « l'écran d'achat n'apparaît qu'au début du deuxième cycle ». **C'EST FAUX.** Le paywall est montré juste après l'onboarding, les 4 options d'emblée.
+- Écrans : onboarding `pricing.tsx` (les 4 cartes, `pricing.tsx:427-519`) ; paywall de mise à niveau in-app `pricing-upgrade.tsx` (aussi accessible depuis Paramètres).
+
+## 🔴 MANQUE 3.1.2 CONFIRMÉ — liens légaux ABSENTS des paywalls (2026-08-12) — POUR V7
+- **Constat code (grep, zéro correspondance)** : `pricing.tsx` ET `pricing-upgrade.tsx` n'ont **AUCUN lien vers la Politique de confidentialité ni les Conditions d'utilisation** (pas même un `import Linking`).
+- **Règle Apple 3.1.2** : pour un abonnement auto-renouvelable, le **binaire** doit inclure titre + durée + prix + **liens FONCTIONNELS vers Privacy Policy ET Terms of Use (EULA)** — au point d'achat. **L'acceptation en onboarding NE SUFFIT PAS.** Motif de refus très fréquent.
+- **Prix/durée/description** : présents sur les cartes (natif + web) → OK.
+- **Correctif prévu V7 (NON codé)** : ajouter une rangée de liens (Confidentialité + Conditions) sur les DEUX paywalls, via les URLs existantes `t.legal.privacyUrl` / `t.legal.termsUrl` (par langue, pages en ligne sur manifest-mind.app) ouvertes par `Linking.openURL`, visibles sur natif. Fichiers partagés → preuves web+Android à faire au codage.
