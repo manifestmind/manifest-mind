@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
@@ -532,6 +532,22 @@ export default function PricingUpgrade() {
           </Text>
         </Pressable>
 
+        {/* Renouvellement auto — abonnements UNIQUEMENT (jamais a-vie). 3.1.2 + Google. */}
+        {(selectedPlan === 'mensuel' || selectedPlan === 'annuel') ? (
+          <Text style={styles.autoRenewText}>{t.pricing.renouvellementAuto}</Text>
+        ) : null}
+
+        {/* Liens legaux au POINT D'ACHAT — Apple 3.1.2 + Google Play. Natif ET web. */}
+        <View style={styles.legalRow}>
+          <Pressable onPress={() => { Linking.openURL(t.legal.privacyUrl).catch(() => {}); }}>
+            <Text style={styles.legalLink}>{t.parametres.legalLinks.confidentialite}</Text>
+          </Pressable>
+          <Text style={styles.legalDot}>·</Text>
+          <Pressable onPress={() => { Linking.openURL(t.legal.termsUrl).catch(() => {}); }}>
+            <Text style={styles.legalLink}>{t.parametres.legalLinks.conditions}</Text>
+          </Pressable>
+        </View>
+
         {/* Porte de reconnexion. C'est ICI qu'atterrit l'ancien abonné revenu sur
             un appareil neuf : essai anonyme démarré, bloqué au cycle 8, son
             abonnement vivant sur son ancien UID. Sans ce lien il n'avait aucune
@@ -885,6 +901,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B3FA0',
     textAlign: 'center',
+  },
+  autoRenewText: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#7A6E64',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  legalLink: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#6B3FA0',
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    fontFamily: 'Jost',
+    fontSize: 13,
+    color: '#A09088',
   },
   bottomText: {
     fontFamily: 'serif',

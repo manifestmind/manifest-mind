@@ -170,6 +170,7 @@ export const translations = {
     pricing: {
       titre: 'Transforme ta vie en 365 cycles',
       etape: 'Étape 3 / 3',
+      renouvellementAuto: 'Renouvellement automatique · résiliable à tout moment',
       plans: {
         free: {
           titre: 'Ton premier cycle offert',
@@ -770,6 +771,7 @@ export const translations = {
     pricing: {
       titre: 'Transform your life in 365 cycles',
       etape: 'Step 3 / 3',
+      renouvellementAuto: 'Auto-renewing · cancel anytime',
       plans: {
         free: {
           titre: 'Your first cycle, free',
@@ -1348,6 +1350,7 @@ export const translations = {
     pricing: {
       titre: 'Transforma tu vida en 365 ciclos',
       etape: 'Paso 3 / 3',
+      renouvellementAuto: 'Renovación automática · cancela cuando quieras',
       plans: {
         free: {
           titre: 'Tu primer ciclo gratis',
