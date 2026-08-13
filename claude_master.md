@@ -1854,3 +1854,8 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **⚠️ La DOC d'Adapty et son MANIFESTE peuvent se CONTREDIRE** (vécu : la doc `apple-app-privacy` dit « déclarez Device ID pour l'IDFA », le manifeste 4.0.1 ne déclare que Purchase History). **LE MANIFESTE FAIT FOI** — c'est le mécanisme officiel Apple dont Adapty est légalement responsable.
 - **Conclusion ACTUELLE (Adapty iOS 4.0.1, vérifié)** : le manifeste ne déclare que **`NSPrivacyCollectedDataTypePurchaseHistory`**, `NSPrivacyTracking = false`, **ni Device ID ni IDFV**. Combiné à `idfaCollectionDisabled: true` (commit `2419781`), la **déclaration App Store exacte = E-mail · Identifiant utilisateur · Achats · Interaction produit** (l'interaction produit = analytics paywall Adapty). **PAS d'identifiant d'appareil.**
 - À REFAIRE ce contrôle avant CHAQUE soumission qui suit une montée de version `react-native-adapty` / SDK iOS Adapty.
+
+## ✅ FIREBASE — FOURNISSEUR APPLE DÉJÀ ACTIVÉ (NE PLUS REDEMANDER, NE PAS RÉINITIALISER)
+- Le fournisseur **Apple est ACTIVÉ** dans Firebase → **Authentication → Sign-in method**, aux côtés de Google, e-mail et anonyme (fait ~2026-08-10 par l'utilisatrice).
+- **iOS natif → champs OAuth (Services ID / Team ID / Key ID / clé) VIDES** = normal et suffisant (l'auth se fait via le Bundle ID). Cf. règle « pas de Service ID ni clé en iOS natif ».
+- **NE PLUS le redemander** (déjà demandé 2×, temps perdu) et **surtout NE PAS le désactiver/réinitialiser** en croyant bien faire — ça casserait Apple Sign-In en production.
