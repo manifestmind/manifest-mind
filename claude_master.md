@@ -1859,3 +1859,11 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - Le fournisseur **Apple est ACTIVÉ** dans Firebase → **Authentication → Sign-in method**, aux côtés de Google, e-mail et anonyme (fait ~2026-08-10 par l'utilisatrice).
 - **iOS natif → champs OAuth (Services ID / Team ID / Key ID / clé) VIDES** = normal et suffisant (l'auth se fait via le Bundle ID). Cf. règle « pas de Service ID ni clé en iOS natif ».
 - **NE PLUS le redemander** (déjà demandé 2×, temps perdu) et **surtout NE PAS le désactiver/réinitialiser** en croyant bien faire — ça casserait Apple Sign-In en production.
+
+## 🌐 WEB PROD REDÉPLOYÉE (2026-08-13) — prix Paddle en direct
+- **Motif** : le paywall web tire désormais ses **3 prix localisés directement de Paddle** (`Paddle.PricePreview`, commit `51d192a`) au lieu des valeurs USD codées en dur (`PRICES`). Embarque aussi tout l'accumulé depuis le 8 août : liens légaux + mention renouvellement sur les paywalls, lien Aide, libellés magasin neutralisés.
+- **Déploiement** : `firebase deploy --only hosting` (**hébergement SEUL** — `functions`/`paddleWebhook`/`adaptyWebhook`/règles Firestore **NON touchés**). Validé au préalable sur canal `preview-prix` (depuis supprimé).
+- **Nouvelle version live** : release **2026-08-13 16:48:08 UTC** (hash complet en Console → Hosting → Historique, entrée de tête).
+- 🛟 **CIBLE DE ROLLBACK = version live d'AVANT ce déploiement** : `5aa8fc87543e149a` (tail `…3e149a`, mise en ligne ~7-8 août, pages d'assistance). **Rollback 1 clic** : Console Firebase → Hosting → Historique → cette version → « Effectuer un rollback ».
+- **Prix web = tout-ou-rien** : si Paddle échoue → « Prix indisponibles » + achat désactivé (jamais de prix inventé). Le fallback USD statique (`PRICES`/`formatUSD`) est **conservé pour l'instant** (filet natif-inerte) — **nettoyage = commit 2, APRÈS validation prod sur `manifest-mind.app`**.
+- **Testé sur preview** : 3 prix exacts (89,99 / 44,99 / 9,99 $), calcul annuel juste (3,75/mois · 0,12/cycle), liens légaux + Aide OK. **NON testable sur preview** (403 identitytoolkit, domaine temporaire non autorisé — normal) : connexion Google/e-mail + ouverture Paddle → **à retester sur `manifest-mind.app`** ; si échec → rollback immédiat vers `5aa8fc87543e149a`.
