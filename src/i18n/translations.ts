@@ -189,7 +189,7 @@ export const translations = {
         annuel: {
           badge: '⭐ Recommandé · Économise 50%',
           titre: 'Annuel',
-          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
           sousTitre: 'Facturé {prixAn}/an · soit {prixCycle}/cycle',
           unite: '/mois',
           uniteAn: '/an',
@@ -792,7 +792,7 @@ export const translations = {
         annuel: {
           badge: '⭐ Recommended · Save 50%',
           titre: 'Annual',
-          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
           sousTitre: 'Billed {prixAn}/year · {prixCycle}/cycle',
           unite: '/mo',
           uniteAn: '/yr',
@@ -1373,7 +1373,7 @@ export const translations = {
         annuel: {
           badge: '⭐ Recomendado · Ahorra 50%',
           titre: 'Anual',
-          // Prix interpolés par les écrans via PRICES + formatUSD (services/prices.ts)
+          // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
           sousTitre: 'Facturado {prixAn}/año · {prixCycle}/ciclo',
           unite: '/mes',
           uniteAn: '/año',

@@ -2,9 +2,11 @@
 // Prix affichés sur le paywall — SOURCE UNIQUE pour les 2 écrans
 // (app/(onboarding)/pricing.tsx et app/(app)/pricing-upgrade.tsx).
 // ─────────────────────────────────────────────────────────────────────────────
-// - WEB, ou NATIF INERTE (STORES_ACTIVE=false) : prix USD indicatifs
-//   (PRICES / formatUSD), comportement INCHANGÉ. Sur web, Paddle affiche de toute
-//   façon le vrai prix localisé au checkout.
+// - WEB (canPay) : prix RÉELS localisés récupérés EN DIRECT via Paddle
+//   (Paddle.PricePreview → services/paddle.ts previewPrices). Même machinerie
+//   tout-ou-rien que le natif ci-dessous.
+// - NATIF INERTE (STORES_ACTIVE=false) : aucune source de prix vivante et aucune
+//   vente possible → placeholder « … », achat désactivé (plus AUCUN prix en dur).
 // - NATIF + STORES_ACTIVE : prix RÉELS localisés d'Adapty/Play (localizedString),
 //   TOUT-OU-RIEN sur les 3 produits (chargement / erreur gérés → l'appelant
 //   désactive l'achat et propose « Réessayer »). Conformité Google : le prix
@@ -19,7 +21,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { auth } from '../../services/firebase';
 import { canPay } from '../../services/config';
-import { PRICES, formatUSD, formatLocalizedMoney } from '../../services/prices';
+import { formatLocalizedMoney } from '../../services/prices';
 import { nativeGetPrices, type NativePricesResult } from '../../services/purchasesNative';
 import { previewPrices } from '../../services/paddle';
 import { type Lang } from '../i18n/translations';
@@ -43,17 +45,6 @@ export type LocalizedPrices = {
 };
 
 const DASH = '…';
-
-function webCards(lang: Lang): PriceCards {
-  return {
-    lifetime: formatUSD(PRICES.lifetime, lang),
-    monthly: formatUSD(PRICES.mensuel, lang),
-    annualBig: formatUSD(PRICES.annuelParMois, lang),
-    annualUnit: 'mois',
-    annualPrixAn: formatUSD(PRICES.annuel, lang),
-    annualPrixCycle: formatUSD(PRICES.annuelParCycle, lang),
-  };
-}
 
 function placeholderCards(): PriceCards {
   return {
@@ -121,8 +112,11 @@ export function useLocalizedPrices(lang: Lang): LocalizedPrices {
   }, [load]);
 
   if (!useFetch) {
-    // Natif-inerte (STORES_ACTIVE=false) ou web sans Paddle : USD statique, INCHANGÉ.
-    return { phase: 'web', pricesReady: true, cards: webCards(lang), retry: () => {} };
+    // Natif-inerte (STORES_ACTIVE=false) ou web sans Paddle : aucune source de prix
+    // vivante ET aucune vente possible (canPay()=false bloque l'achat en aval). On
+    // n'affiche donc PAS de prix (plus aucune valeur USD en dur) : placeholder « … »
+    // + achat désactivé. Le plan gratuit, non gaté par pricesReady, reste utilisable.
+    return { phase: 'web', pricesReady: false, cards: placeholderCards(), retry: () => {} };
   }
   if (res === 'loading') {
     return { phase: 'loading', pricesReady: false, cards: placeholderCards(), retry: load };
