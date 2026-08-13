@@ -10,6 +10,12 @@
 
 import { Platform } from 'react-native';
 import { PADDLE_SANDBOX, SUPPORT_EMAIL } from './config';
+// Types de prix PARTAGÉS avec le natif (Adapty). Import de TYPE uniquement
+// (effacé à la compilation) → aucun couplage runtime, aucune lib native tirée
+// dans le bundle web. Sur web, Metro résout purchasesNative.web.ts (qui exporte
+// ces mêmes types). Permet à previewPrices() de renvoyer EXACTEMENT la forme que
+// nativeGetPrices(), donc de réutiliser le même constructeur de cartes.
+import type { NativePriceInfo, NativePricesResult } from './purchasesNative';
 
 const PADDLE_JS_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
@@ -40,6 +46,11 @@ declare global {
       Environment: { set: (env: 'sandbox' | 'production') => void };
       Setup: (config: { token: string; eventCallback?: (data: any) => void }) => void;
       Checkout: { open: (options: any) => void; close: () => void };
+      // Aperçu de prix LOCALISÉS (devise + taxes du visiteur, détecté par IP).
+      // S'authentifie avec le MÊME client token public (aucune clé secrète).
+      PricePreview: (options: {
+        items: { priceId: string; quantity: number }[];
+      }) => Promise<any>;
     };
   }
 }
@@ -233,5 +244,80 @@ export function mapCheckoutError(
       return msgs.erreurTechnique.replace('{email}', SUPPORT_EMAIL);
     case 'unsupported':
       return null;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Prix LOCALISÉS via Paddle.PricePreview (WEB uniquement)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Récupère les 3 prix localisés (devise + taxes du visiteur, détectés par IP)
+// avec le client token public déjà en place — AUCUNE clé secrète, AUCUN nouvel
+// identifiant. Renvoie EXACTEMENT la forme de nativeGetPrices() (Adapty) pour
+// que le hook réutilise le même constructeur de cartes + le même TOUT-OU-RIEN.
+//
+// TOUT-OU-RIEN : { ok: false } si le web n'est pas disponible, si un price ID
+// .env manque, si Paddle échoue, ou si UN SEUL des 3 produits n'a pas un prix
+// localisé complet (formaté + montant + devise). L'appelant désactive alors
+// l'achat et affiche « Prix indisponibles ». Jamais de prix inventé.
+export async function previewPrices(): Promise<NativePricesResult> {
+  if (Platform.OS !== 'web') return { ok: false };
+
+  const plans: PaddlePlan[] = ['mensuel', 'annuel', 'lifetime'];
+  const priceIdByPlan = {} as Record<PaddlePlan, string>;
+  const items: { priceId: string; quantity: number }[] = [];
+  for (const plan of plans) {
+    const id = getPriceId(plan);
+    if (!id) {
+      // .env incomplet (100 % des prix cassés) — diagnostic INTENTIONNEL.
+      console.error(`[paddle] price ID manquant pour preview plan="${plan}" — vérifier .env`);
+      return { ok: false };
+    }
+    priceIdByPlan[plan] = id;
+    items.push({ priceId: id, quantity: 1 });
+  }
+
+  try {
+    await loadPaddleScript();
+  } catch (e) {
+    if (__DEV__) console.log('[paddle] preview: chargement script échoué', e);
+    return { ok: false };
+  }
+  if (!setupPaddle() || !window.Paddle?.PricePreview) return { ok: false };
+
+  try {
+    const result = await window.Paddle.PricePreview({ items });
+    const lineItems: any[] = result?.data?.details?.lineItems ?? [];
+    const currencyCode: string | undefined = result?.data?.currencyCode;
+    if (!currencyCode) return { ok: false };
+
+    // Nombre de décimales de la devise (USD=2, JPY=0…) via Intl — évite un
+    // facteur 100 erroné : `totals.total` de Paddle est en PLUS PETITE UNITÉ.
+    let decimals = 2;
+    try {
+      decimals =
+        new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode })
+          .resolvedOptions().maximumFractionDigits ?? 2;
+    } catch {
+      decimals = 2;
+    }
+    const divisor = Math.pow(10, decimals);
+
+    const prices = {} as Record<PaddlePlan, NativePriceInfo>;
+    for (const plan of plans) {
+      const li = lineItems.find((x) => x?.price?.id === priceIdByPlan[plan]);
+      const localized: string | undefined = li?.formattedTotals?.total;
+      const rawMinor: unknown = li?.totals?.total;
+      const amount =
+        typeof rawMinor === 'string' || typeof rawMinor === 'number'
+          ? Number(rawMinor) / divisor
+          : NaN;
+      if (!localized || !Number.isFinite(amount)) return { ok: false };
+      prices[plan] = { localized, amount, currencyCode };
+    }
+    return { ok: true, prices };
+  } catch (e) {
+    if (__DEV__) console.log('[paddle] PricePreview échoué', e);
+    return { ok: false };
   }
 }

@@ -21,6 +21,7 @@ import { auth } from '../../services/firebase';
 import { canPay } from '../../services/config';
 import { PRICES, formatUSD, formatLocalizedMoney } from '../../services/prices';
 import { nativeGetPrices, type NativePricesResult } from '../../services/purchasesNative';
+import { previewPrices } from '../../services/paddle';
 import { type Lang } from '../i18n/translations';
 
 export type PriceCards = {
@@ -92,24 +93,35 @@ function nativeCards(res: Extract<NativePricesResult, { ok: true }>, lang: Lang)
 }
 
 export function useLocalizedPrices(lang: Lang): LocalizedPrices {
+  // NATIF (Adapty) : INCHANGÉ — même condition, même fetch, mêmes phases.
   const useNative = Platform.OS !== 'web' && canPay();
+  // WEB (Paddle PricePreview) : nouveau chemin, prix localisés en direct.
+  const useWeb = Platform.OS === 'web' && canPay();
+  // Les deux chemins « live » partagent la machinerie loading/error/ready +
+  // nativeCards + tout-ou-rien. Sinon (natif-inerte, ou web sans Paddle) : le
+  // fallback USD statique historique reste EXACTEMENT tel quel.
+  const useFetch = useNative || useWeb;
+
   const [res, setRes] = useState<NativePricesResult | 'loading'>(
-    useNative ? 'loading' : { ok: false },
+    useFetch ? 'loading' : { ok: false },
   );
 
   const load = useCallback(() => {
-    if (!useNative) return;
+    if (!useFetch) return;
     setRes('loading');
-    nativeGetPrices(auth.currentUser?.uid ?? '')
-      .then(setRes)
-      .catch(() => setRes({ ok: false }));
-  }, [useNative]);
+    // WEB → Paddle (anonyme, pas d'uid) ; NATIF → Adapty (uid), INCHANGÉ.
+    const fetcher = useWeb
+      ? previewPrices()
+      : nativeGetPrices(auth.currentUser?.uid ?? '');
+    fetcher.then(setRes).catch(() => setRes({ ok: false }));
+  }, [useFetch, useWeb]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  if (!useNative) {
+  if (!useFetch) {
+    // Natif-inerte (STORES_ACTIVE=false) ou web sans Paddle : USD statique, INCHANGÉ.
     return { phase: 'web', pricesReady: true, cards: webCards(lang), retry: () => {} };
   }
   if (res === 'loading') {

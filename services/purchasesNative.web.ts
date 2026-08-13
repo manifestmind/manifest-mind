@@ -27,7 +27,9 @@ export async function nativeInitAdapty(): Promise<void> {
   // rien à faire sur web
 }
 
-// Types + stub prix : jamais utilisés sur web (le paywall web affiche PRICES/USD).
+// Types de prix : RÉUTILISÉS sur web (paddle.ts previewPrices renvoie cette même
+// forme). En revanche nativeGetPrices ci-dessous reste un stub jamais appelé sur
+// web (le paywall web passe par Paddle.PricePreview, pas par Adapty).
 export type NativePriceInfo = { localized: string; amount: number; currencyCode: string };
 export type NativePricesResult =
   | { ok: true; prices: Record<'mensuel' | 'annuel' | 'lifetime', NativePriceInfo> }
