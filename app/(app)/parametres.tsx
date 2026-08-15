@@ -401,6 +401,20 @@ export default function Parametres() {
         if (__DEV__) console.log('[parametres] suppression doc Firestore échouée', e?.code);
       }
 
+      // 1-bis. Doc Firestore marketing_consents/{uid} (consentement + e-mail).
+      //    ⚠️ NON OPTIONNEL : sans cette suppression, l'ADRESSE E-MAIL de la
+      //    personne SURVIVRAIT à la suppression de son compte — exactement le
+      //    trou RGPD décrit ci-dessus, sur la collection qui sert justement à
+      //    la prospection. Le `allow delete` correspondant est dans
+      //    firestore.rules, bloc /marketing_consents/{userId}.
+      //    Même forme non bloquante que ci-dessus : un échec ici ne doit pas
+      //    empêcher la suppression du compte Firebase qui suit.
+      try {
+        await deleteDoc(doc(db, 'marketing_consents', user.uid));
+      } catch (e: any) {
+        if (__DEV__) console.log('[parametres] suppression consentement marketing échouée', e?.code);
+      }
+
       // 2. Compte Firebase.
       try {
         await deleteUser(user);

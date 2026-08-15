@@ -11,6 +11,7 @@ import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
+import { saveMarketingConsent } from '../../services/marketingConsent';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub), purchasesNative.ts
@@ -39,6 +40,20 @@ export default function PricingUpgrade() {
   // « connecte-toi » + bouton de reconnexion, au lieu d'un faux « mot de passe
   // incorrect » (un compte magic link n'a jamais eu de mot de passe).
   const [emailExists, setEmailExists] = useState(false);
+  // Consentement marketing (RGPD) — NON coché par défaut. Ne conditionne AUCUN
+  // bouton ni AUCUNE validation : ne pas le cocher n'a aucun effet sur la
+  // création de compte ni sur l'achat. (Symétrique de pricing.tsx.)
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+
+  // Écriture du consentement, une fois le compte PERMANENT acquis. Sans `await`
+  // et sans remontée d'erreur : le consentement est secondaire, la vente ne
+  // l'est pas. Compromis assumé — une écriture ratée est un consentement perdu.
+  function recordMarketingConsent(email: string) {
+    if (!marketingOptIn) return; // aucun document pour un refus
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    saveMarketingConsent({ uid, email, lang, source: 'pricing-upgrade' }).catch(() => {});
+  }
   // VERROU D'ACHAT UNIFIÉ (point 11) — remplace submitting + googleBusy.
   //  - busyRef : verrou SYNCHRONE anti-réentrance (bulletproof contre un double-
   //    tap dans le même tick, que `disabled` seul ne garantit pas).
@@ -133,6 +148,8 @@ export default function PricingUpgrade() {
         }
         checkoutEmail = res.user.email ?? email;
         setMustCreateAccount(false);
+        // Compte permanent acquis → on peut rattacher le consentement.
+        recordMarketingConsent(checkoutEmail);
       }
       if (!checkoutEmail || !auth.currentUser) {
         showAuthToast(t.compte.errGenerique, 'error');
@@ -255,6 +272,9 @@ export default function PricingUpgrade() {
         case 'linked':   // même UID → progression préservée
         case 'switched': // compte existant retrouvé → hasActiveSubscription() prend le relais
           setEmailExists(false);
+          // MÊME appel que la branche e-mail/mot de passe : sans cette ligne,
+          // toutes les inscriptions via Google passeraient à travers la case.
+          recordMarketingConsent(auth.currentUser?.email ?? '');
           await runPurchase();
           return;
         case 'cancelled':
@@ -499,6 +519,27 @@ export default function PricingUpgrade() {
               onChangeText={setAccountPassword}
             />
             <Text style={styles.accountRappel}>{t.compte.rappelReconnexion}</Text>
+
+            {/* CONSENTEMENT MARKETING (RGPD). BRANCHE WEB uniquement — seule où
+                ce formulaire crée réellement le compte (runPurchase,
+                `Platform.OS === 'web' && PADDLE_ACTIVE`). Sur natif l'achat part
+                sur un UID anonyme, le compte permanent n'arrive qu'après, sur
+                activation.tsx, qui porte sa propre case. Même condition de
+                plateforme que le bouton Google. (Symétrique de pricing.tsx.) */}
+            {Platform.OS === 'web' && PADDLE_ACTIVE ? (
+              <Pressable style={styles.optInContainer} onPress={() => setMarketingOptIn((v) => !v)}>
+                <View style={[styles.optInBox, marketingOptIn && styles.optInBoxChecked]}>
+                  {marketingOptIn ? (
+                    <Svg width={11} height={11} viewBox="0 0 12 12" fill="none">
+                      <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  ) : null}
+                </View>
+                <Text style={styles.optInText} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.compte.marketingOptIn}
+                </Text>
+              </Pressable>
+            ) : null}
             {emailExists ? (
               <View style={styles.emailExistsBox}>
                 <Text style={styles.emailExistsText}>{t.compte.errEmailDejaUtilise}</Text>
@@ -885,6 +926,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#6B3FA0',
+  },
+  // Case de consentement — calquée sur privacy.tsx, identique à pricing.tsx.
+  optInContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(221,208,248,0.3)',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  optInBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#C4A8D4',
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optInBoxChecked: {
+    backgroundColor: '#6B3FA0',
+  },
+  optInText: {
+    flex: 1,
+    fontFamily: 'Jost',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#4A3060',
+    lineHeight: 16,
   },
   btnReconnexion: {
     width: '100%',

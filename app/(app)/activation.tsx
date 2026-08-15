@@ -28,6 +28,7 @@ import { SUPPORT_EMAIL } from '../../services/config';
 import { nativeRestore } from '../../services/purchasesNative';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
+import { saveMarketingConsent } from '../../services/marketingConsent';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -119,6 +120,9 @@ export default function Activation() {
   const [convPassword, setConvPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [convBusy, setConvBusy] = useState(false);
+  // Consentement marketing (RGPD) — NON coché par défaut. Ne conditionne rien :
+  // ni la création du compte, ni l'accès premium déjà acquis par l'achat.
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [convErr, setConvErr] = useState<string | null>(null);
   const [convMsg, setConvMsg] = useState<string | null>(null);
 
@@ -179,6 +183,18 @@ export default function Activation() {
     try {
       const res = await linkAnonymousEmail(email, convPassword, lang);
       if (res.ok) {
+        // CHEMIN NATIF du consentement. Sur mobile, les paywalls achètent sur un
+        // UID anonyme : c'est ICI, et seulement ici, que le compte permanent est
+        // créé — donc ici que le consentement peut être rattaché à un UID stable.
+        // Sans `await` : ne doit ni retarder ni bloquer la fin du parcours.
+        if (marketingOptIn && auth.currentUser?.uid) {
+          saveMarketingConsent({
+            uid: auth.currentUser.uid,
+            email,
+            lang,
+            source: 'activation',
+          }).catch(() => {});
+        }
         // UID CONSERVÉ (link in-place) → l'abonnement reste sur son doc. On laisse
         // lire la confirmation, puis home. Le form reste figé (convBusy) jusque-là.
         setConvMsg(t.compte.convertSucces);
@@ -430,6 +446,26 @@ export default function Activation() {
                     <Text style={styles.convToggleText}>{showPass ? t.compte.masquer : t.compte.afficher}</Text>
                   </Pressable>
                 </View>
+                {/* CONSENTEMENT MARKETING (RGPD) — chemin NATIF. Affiché sans
+                    condition de plateforme : cet écran est le SEUL endroit où
+                    un acheteur mobile crée son compte permanent. Non coché par
+                    défaut, et sans effet sur le bouton ci-dessous. */}
+                <Pressable
+                  style={styles.optInContainer}
+                  onPress={() => setMarketingOptIn((v) => !v)}
+                  disabled={convBusy}
+                >
+                  <View style={[styles.optInBox, marketingOptIn && styles.optInBoxChecked]}>
+                    {marketingOptIn ? (
+                      <Svg width={11} height={11} viewBox="0 0 12 12" fill="none">
+                        <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </Svg>
+                    ) : null}
+                  </View>
+                  <Text style={styles.optInText} numberOfLines={0} adjustsFontSizeToFit={false}>
+                    {t.compte.marketingOptIn}
+                  </Text>
+                </Pressable>
                 {convErr ? <Text style={styles.convErr} numberOfLines={0}>{convErr}</Text> : null}
                 {convMsg ? <Text style={styles.convOk} numberOfLines={0}>{convMsg}</Text> : null}
                 <Pressable
@@ -671,6 +707,40 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost',
     fontSize: 13,
     color: '#6B3FA0',
+  },
+  // Case de consentement — calquée sur privacy.tsx, identique aux 2 paywalls.
+  optInContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(221,208,248,0.3)',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  optInBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#C4A8D4',
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optInBoxChecked: {
+    backgroundColor: '#6B3FA0',
+  },
+  optInText: {
+    flex: 1,
+    fontFamily: 'Jost',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#4A3060',
+    lineHeight: 16,
   },
   convErr: {
     fontFamily: 'Jost',

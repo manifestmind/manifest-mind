@@ -587,6 +587,11 @@ export const translations = {
       errReseau: 'Problème de connexion. Réessaie.',
       errGenerique: 'Impossible de créer le compte. Réessaie.',
       rappelReconnexion: 'Retiens bien ce mot de passe : il te servira à te reconnecter.',
+      // Consentement marketing (RGPD). JAMAIS coché par défaut : c'est le point
+      // juridique central. Le 1er membre dit CE QUI sera envoyé (consentement
+      // « spécifique et informé »), le 2e dit que c'est facultatif — donc que
+      // refuser n'empêche pas de créer un compte ni d'acheter.
+      marketingOptIn: 'Je souhaite recevoir les offres et nouveautés de ManifestMind par e-mail. Facultatif, et tu peux te désinscrire à tout moment.',
       convertTitre: 'Sécurise ton accès',
       convertMessage: 'Crée ton compte pour retrouver ton abonnement si tu changes de téléphone.',
       convertCreer: 'Créer mon compte',
@@ -1175,6 +1180,7 @@ export const translations = {
       errReseau: 'Connection problem. Please try again.',
       errGenerique: 'Could not create the account. Please try again.',
       rappelReconnexion: 'Remember this password — you\'ll use it to log back in.',
+      marketingOptIn: 'I would like to receive ManifestMind offers and news by email. Optional — you can unsubscribe at any time.',
       convertTitre: 'Secure your access',
       convertMessage: 'Create your account to keep your subscription if you change phones.',
       convertCreer: 'Create my account',
@@ -1760,6 +1766,8 @@ export const translations = {
       errReseau: 'Problema de conexión. Inténtalo de nuevo.',
       errGenerique: 'No se pudo crear la cuenta. Inténtalo de nuevo.',
       rappelReconnexion: 'Recuerda esta contraseña: la necesitarás para volver a entrar.',
+      // « darte de baja CUANDO quieras » — surtout pas « en cuando quieras ».
+      marketingOptIn: 'Quiero recibir ofertas y novedades de ManifestMind por correo electrónico. Opcional: puedes darte de baja cuando quieras.',
       convertTitre: 'Asegura tu acceso',
       convertMessage: 'Crea tu cuenta para conservar tu suscripción si cambias de teléfono.',
       convertCreer: 'Crear mi cuenta',

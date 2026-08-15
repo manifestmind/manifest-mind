@@ -10,6 +10,7 @@ import { useLanguage } from '../../src/i18n/LanguageContext';
 import { canPay, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
+import { saveMarketingConsent } from '../../services/marketingConsent';
 import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
@@ -51,6 +52,25 @@ export default function Pricing() {
   // revient (nouveau tél, cache vidé) se fabriquerait un anonyme NEUF et
   // perdrait l'accès à son abonnement, attaché à son ancien UID.
   const [showRetourAbonne, setShowRetourAbonne] = useState(false);
+  // Consentement marketing (RGPD) — NON coché par défaut, c'est le point
+  // juridique central. Purement informatif pour l'écran : ne conditionne AUCUN
+  // bouton, AUCUNE validation. Ne pas le cocher n'a strictement aucun effet sur
+  // la création de compte ni sur l'achat.
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+
+  // Enregistre le consentement. Appelé UNIQUEMENT une fois qu'un compte
+  // PERMANENT existe (après convertOrSignIn ou après Google) — avant, il n'y a
+  // pas d'UID stable auquel le rattacher.
+  // SANS `await` et sans remontée d'erreur, volontairement : le consentement est
+  // secondaire, la vente ne l'est pas. Une panne Firestore ne doit jamais
+  // retarder l'ouverture du checkout. Compromis assumé : une écriture ratée est
+  // un consentement perdu silencieusement.
+  function recordMarketingConsent(email: string) {
+    if (!marketingOptIn) return; // aucun document pour un refus
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    saveMarketingConsent({ uid, email, lang, source: 'pricing' }).catch(() => {});
+  }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -185,6 +205,8 @@ export default function Pricing() {
           return;
         }
         checkoutEmail = res.user.email ?? email;
+        // Compte permanent acquis → on peut rattacher le consentement.
+        recordMarketingConsent(checkoutEmail);
       }
       if (!checkoutEmail || !auth.currentUser) {
         showAuthToast(t.compte.errGenerique, 'error');
@@ -295,6 +317,9 @@ export default function Pricing() {
         case 'linked':   // même UID → progression préservée
         case 'switched': // compte existant retrouvé → hasActiveSubscription() prend le relais
           setEmailExists(false);
+          // MÊME appel que la branche e-mail/mot de passe : sans cette ligne,
+          // toutes les inscriptions via Google passeraient à travers la case.
+          recordMarketingConsent(auth.currentUser?.email ?? '');
           await runPurchase();
           return;
         case 'cancelled':
@@ -595,6 +620,30 @@ export default function Pricing() {
               onChangeText={setAccountPassword}
             />
             <Text style={styles.accountRappel}>{t.compte.rappelReconnexion}</Text>
+
+            {/* CONSENTEMENT MARKETING (RGPD). Affiché sur la BRANCHE WEB
+                uniquement — c'est la seule où ce formulaire crée réellement le
+                compte (runPurchase, `Platform.OS === 'web' && PADDLE_ACTIVE`).
+                Sur natif l'achat part sur un UID anonyme et le compte permanent
+                n'est créé qu'APRÈS, sur activation.tsx : y afficher une case
+                dont la valeur serait jetée serait un mensonge d'interface.
+                Même condition de plateforme que le bouton Google plus haut.
+                Encadré repris de privacy.tsx : son cadre propre l'isole du
+                formulaire, elle ne peut pas se lire comme une condition. */}
+            {Platform.OS === 'web' && PADDLE_ACTIVE ? (
+              <Pressable style={styles.optInContainer} onPress={() => setMarketingOptIn((v) => !v)}>
+                <View style={[styles.optInBox, marketingOptIn && styles.optInBoxChecked]}>
+                  {marketingOptIn ? (
+                    <Svg width={11} height={11} viewBox="0 0 12 12" fill="none">
+                      <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  ) : null}
+                </View>
+                <Text style={styles.optInText} numberOfLines={0} adjustsFontSizeToFit={false}>
+                  {t.compte.marketingOptIn}
+                </Text>
+              </Pressable>
+            ) : null}
             {emailExists ? (
               <View style={styles.emailExistsBox}>
                 <Text style={styles.emailExistsText}>{t.compte.errEmailDejaUtilise}</Text>
@@ -1065,6 +1114,43 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#6B3FA0',
     textAlign: 'center',
+  },
+  // Case de consentement — calquée sur privacy.tsx (checkboxContainer/checkbox/
+  // checkboxChecked/checkboxText) pour rester cohérente avec l'autre case de
+  // l'app. Les deux consentements restent bien DISTINCTS : celui des conditions
+  // est accepté sur un écran entièrement différent (privacy.tsx, onboarding).
+  optInContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(221,208,248,0.3)',
+    borderWidth: 0.5,
+    borderColor: '#C4A8D4',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  optInBox: {
+    width: 18,
+    height: 18,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#C4A8D4',
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optInBoxChecked: {
+    backgroundColor: '#6B3FA0',
+  },
+  optInText: {
+    flex: 1,
+    fontFamily: 'Jost',
+    fontSize: 13,
+    fontWeight: '300',
+    color: '#4A3060',
+    lineHeight: 16,
   },
   btnReconnexion: {
     width: '100%',
