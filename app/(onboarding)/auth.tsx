@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -35,6 +36,39 @@ export default function Auth() {
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [appleBusy, setAppleBusy] = useState(false);
+
+  // Une authentification est en vol (mot de passe, Google ou Apple) : le lien de
+  // retour est neutralisé le temps du traitement. Quitter l'écran au milieu d'un
+  // signIn laisserait une session à moitié établie (identité basculée mais
+  // finalizeSignIn jamais joué → clés de cycle non initialisées).
+  const authBusy = busy || googleBusy || appleBusy;
+
+  // SORTIE DE L'ÉCRAN — c'était le SEUL écran de l'app sans aucun retour (audit
+  // des 21 écrans, 2026-08-15) : `_layout.tsx` masque l'en-tête natif, donc sur
+  // iOS et en PWA autonome on ne pouvait que fermer l'application.
+  //
+  // TOUJOURS AFFICHÉ, volontairement. Une condition `canGoBack()` seule aurait
+  // deux angles morts :
+  //   1. après un RECHARGEMENT de page sur web, la pile est reconstruite à
+  //      partir de la seule URL (aucun `initialRouteName` dans ce projet) →
+  //      canGoBack faux → le lien disparaîtrait au moment où il sert ;
+  //   2. l'arrivée par LIEN MAGIQUE expiré/invalide (`_layout.tsx:138` et
+  //      `:166`) se fait en `replace` → pile neuve → piège intact.
+  //
+  // Repli = le paywall, PAS `router.replace('/')` : `index.tsx:15-22` sort sans
+  // router quand l'URL d'origine est un lien de connexion — soit exactement le
+  // cas du lien magique — ce qui donnerait un écran vide, un piège silencieux
+  // pire que le piège visible. Le paywall est actionnable (cycle offert, 3
+  // offres, reconnexion) et ne déclenche AUCUN signOut au montage : la logique
+  // destructrice vit dans `startFreeTrial()` (pricing.tsx:72), au clic.
+  const handleBack = () => {
+    if (authBusy) return;
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace('/(onboarding)/pricing' as any);
+  };
 
   const handleAppleSignIn = async () => {
     if (appleBusy) return; // anti double-tap (comme googleBusy)
@@ -342,6 +376,20 @@ export default function Auth() {
       </View>
 
       <View style={styles.bottomBlock}>
+        {/* Retour. NEUTRALISÉ ET INVISIBLE (opacité 0) pendant une
+            authentification, plutôt que démonté : les points de progression ne
+            sautent pas. Placé dans le flux du ScrollView → suit le défilement
+            quand le clavier s'ouvre, jamais coincé dessous ; et
+            `keyboardShouldPersistTaps="handled"` (plus haut) laisse le tap
+            atteindre le lien directement, sans fermer le clavier d'abord. */}
+        <Pressable
+          style={[styles.backLink, authBusy && { opacity: 0 }]}
+          onPress={handleBack}
+          disabled={authBusy}
+        >
+          <Text style={styles.backText}>{t.commun.retour}</Text>
+        </Pressable>
+
         <View style={styles.dotsNav}>
           <View style={styles.dotNav} />
           <View style={styles.dotNav} />
@@ -490,6 +538,18 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   forgotText: {
+    fontFamily: 'Jost',
+    fontSize: 14,
+    color: '#6B3FA0',
+    textAlign: 'center',
+  },
+  // Calqué à l'identique sur forgotLink/forgotText : même famille, même corps,
+  // même violet — le lien de retour est un secondaire de même rang.
+  backLink: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  backText: {
     fontFamily: 'Jost',
     fontSize: 14,
     color: '#6B3FA0',
