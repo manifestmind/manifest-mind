@@ -200,6 +200,23 @@ export default function VisionBoard() {
           </View>
 
           <View style={styles.separator} />
+
+          {/* PHRASE FIXE — donne du sens au geste. Les 5 pts sont attribués sans
+              aucune action, au simple focus de l'écran (useFocusEffect ci-dessus),
+              et UNE SEULE fois par cycle : sans ce texte, on gagne des points sans
+              comprendre pourquoi, et les visites suivantes n'expliquent rien non
+              plus. Volontairement PERMANENTE et non conditionnée aux points —
+              elle doit parler surtout quand le geste ne rapporte plus rien.
+              Placée ICI, sous le séparateur : c'est là que le regard tombe, et
+              c'est l'instant même où le toast « ✦ +5 pts » s'affiche.
+              Le View englobant + numberOfLines={0} + adjustsFontSizeToFit={false}
+              sont le motif anti-troncature Android déjà validé sur ce projet. */}
+          <View style={styles.phraseWrap}>
+            <Text style={styles.phrase} numberOfLines={0} adjustsFontSizeToFit={false}>
+              <Text style={styles.phraseBravo}>{t.visionBoard.phraseBravo}</Text>{' '}
+              {t.visionBoard.phraseTexte}
+            </Text>
+          </View>
         </Animated.View>
 
         {/* Grille */}
@@ -455,6 +472,27 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E0D8D0',
     marginTop: 2,
+  },
+  phraseWrap: {
+    width: '100%',
+    flexShrink: 1,
+  },
+  phrase: {
+    fontFamily: 'Jost',
+    fontSize: 12.5,
+    color: '#7A7068',
+    textAlign: 'center',
+    lineHeight: 17,
+    marginTop: 6,
+  },
+  // Doré REPRIS du badge « +5 pts/cycle » (ptsBadgeText, #9A6A00) affiché deux
+  // lignes plus haut : la phrase et la récompense se répondent visuellement,
+  // sans ajouter un 8e bloc coloré à un écran qui compte déjà 7 pastels.
+  phraseBravo: {
+    fontFamily: 'Jost',
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#9A6A00',
   },
 
   // Grille

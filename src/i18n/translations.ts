@@ -417,6 +417,14 @@ export const translations = {
       valider: 'Valider mon Vision Board · +5 pts',
       passer: 'Passer cette étape sans points',
       toast: '✦ +5 pts · Vision Board validé',
+      // Phrase FIXE affichée en permanence sous le séparateur. Elle donne du sens
+      // au geste : les 5 points ne tombent qu'UNE fois par cycle (garde
+      // `!status.vision_board`), donc une phrase conditionnée aux points aurait
+      // disparu précisément quand le geste devient gratuit. Découpée en deux clés
+      // pour colorer « BRAVO ! » sans découper la chaîne au « ! » — l'espagnol
+      // ouvre par « ¡ » et un découpage automatique s'y casserait.
+      phraseBravo: 'BRAVO !', // espace insécable : « BRAVO » et « ! » ne se séparent jamais
+      phraseTexte: 'Tu as visualisé ta future vie aujourd\'hui. Chaque regard renforce ton intention.',
       terminerCycle: 'Terminer mon cycle ✦',
       permissionTitre: 'Accès aux photos requis',
       permissionMessage: 'Pour ajouter une photo, autorise l\'accès à ta galerie dans les Réglages de ton téléphone.',
@@ -1009,6 +1017,10 @@ export const translations = {
       valider: 'Save my Vision Board · +5 pts',
       passer: 'Skip this step without points',
       toast: '✦ +5 pts · Vision Board saved',
+      // « WELL DONE », PAS « BRAVO » : en anglais le mot existe mais s'emploie
+      // pour applaudir une performance, pas pour encourager un geste quotidien.
+      phraseBravo: 'WELL DONE!',
+      phraseTexte: 'You have visualized your future life today. Every look strengthens your intention.',
       terminerCycle: 'Complete my cycle ✦',
       permissionTitre: 'Photo access required',
       permissionMessage: 'To add a photo, allow access to your gallery in your phone Settings.',
@@ -1591,6 +1603,9 @@ export const translations = {
       valider: 'Guardar mi Vision Board · +5 pts',
       passer: 'Saltar este paso sin puntos',
       toast: '✦ +5 pts · Vision Board guardado',
+      // Point d'exclamation INVERSÉ en ouverture — ne jamais le retirer.
+      phraseBravo: '¡BIEN HECHO!',
+      phraseTexte: 'Has visualizado tu vida futura hoy. Cada mirada refuerza tu intención.',
       terminerCycle: 'Completar mi ciclo ✦',
       permissionTitre: 'Acceso a fotos requerido',
       permissionMessage: 'Para añadir una foto, permite el acceso a tu galería en los Ajustes de tu teléfono.',
