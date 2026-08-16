@@ -1923,3 +1923,57 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **PISTE 2 — `play()` appelé après un `replace()` asynchrone.** Chrome Android exige que `play()` parte **dans le geste utilisateur**. `replace()` déclenche le téléchargement (3,11 Mo) ; le `play()` qui suit peut sortir de la fenêtre d'activation ou porter sur un élément pas encore prêt.
 - **PISTE 3 — l'échec est TOTALEMENT silencieux.** Le `try/catch` de `:105-112` **n'attrape pas** le rejet de `play()`, qui renvoie une promesse non attendue. Aucune trace, nulle part. Commencer par instrumenter ce point avant toute autre chose.
 - **🔴 DANGER SUR CE FICHIER — RELIRE LA RÈGLE DU CLAUDE.md AVANT D'Y TOUCHER** : c'est l'import d'`expo-audio` dans du code partagé qui a CASSÉ le rendu statique web en juillet (toutes les routes tombées à 19,3 kB) avec `tsc` ET `expo export` au VERT. Toute modification ici impose la comparaison des tailles de routes AVANT/APRÈS, en plus des vérifications habituelles.
+
+## 🔑 INVENTAIRE DES CLÉS & CALENDRIER DES ÉCHÉANCES (établi 2026-08-15)
+> **🚫 RÈGLE ABSOLUE DE CETTE SECTION — AUCUNE VALEUR DE CLÉ ICI, jamais, même partielle.** Uniquement des NOMS, des EMPLACEMENTS et des DATES. Ce fichier vit dans le dépôt git. Quiconque met à jour cette section applique la même règle.
+
+### 📅 CALENDRIER — par échéance la plus proche
+
+| Échéance | Rappel | Quoi | Ce qui casse |
+|---|---|---|---|
+| **2026-09-28** | **2026-08-28** | Clé serveur Paddle (`pdl_live_apikey_*`) | **RIEN — voir l'encadré ci-dessous** |
+| **inconnue (~1 an)** | à fixer | Certificat de distribution Apple | nouveaux builds iOS impossibles |
+| **inconnue (~1 an)** | à fixer | Profil de provisionnement iOS | nouveaux builds iOS impossibles |
+
+### 🟢 L'ÉCHÉANCE DU 28/09 EST UNE FAUSSE ALERTE — vérifié le 2026-08-15
+- **La clé serveur Paddle n'est utilisée par AUCUN code de ce projet.** Vérifié par recherche exhaustive : zéro occurrence de `PADDLE_API_KEY` / `pdl_live_apikey` dans `services/`, `functions/`, `app/`, `src/`, `scripts/` ; zéro `functions.config()`.
+- **⚠️ CONTRADICTION CORRIGÉE DANS CE MÊME FICHIER.** La section « 🚨 PADDLE_API_KEY serveur — sécurité absolue » (l. ~344) affirme que cette clé « sert au backend pour valider la signature HMAC des webhooks ». **C'EST FAUX.** La signature des webhooks est validée avec `PADDLE_WEBHOOK_SECRET` (`functions/src/index.ts:51`), qui est une valeur DIFFÉRENTE et SANS expiration. La section « PADDLE_API_KEY serveur — pas nécessaire au V1 » (l. ~418) dit vrai : cette clé ne sert qu'à APPELER l'API Paddle (annulation, remboursement, requêtes), fonctionnalités non implémentées.
+- **Conséquence : si elle expire le 28/09, il ne se passe RIEN.** Pas de coupure de paiement, pas d'accès perdu, aucun dimanche d'astreinte. **Ne PAS paniquer à cette date.**
+- **À faire au rappel du 28/08** : décider si on la renouvelle *(seulement si le chantier V1.5 « Annuler mon abonnement » démarre)* ou si on la **supprime purement et simplement** du dashboard Paddle — surface d'attaque en moins et échéance rayée du calendrier pour de bon.
+
+### ⚠️ LE VRAI POINT FRAGILE, QUI N'EST PAS UNE EXPIRATION : le fichier `.env`
+- Les jetons Paddle et la config Firebase du **build WEB** viennent du fichier **`.env` local**, qui est dans `.gitignore` (l. 34) et **n'existe que sur la machine de l'utilisatrice**. Les environnements EAS ne contiennent PAS les variables Paddle (vérifié : `preview` et `production` ne portent que les 6 `EXPO_PUBLIC_FIREBASE_*` + `GOOGLE_SERVICES_JSON`) — c'est normal, Paddle est web-only.
+- **Perdre `.env` = ne plus pouvoir reconstruire un site web fonctionnel** (prix Paddle absents → « Prix indisponibles » → zéro vente), sans qu'aucune clé n'ait expiré.
+- **À FAIRE** : sauvegarder `.env` hors du disque de travail (gestionnaire de mots de passe ou coffre chiffré). **JAMAIS dans git.** 15 variables, noms listés plus bas.
+
+### 🔒 SECRETS SERVEUR — Google Secret Manager (aucune expiration, rotation sur demande)
+| Nom | Rôle | Ce qui casse si invalide |
+|---|---|---|
+| `PADDLE_WEBHOOK_SECRET` | signature HMAC des webhooks Paddle (`functions/src/index.ts:51`) | **CRITIQUE** — les paiements web n'activent plus l'abonnement |
+| `PADDLE_SANDBOX_WEBHOOK_SECRET` | idem, bac à sable (`:54`) | tests sandbox seulement |
+| `ADAPTY_WEBHOOK_AUTHORIZATION` | en-tête d'autorisation Adapty (`adaptyWebhook.ts:49`) | **CRITIQUE** — les achats mobiles n'activent plus l'abonnement |
+| `ADAPTY_SANDBOX_WEBHOOK_AUTHORIZATION` | idem, bac à sable (`:51`) | tests sandbox seulement |
+- Procédure de rotation déjà documentée plus haut (« Rotation PADDLE_WEBHOOK_SECRET »). Version active du secret Paddle prod = **v2** (v1 corrompue conservée pour rollback).
+
+### 🌍 CLÉS PUBLIQUES PAR CONCEPTION — aucune expiration, rien à surveiller
+| Nom | Où | Note |
+|---|---|---|
+| Clé SDK Adapty (`public_live_…`) | en dur, `services/purchasesNative.ts:20` | publique par conception, prévue pour être embarquée |
+| `EXPO_PUBLIC_PADDLE_CLIENT_TOKEN` | `.env` + bundle web | idem côté Paddle |
+| `EXPO_PUBLIC_FIREBASE_*` (6) | `.env` + environnements EAS | config Firebase, publique par nature ⚠️ cf. section « RESTRICTION DES CLÉS API À TRAITER À FROID » (2026-08-08) |
+| Empreintes SHA-1 (2) | `google-services.json` | clé de dépôt EAS + clé de signature Google Play |
+| `EXPO_PUBLIC_PADDLE_PRICE_*` (6) | `.env` | identifiants de prix, pas des secrets |
+
+### ❓ CE QUE JE N'AI PAS PU VÉRIFIER — à lire dans les consoles, NE PAS DEVINER
+| Élément | Où regarder | Attendu |
+|---|---|---|
+| **Certificat de distribution Apple** | `eas credentials` → iOS, ou developer.apple.com → Certificates | **expire ~1 an après création** — SEULE VRAIE ÉCHÉANCE À VENIR |
+| **Profil de provisionnement iOS** | idem | expire avec le certificat |
+| Clé API App Store Connect (.p8) | App Store Connect → Users and Access → Integrations | normalement SANS expiration (révocable) |
+| Clé d'achat intégré (.p8) | idem | normalement SANS expiration |
+| Secret partagé App Store | App Store Connect → app → In-App Purchases | normalement SANS expiration |
+| Clé de notifications APNs (.p8, générée par EAS) | `eas credentials` | normalement SANS expiration |
+| Clés Apple transmises à Adapty | Dashboard Adapty → App settings → iOS | vérifier qu'elles sont toujours acceptées |
+| Compte de service Play Console (JSON) | Google Cloud → IAM → Comptes de service | pas d'expiration par défaut |
+| Keystore Android (`Build Credentials M2wpFPgke0`) | `eas credentials` → Android | validité très longue (décennies), à confirmer |
+- **🔴 PRIORITÉ : le certificat de distribution Apple.** C'est le seul élément de tout l'inventaire qui expire vraiment et qui bloque quelque chose. Relever sa date, l'inscrire dans le calendrier ci-dessus, et poser un rappel à **un mois avant**.
