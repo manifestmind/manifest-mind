@@ -944,6 +944,10 @@ const styles = StyleSheet.create({
   accountForm: {
     width: '100%',
     gap: 8,
+    // Annule le `gap: 12` de bottomBlock pour coller le bouton d'achat juste en
+    // dessous. Portée par le formulaire et non par le bouton : elle n'existe que
+    // quand il existe. Symétrique de pricing-upgrade.tsx.
+    marginBottom: -12,
   },
   accountTitle: {
     fontFamily: 'serif',
@@ -1036,13 +1040,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B3FA0',
   },
+  // ⚠️ PAS de marginTop négatif ici — voir accountForm/priceError ci-dessous.
+  // Même correction que sur pricing-upgrade.tsx (2026-08-15) : la marge négative
+  // qui collait ce bouton au formulaire débordait par-dessus le contenu du haut
+  // dès que le formulaire n'était pas rendu. Ici le formulaire est masqué quand
+  // le CYCLE GRATUIT est sélectionné (`selectedPlan === 'free'`) ou quand un
+  // compte permanent existe déjà — le défaut était donc latent sur cet écran
+  // aussi, simplement moins visible que sur le paywall de mise à niveau.
   btnPrimary: {
     width: '100%',
     paddingVertical: 13,
     borderRadius: 999,
     backgroundColor: '#3A3530',
     alignItems: 'center',
-    marginTop: -12,
   },
   btnPrimaryText: {
     color: '#F0EAE0',
@@ -1061,6 +1071,9 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     alignItems: 'center',
+    // Même rôle que sur accountForm : l'autre bloc pouvant précéder le bouton.
+    // Symétrique de pricing-upgrade.tsx.
+    marginBottom: -12,
   },
   priceErrorText: {
     fontFamily: 'Jost',

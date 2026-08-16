@@ -789,6 +789,12 @@ const styles = StyleSheet.create({
   accountForm: {
     width: '100%',
     gap: 8,
+    // Annule le `gap: 12` de bottomBlock pour coller le bouton d'achat juste en
+    // dessous. La marge est portée par le formulaire, PAS par le bouton : elle
+    // n'a de sens que quand le formulaire existe, donc elle disparaît d'elle-même
+    // quand il n'est pas rendu. Aucune condition à écrire, rien qui puisse se
+    // dé-synchroniser d'un rendu futur.
+    marginBottom: -12,
   },
   accountTitle: {
     fontFamily: 'serif',
@@ -881,13 +887,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B3FA0',
   },
+  // ⚠️ PAS de marginTop négatif ici — voir accountForm/priceError ci-dessous.
+  // Historique (corrigé le 2026-08-15) : ce bouton portait `marginTop: -12`
+  // depuis a263a0b (13/04) pour annuler le `gap: 12` de bottomBlock et se coller
+  // au formulaire. Mais quand le formulaire n'est PAS rendu (abonnée existante →
+  // `mustCreateAccount` faux), le bouton devenait le PREMIER enfant : sa marge
+  // négative n'avait plus de gap à annuler et le faisait déborder de 12 px HORS
+  // du conteneur, par-dessus la dernière ligne des avantages (police 10 → ligne
+  // d'environ 12 px : recouverte en entier). Invisible tant qu'il restait de
+  // l'espace libre entre les deux blocs ; devenu visible quand c905972 (12/08,
+  // liens légaux + mention de renouvellement) a rempli l'écran.
   btnPrimary: {
     width: '100%',
     paddingVertical: 13,
     borderRadius: 999,
     backgroundColor: '#3A3530',
     alignItems: 'center',
-    marginTop: -12,
   },
   btnPrimaryText: {
     color: '#F0EAE0',
@@ -906,6 +921,11 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     alignItems: 'center',
+    // Même rôle que sur accountForm : cet encart est l'autre bloc qui peut
+    // précéder le bouton. Sans cette ligne, l'état « prix indisponibles sans
+    // formulaire » verrait le bouton s'écarter de 12 px par rapport à
+    // aujourd'hui. Portée par le bloc, donc absente quand il l'est.
+    marginBottom: -12,
   },
   priceErrorText: {
     fontFamily: 'Jost',
