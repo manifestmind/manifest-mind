@@ -53,6 +53,51 @@ function Toggle({ on }: { on: boolean }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTATION — destinations magasin. NATIF UNIQUEMENT (le site n'a pas de fiche).
+// ─────────────────────────────────────────────────────────────────────────────
+// LIEN DIRECT et NON l'API de notation intégrée (`expo-store-review`), sur
+// recommandation EXPLICITE des deux magasins :
+//   - Apple : `SKStoreReviewController` ne doit « jamais être appelé en réponse
+//     à une action de l'utilisateur, comme l'appui sur un bouton » — le système
+//     plafonne l'affichage à 3 fois/an/utilisateur et décide seul.
+//   - Google : « Vous ne devez pas avoir de bouton déclenchant l'API […] POUR CE
+//     CAS D'USAGE, REDIRIGEZ PLUTÔT VERS LE PLAY STORE. »
+// Un bouton derrière une interface à quota serait mort une fois sur deux, sans
+// que personne ne s'en aperçoive. Bénéfice annexe : aucune dépendance native
+// ajoutée, donc app.json/package.json intacts et AUCUNE reconstruction imposée.
+//
+// iOS : `?action=write-review` ouvre le FORMULAIRE de notation, pas la fiche.
+const STORE_REVIEW_URL =
+  Platform.OS === 'ios'
+    ? 'itms-apps://apps.apple.com/app/id6799153444?action=write-review'
+    : 'market://details?id=com.manifestmind.app';
+
+// Repli https si le schéma natif échoue (magasin absent, émulateur…).
+const STORE_REVIEW_FALLBACK =
+  Platform.OS === 'ios'
+    ? 'https://apps.apple.com/app/id6799153444?action=write-review'
+    : 'https://play.google.com/store/apps/details?id=com.manifestmind.app';
+
+// ⚠️ AUCUN `Linking.canOpenURL` ICI, VOLONTAIREMENT. Sur Android 11+, la
+// visibilité des paquets lui fait renvoyer FAUX pour `market://` même quand le
+// Play Store est bien installé — sauf à déclarer un bloc `<queries>` dans le
+// manifeste, ce qui modifierait app.json et casserait l'invariant « manifeste
+// identique ». Un garde `canOpenURL` produirait donc un bouton SILENCIEUSEMENT
+// MORT sur les téléphones récents, c'est-à-dire ceux des testeurs. On tente
+// l'ouverture, et on se replie sur l'URL https en cas d'échec.
+async function openStoreReview() {
+  try {
+    await Linking.openURL(STORE_REVIEW_URL);
+  } catch {
+    try {
+      await Linking.openURL(STORE_REVIEW_FALLBACK);
+    } catch {
+      /* aucun magasin ni navigateur : on ne casse rien, on ne dit rien */
+    }
+  }
+}
+
 export default function Parametres() {
   const insets = useSafeAreaInsets();
   const t = useTranslation();
@@ -743,6 +788,27 @@ export default function Parametres() {
             <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.aide}</Text>
             <Chevron />
           </Pressable>
+
+          {/* Ligne 0-bis — Noter l'application. NATIF UNIQUEMENT : le site n'est
+              dans aucun magasin, il n'y a pas de fiche à noter. Même garde de
+              plateforme que les boutons Google des paywalls.
+              Placée ICI, entre « Aide » et les documents : les deux lignes où
+              l'on FAIT quelque chose en haut, les trois textes à LIRE en dessous.
+              Style `rowMiddle` → sur web, où elle n'est pas rendue, la section
+              redevient exactement rowFirst/rowMiddle/rowMiddle/rowLast, soit son
+              apparence actuelle au pixel près (aucun coin arrondi déplacé). */}
+          {Platform.OS !== 'web' ? (
+            <Pressable style={[styles.rowBase, styles.rowMiddle]} onPress={openStoreReview}>
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path
+                  d="M10 2.5l2.3 4.7 5.2.8-3.75 3.65.9 5.15L10 14.4l-4.65 2.4.9-5.15L2.5 8l5.2-.8z"
+                  stroke="#6B3FA0" strokeWidth="1.2" strokeLinejoin="round" fill="none"
+                />
+              </Svg>
+              <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.legalLinks.noter}</Text>
+              <Chevron />
+            </Pressable>
+          ) : null}
 
           {/* Ligne 1 — Politique de confidentialité */}
           <Pressable

@@ -496,6 +496,10 @@ export const translations = {
       },
       legalLinks: {
         aide: 'Aide',
+        // Libellé volontairement NEUTRE et descriptif : il nomme l'action, sans
+        // jamais suggérer la note à donner. Inciter à une bonne note est un
+        // motif de sanction chez Apple comme chez Google.
+        noter: 'Noter l\'application',
         confidentialite: 'Politique de confidentialité',
         conditions: 'Conditions d\'utilisation',
         remboursement: 'Politique de remboursement',
@@ -1095,6 +1099,7 @@ export const translations = {
       },
       legalLinks: {
         aide: 'Help',
+        noter: 'Rate the app',
         confidentialite: 'Privacy Policy',
         conditions: 'Terms of Use',
         remboursement: 'Refund policy',
@@ -1681,6 +1686,7 @@ export const translations = {
       },
       legalLinks: {
         aide: 'Ayuda',
+        noter: 'Valorar la aplicación',
         confidentialite: 'Política de privacidad',
         conditions: 'Términos de uso',
         remboursement: 'Política de reembolso',
