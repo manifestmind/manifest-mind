@@ -1977,3 +1977,30 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 | Compte de service Play Console (JSON) | Google Cloud → IAM → Comptes de service | pas d'expiration par défaut |
 | Keystore Android (`Build Credentials M2wpFPgke0`) | `eas credentials` → Android | validité très longue (décennies), à confirmer |
 - **🔴 PRIORITÉ : le certificat de distribution Apple.** C'est le seul élément de tout l'inventaire qui expire vraiment et qui bloque quelque chose. Relever sa date, l'inscrire dans le calendrier ci-dessus, et poser un rappel à **un mois avant**.
+
+## 🤖 ANDROID v8 DÉPOSÉE SUR LA PISTE DE TEST FERMÉ (2026-08-15) — 2ᵉ mise à jour sur 3
+- **versionCode 8** · version 1.0.0 · profil `production` · distribution `store` (AAB) · SDK 54.
+- **Build EAS** : `2f996e38-08fb-4500-a67b-67c4708e4831` — construite depuis `7cf41c5`, terminée en 14 min 43 s, **acceptée et déposée** par l'utilisatrice.
+- **Signature** : keystore `Build Credentials M2wpFPgke0` (default) — **le même que la v7**, donc mise à jour par-dessus sans réinstallation pour les 25 testeurs.
+- **versionCode** : incrémenté 7 → 8 par `autoIncrement` (profil `production` uniquement). L'APK `preview` du même jour avait **réutilisé** le 7 sans le consommer — comportement confirmé, à réutiliser sans crainte pour de futurs APK de test.
+- **Les 4 changements embarqués** :
+  1. Lien « ← Retour » sur l'écran de reconnexion (`22c38c2`) — c'était le SEUL des 21 écrans sans aucune sortie.
+  2. Phrase fixe du vision board (`e5b5986`) — donne du sens aux 5 pts attribués sans action.
+  3. Consentement marketing RGPD (`3f1d325`) — sur Android la case est sur `activation.tsx`, seul endroit où un acheteur mobile crée son compte permanent.
+  4. Correctif du bouton d'achat qui recouvrait la liste des avantages (`fdbfed9`).
+- **⚠️ Testable seulement par un acheteur** : le point 3 exige un achat réel. Depuis la piste fermée l'achat fonctionne (contrairement à un APK installé à la main, que Play Billing refuse).
+- **Notes de version** rédigées en FR/EN/ES, **sans jamais évoquer de retours de testeurs** — ces 4 changements viennent de l'usage propre de l'utilisatrice. Même règle d'honnêteté que pour la v7.
+
+### 🗓️ SUIVI DES MISES À JOUR DU TEST FERMÉ — 2 sur 3 CONSOMMÉES
+| # | Version | Date | Contenu |
+|---|---|---|---|
+| 1 | v7 | 2026-08-12 | liens légaux + mention de renouvellement (conformité 3.1.2), lien Aide |
+| 2 | **v8** | **2026-08-15** | les 4 changements ci-dessus |
+| 3 | **v9 — À VENIR** | — | **les VRAIS retours des testeurs** : les rapports de la société sont ARRIVÉS le 2026-08-15, analyse prévue le 2026-08-16 |
+- **🔑 IL NE RESTE QU'UNE MISE À JOUR.** La v9 est la dernière du cycle de test fermé : elle doit porter ce qui ressort des rapports de la société de testeurs. Ne pas la consommer pour un correctif mineur qui pourrait attendre.
+
+### 🌐 DÉPÔT GITHUB : PUBLIC — confirmé par l'utilisatrice le 2026-08-15
+- Le dépôt `manifestmind/manifest-mind` est **PUBLIC**. À retenir, ne plus le redemander.
+- **Ce qui y est donc visible de tous, et pourquoi c'est acceptable** : `google-services.json` (clé API Firebase + 2 empreintes SHA-1) et la clé SDK Adapty en dur (`services/purchasesNative.ts:20`). **Toutes sont publiques PAR CONCEPTION** — conçues pour être embarquées dans une application distribuée, donc extractibles de tout APK. Aucun secret n'est exposé.
+- **Ce qui n'y est PAS, et ne doit jamais y entrer** : le fichier `.env` (gitignoré — jetons Paddle), les 4 secrets de Google Secret Manager, les clés Apple `.p8`, le compte de service Play, le keystore Android.
+- **⚠️ CONSÉQUENCE À TIRER** : dépôt public = clé API Firebase **trivialement moissonnable**. Ça ne crée pas de faille en soi (la sécurité vient des règles Firestore, qui sont strictes), mais ça **renforce la priorité** de la section « 🔐 NOTE SÉCURITÉ (2026-08-08) — RESTRICTION DES CLÉS API À TRAITER À FROID ». À traiter au même moment que le reste du nettoyage.
