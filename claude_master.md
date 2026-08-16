@@ -1909,8 +1909,10 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
   3. `npx firebase deploy --only hosting`.
 - **🚨 TOUJOURS `--only`** : `firebase.json` déclare AUSSI `functions` avec un `predeploy` (`npm run build`). Un `firebase deploy` nu redéploierait **paddleWebhook ET adaptyWebhook**. Vérifié après coup cette fois : les deux sont restés en v2 / europe-west1 / nodejs20, révision inchangée, et la sortie du déploiement ne mentionnait que `hosting`.
 - **Nouvelle version live** : release **2026-08-15 21:11:50** (canal `live`). 70 fichiers dans `dist`, 23 nouveaux envoyés.
-- 🛟 **CIBLE DE ROLLBACK = version d'AVANT ce déploiement** : `16b926` (release du 2026-08-13 16:48 UTC, prix Paddle en direct). **Rollback 1 clic** : Console → Hosting → Historique → cette version → « Effectuer un rollback ».
-- ⏳ **HASH DE LA VERSION DU 15/08 À COMPLÉTER ICI** (à relever en Console → Hosting → Historique, entrée de tête) : `________`. C'est la cible de rollback du PROCHAIN déploiement.
+- 🛟 **DEUX CRANS DE RETOUR ARRIÈRE DISPONIBLES** (Console → Hosting → Historique → la version voulue → « Effectuer un rollback », 1 clic) :
+  - **`ad8ac3`** — release du **2026-08-15 21:11:50**, la v8 : c'est la version EN LIGNE aujourd'hui, et **la cible de rollback du PROCHAIN déploiement**.
+  - **`16b926`** — release du **2026-08-13 16:48 UTC** (prix Paddle en direct, sans la v8) : **cran PRÉCÉDENT, toujours disponible dans l'historique**. C'est le repli si `ad8ac3` posait problème. Y revenir retire les 4 changements de la v8 du site, mais **ne touche NI les règles Firestore** (déployées séparément, le bloc `marketing_consents` resterait actif) **NI les webhooks**.
+  - ⚠️ Conséquence de ce découplage : après un rollback vers `16b926`, la case de consentement disparaîtrait du site alors que la collection resterait inscriptible — état inoffensif (plus personne n'écrit), mais à connaître pour ne pas s'en étonner.
 - **Règles Firestore** : ajout du bloc `marketing_consents` en **insertion pure**. Bloc `/users/` renvoyé identique au caractère près (`allow create, update: if false` intact) — vérifié en console après déploiement. Le fourre-tout final ferme toujours le reste.
 - **Vérifié en production par l'utilisatrice** : bouton d'achat ne recouvrant plus la liste des avantages · lien de retour fonctionnel · phrase du vision board affichée · **consentement écrit dans `marketing_consents` avec horodatage SERVEUR et champ `source`** — la chaîne case → écriture → règles est prouvée de bout en bout.
 
