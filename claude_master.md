@@ -1931,9 +1931,10 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 
 | Échéance | Rappel | Quoi | Ce qui casse |
 |---|---|---|---|
+| **2026-10-01** | ✅ **FAIT le 2026-08-20** | **Contrat de licence développeur Apple** — accepter la dernière version | **BLOQUE TOUT** : certificats, identifiants, profils, App Store Connect et son API |
 | **2026-09-28** | **2026-08-28** | Clé serveur Paddle (`pdl_live_apikey_*`) | **RIEN — voir l'encadré ci-dessous** |
-| **inconnue (~1 an)** | à fixer | Certificat de distribution Apple | nouveaux builds iOS impossibles |
-| **inconnue (~1 an)** | à fixer | Profil de provisionnement iOS | nouveaux builds iOS impossibles |
+| **2027-08-08** | **début juillet 2027** | **Certificat de distribution iOS** (« Lyana DUBOIS », type iOS Distribution) | nouveaux builds iOS impossibles |
+| **2027-08-08** | idem | Profil de provisionnement iOS | expire avec le certificat ci-dessus |
 
 ### 🟢 L'ÉCHÉANCE DU 28/09 EST UNE FAUSSE ALERTE — vérifié le 2026-08-15
 - **La clé serveur Paddle n'est utilisée par AUCUN code de ce projet.** Vérifié par recherche exhaustive : zéro occurrence de `PADDLE_API_KEY` / `pdl_live_apikey` dans `services/`, `functions/`, `app/`, `src/`, `scripts/` ; zéro `functions.config()`.
@@ -1967,8 +1968,8 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 ### ❓ CE QUE JE N'AI PAS PU VÉRIFIER — à lire dans les consoles, NE PAS DEVINER
 | Élément | Où regarder | Attendu |
 |---|---|---|
-| **Certificat de distribution Apple** | `eas credentials` → iOS, ou developer.apple.com → Certificates | **expire ~1 an après création** — SEULE VRAIE ÉCHÉANCE À VENIR |
-| **Profil de provisionnement iOS** | idem | expire avec le certificat |
+| ~~Certificat de distribution Apple~~ | — | ✅ **RELEVÉ le 2026-08-20 → expire le 2027-08-08.** Reporté dans le calendrier en tête de section |
+| ~~Profil de provisionnement iOS~~ | — | ✅ **idem, expire avec le certificat** |
 | Clé API App Store Connect (.p8) | App Store Connect → Users and Access → Integrations | normalement SANS expiration (révocable) |
 | Clé d'achat intégré (.p8) | idem | normalement SANS expiration |
 | Secret partagé App Store | App Store Connect → app → In-App Purchases | normalement SANS expiration |
@@ -1976,7 +1977,7 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 | Clés Apple transmises à Adapty | Dashboard Adapty → App settings → iOS | vérifier qu'elles sont toujours acceptées |
 | Compte de service Play Console (JSON) | Google Cloud → IAM → Comptes de service | pas d'expiration par défaut |
 | Keystore Android (`Build Credentials M2wpFPgke0`) | `eas credentials` → Android | validité très longue (décennies), à confirmer |
-- **🔴 PRIORITÉ : le certificat de distribution Apple.** C'est le seul élément de tout l'inventaire qui expire vraiment et qui bloque quelque chose. Relever sa date, l'inscrire dans le calendrier ci-dessus, et poser un rappel à **un mois avant**.
+- ~~**🔴 PRIORITÉ : le certificat de distribution Apple.** Relever sa date…~~ → ✅ **FAIT le 2026-08-20** : `2027-08-08`, inscrit au calendrier avec rappel début juillet 2027. Les 7 lignes restantes de ce tableau sont encore à vérifier.
 
 ## 🤖 ANDROID v8 DÉPOSÉE SUR LA PISTE DE TEST FERMÉ (2026-08-15) — 2ᵉ mise à jour sur 3
 - **versionCode 8** · version 1.0.0 · profil `production` · distribution `store` (AAB) · SDK 54.
@@ -2020,3 +2021,18 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **Ce qui casse si on l'oublie** : la fiche introuvable ⇒ le bouton « Noter l'application » ouvre l'App Store **sur du vide** chez toutes les utilisatrices iPhone. Pas de plantage, pas de message : un bouton qui ne mène nulle part, et personne ne le signalera.
 - **Si la fiche ne s'affichait toujours pas** après publication : re-relever l'Apple ID dans App Store Connect → Informations sur l'app → Apple ID, et corriger les DEUX constantes (`STORE_REVIEW_URL` et `STORE_REVIEW_FALLBACK`).
 - Le chemin **Android est indépendant** et n'est pas concerné : `market://details?id=com.manifestmind.app` fonctionne dès que l'app est sur une piste Play.
+
+## 📜 CONTRAT DE LICENCE DÉVELOPPEUR APPLE — un blocage SILENCIEUX qui ne ressemble pas à un blocage
+- **Accepté le 2026-08-20** par l'utilisatrice. L'échéance annoncée par Apple était le **1er octobre 2026** : « Acceptez le dernier accord de licence avant le 1er octobre 2026 afin de maintenir l'accès aux ressources d'adhésion, y compris les certificats, identifiants et profils, App Store Connect et l'API App Store Connect. »
+- **🔴 CE QUE ÇA BLOQUE SI CE N'EST PAS ACCEPTÉ** : **TOUT** le versant Apple — certificats, identifiants, profils de provisionnement, App Store Connect et son API. Donc **aucune construction iOS et aucune soumission possibles**.
+- **🔑 POURQUOI C'EST NOTÉ ICI PLUTÔT QU'OUBLIÉ** : ce blocage ne se présente PAS comme un problème de contrat. Il se manifeste par des échecs de build ou de soumission aux messages génériques, qui envoient chercher du côté du code, des certificats ou d'EAS. **Réflexe à avoir : devant tout échec iOS inexpliqué, aller D'ABORD vérifier qu'aucun contrat n'est en attente d'acceptation** (developer.apple.com → Account → bandeau en tête, et App Store Connect → Agreements).
+- **⚠️ CE N'EST PAS UNE ÉCHÉANCE UNIQUE.** Apple met ses contrats à jour **régulièrement** (paiement, licence, addenda). Il y en aura d'autres, sans préavis long. Le seul signal fiable est le bandeau d'alerte dans le compte développeur — pas un e-mail, qui peut se perdre. **Vérifier ce bandeau à chaque session de travail iOS.**
+
+## 🍎 SOUMISSION iOS REJETÉE UNE 2ᵉ FOIS SOUS LA RÈGLE 2.1, SANS MOTIF (2026-08-20) — NE RIEN RECONSTRUIRE
+- **État au 2026-08-20** : rejet sous **la règle 2.1**, la même qu'au premier tour. **Aucun motif précis fourni** — Apple demande seulement de resoumettre « une fois les ajustements nécessaires effectués », sans dire lesquels.
+- **PISTES DÉJÀ VÉRIFIÉES ET ÉCARTÉES par l'utilisatrice — ne pas les rouvrir** :
+  1. **Contrat de licence développeur** → accepté le 2026-08-20, et son échéance était au 1er octobre : il n'était donc pas encore bloquant au moment du rejet.
+  2. **Classification d'âge** → déjà complète, **18+ sur 173 pays**.
+- **🔴 CONSIGNE ABSOLUE, EN VIGUEUR JUSQU'À NOUVEL ORDRE : NE RIEN RECONSTRUIRE, NE RIEN RESOUMETTRE.** L'utilisatrice a demandé à Apple de préciser ce qui manque et **attend leur réponse**. Une soumission à l'aveugle coûterait un tour d'examen complet pour rien.
+- **Ce que ça implique concrètement** : pas de `eas build --platform ios`, pas de `eas submit`, aucune modification motivée par « peut-être que c'est ça ». Le motif viendra d'Apple, pas d'une supposition.
+- **Rappel de contexte** : la règle 2.1 (« App Completeness ») couvre un éventail très large — binaire incomplet, fonctionnalité inaccessible à l'examinateur, compte de démonstration défaillant, achat non testable, métadonnée manquante. **Deviner parmi ces possibilités est précisément ce qu'il ne faut pas faire.**
