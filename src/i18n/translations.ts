@@ -191,7 +191,10 @@ export const translations = {
           badge: '⭐ Recommandé · Économise 50%',
           titre: 'Annuel',
           // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
-          sousTitre: 'Facturé {prixAn}/an · soit {prixCycle}/cycle',
+          // 🔴 SOUS-TITRE = le prix CALCULÉ, subordonné. Le montant FACTURÉ est
+          // affiché en gros dans la colonne de prix. NE JAMAIS RE-INVERSER :
+          // rejet Apple 3.1.2(c) du 2026-08-22, et même exigence côté Google.
+          sousTitre: 'soit {prixMois}/mois',
           unite: '/mois',
           uniteAn: '/an',
           sousTitreAn: 'Facturé une fois par an',
@@ -211,7 +214,6 @@ export const translations = {
       ],
       cta: 'Je transforme ma vie maintenant →',
       bottomText: 'Moins de 0,50 $ pour changer ta vie',
-      bottomTextJour: 'Soit seulement {prix} par jour avec le plan annuel',
       prixErreur: 'Prix indisponibles — vérifie ta connexion, puis réessaie.',
       reessayer: 'Réessayer',
       dejaCompte: 'J\'ai déjà un abonnement — Me reconnecter',
@@ -812,7 +814,7 @@ export const translations = {
           badge: '⭐ Recommended · Save 50%',
           titre: 'Annual',
           // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
-          sousTitre: 'Billed {prixAn}/year · {prixCycle}/cycle',
+          sousTitre: 'that\'s {prixMois}/month',
           unite: '/mo',
           uniteAn: '/yr',
           sousTitreAn: 'Billed once a year',
@@ -832,7 +834,6 @@ export const translations = {
       ],
       cta: 'Transform my life now →',
       bottomText: 'Less than $0.50 to change your life',
-      bottomTextJour: 'That\'s just {prix} a day with the annual plan',
       prixErreur: 'Prices unavailable — check your connection, then retry.',
       reessayer: 'Retry',
       dejaCompte: 'I already have a subscription — Log in',
@@ -1400,7 +1401,7 @@ export const translations = {
           badge: '⭐ Recomendado · Ahorra 50%',
           titre: 'Anual',
           // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
-          sousTitre: 'Facturado {prixAn}/año · {prixCycle}/ciclo',
+          sousTitre: 'es decir {prixMois}/mes',
           unite: '/mes',
           uniteAn: '/año',
           sousTitreAn: 'Facturado una vez al año',
@@ -1420,7 +1421,6 @@ export const translations = {
       ],
       cta: 'Transformar mi vida ahora →',
       bottomText: 'Menos de 0,50 $ para cambiar tu vida',
-      bottomTextJour: 'Solo {prix} al día con el plan anual',
       prixErreur: 'Precios no disponibles — comprueba tu conexión y reinténtalo.',
       reessayer: 'Reintentar',
       dejaCompte: 'Ya tengo una suscripción — Iniciar sesión',

@@ -12,10 +12,28 @@
 //   désactive l'achat et propose « Réessayer »). Conformité Google : le prix
 //   affiché = le prix facturé.
 //
-// Carte annuelle : option A = cadrage « /mois » calculé depuis le montant localisé,
-// AVEC le total annuel toujours affiché. Repli automatique option B (total annuel
-// « /an ») si Intl échoue OU si un montant dérivé s'arrondit à zéro
-// (formatLocalizedMoney → null). Mensuel + lifetime : localizedString DIRECT.
+// ─────────────────────────────────────────────────────────────────────────────
+// CARTE ANNUELLE — HIÉRARCHIE IMPOSÉE PAR LES DEUX MAGASINS (corrigé 2026-08-22)
+// ─────────────────────────────────────────────────────────────────────────────
+// Le MONTANT RÉELLEMENT FACTURÉ (total annuel) occupe TOUJOURS la place
+// dominante. Le prix par mois est CALCULÉ : il est subordonné, en sous-titre.
+//
+// 🔴 NE JAMAIS RE-INVERSER. Rejet Apple du 2026-08-22, règle 3.1.2(c) :
+// « L'abonnement renouvelable affiche le prix calculé par an de manière plus
+// claire et plus visible que le montant facturé. » Tout élément autre que le
+// montant facturé (essai, prix d'introduction, prix calculé) doit être
+// subordonné en POSITION et en TAILLE — police, taille, couleur, emplacement.
+// Google porte la MÊME exigence (politique Play sur les abonnements) : interdit
+// d'« afficher le plus en évidence le prix sous forme de coût mensuel décomposé
+// plutôt que ce qui sera réellement facturé ». Ce n'était donc pas qu'un sujet
+// Apple : l'app était non conforme EN PRODUCTION sur Play.
+//
+// Le prix par mois reste affiché (utile à la comparaison) mais uniquement en
+// sous-titre 10 px gris, contre 20 px serif coloré pour le montant facturé.
+// Si le calcul échoue (Intl indisponible, arrondi à zéro), il disparaît
+// simplement : le montant facturé, lui, est toujours là.
+// Mensuel + lifetime : localizedString DIRECT — le montant affiché EST le
+// montant prélevé, donc déjà conformes, RIEN À Y CHANGER.
 
 import { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
@@ -29,12 +47,11 @@ import { type Lang } from '../i18n/translations';
 export type PriceCards = {
   lifetime: string;
   monthly: string;
+  // TOUJOURS le montant FACTURÉ (total annuel), jamais un montant calculé.
   annualBig: string;
-  annualUnit: 'mois' | 'an'; // 'mois' = option A, 'an' = repli option B
-  // Non-null → sous-titre « Facturé {prixAn}/an · soit {prixCycle}/cycle » (option A).
-  // Null → sous-titre de repli (option B).
-  annualPrixAn: string | null;
-  annualPrixCycle: string | null;
+  // Prix par mois CALCULÉ, subordonné → sous-titre « soit {prix}/mois ».
+  // Null si le calcul échoue → sous-titre de repli, sans aucun prix dérivé.
+  annualPrixMois: string | null;
 };
 
 export type LocalizedPrices = {
@@ -51,35 +68,25 @@ function placeholderCards(): PriceCards {
     lifetime: DASH,
     monthly: DASH,
     annualBig: DASH,
-    annualUnit: 'mois',
-    annualPrixAn: null,
-    annualPrixCycle: null,
+    annualPrixMois: null,
   };
 }
 
 function nativeCards(res: Extract<NativePricesResult, { ok: true }>, lang: Lang): PriceCards {
   const { mensuel, annuel, lifetime } = res.prices;
-  // Annuel : option A si le /mois ET le /cycle se formatent (non nuls), sinon repli B.
+  // `annuel.localized` = le montant RÉELLEMENT FACTURÉ, tel que formaté par le
+  // store. Il occupe la place dominante dans TOUS les cas — y compris si le
+  // calcul du /mois échoue ci-dessous. C'est l'invariant exigé par Apple 3.1.2(c)
+  // et par la politique Play : jamais un montant calculé au-dessus de lui.
   const perMonth = formatLocalizedMoney(annuel.amount / 12, annuel.currencyCode, lang);
-  const perCycle = formatLocalizedMoney(annuel.amount / 365, annuel.currencyCode, lang);
-  if (perMonth && perCycle) {
-    return {
-      lifetime: lifetime.localized,
-      monthly: mensuel.localized,
-      annualBig: perMonth,
-      annualUnit: 'mois',
-      annualPrixAn: annuel.localized, // total réellement facturé — toujours visible
-      annualPrixCycle: perCycle,
-    };
-  }
-  // Repli option B : total annuel « /an », aucun montant dérivé.
   return {
     lifetime: lifetime.localized,
     monthly: mensuel.localized,
     annualBig: annuel.localized,
-    annualUnit: 'an',
-    annualPrixAn: null,
-    annualPrixCycle: null,
+    // Subordonné, et facultatif : si Intl échoue ou si le montant s'arrondit à
+    // zéro, on n'affiche simplement aucun prix dérivé. Le prix par CYCLE a été
+    // retiré le 2026-08-22 — un montant calculé de moins après deux rejets.
+    annualPrixMois: perMonth,
   };
 }
 

@@ -506,17 +506,23 @@ export default function Pricing() {
               </View>
               <View style={styles.planInfo}>
                 <Text style={styles.planTitle}>{t.pricing.plans.annuel.titre}</Text>
+                {/* SOUS-TITRE = le prix CALCULÉ par mois, SUBORDONNÉ : 10 px,
+                    graisse 300, gris — contre 20 px serif coloré pour le montant
+                    facturé, colonne de droite. Subordination en TAILLE et en
+                    POSITION, les deux critères cités par Apple. */}
                 <Text style={styles.planSubtitle}>
-                  {cards.annualPrixAn !== null
-                    ? t.pricing.plans.annuel.sousTitre
-                        .replace('{prixAn}', cards.annualPrixAn)
-                        .replace('{prixCycle}', cards.annualPrixCycle ?? '')
+                  {cards.annualPrixMois !== null
+                    ? t.pricing.plans.annuel.sousTitre.replace('{prixMois}', cards.annualPrixMois)
                     : t.pricing.plans.annuel.sousTitreAn}
                 </Text>
               </View>
+              {/* 🔴 COLONNE DE PRIX = le montant RÉELLEMENT FACTURÉ (total annuel),
+                  JAMAIS un montant calculé. Inversé le 2026-08-22 après le rejet
+                  Apple 3.1.2(c) ; la politique Play porte la même exigence.
+                  NE PAS remettre le prix par mois ici. */}
               <View style={styles.planPrice}>
                 <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{cards.annualBig}</Text>
-                <Text style={styles.priceUnit}>{cards.annualUnit === 'an' ? t.pricing.plans.annuel.uniteAn : t.pricing.plans.annuel.unite}</Text>
+                <Text style={styles.priceUnit}>{t.pricing.plans.annuel.uniteAn}</Text>
               </View>
             </View>
           </Pressable>
@@ -707,15 +713,12 @@ export default function Pricing() {
           <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
         </Pressable>
 
-        {/* Web : texte USD statique inchangé. Natif option A : « par jour »
-            localisé, EXPLICITEMENT rattaché au plan annuel (vrai quel que soit le
-            plan choisi). Natif repli (option B / erreur / chargement) : masqué. */}
+        {/* La mention « par jour » (prix CALCULÉ) a été RETIRÉE le 2026-08-22 :
+            un montant dérivé de moins sur l'écran, après le rejet Apple 3.1.2(c).
+            Ne PAS la réintroduire. Seul subsiste le texte statique du mode inerte
+            (canPay=false), qui n'affiche aucun prix issu d'un store. */}
         {pricesPhase === 'web' ? (
           <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
-        ) : pricesPhase === 'ready' && cards.annualPrixCycle ? (
-          <Text style={styles.bottomText}>
-            {t.pricing.bottomTextJour.replace('{prix}', cards.annualPrixCycle)}
-          </Text>
         ) : null}
 
         {/* « Restaurer un achat » est un concept de store natif (App Store /
