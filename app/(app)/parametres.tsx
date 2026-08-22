@@ -68,32 +68,49 @@ function Toggle({ on }: { on: boolean }) {
 // ajoutée, donc app.json/package.json intacts et AUCUNE reconstruction imposée.
 //
 // iOS : `?action=write-review` ouvre le FORMULAIRE de notation, pas la fiche.
+//
+// 🔴 ANDROID — NE JAMAIS REVENIR À `market://` (corrigé le 2026-08-22).
+// Constaté en production sur Xiaomi : le bouton ouvrait GetApps, le magasin du
+// constructeur, qui affichait « L'application a été supprimée » puisqu'il ne
+// connaît pas l'app. Le lien n'était pas cassé, il était DÉTOURNÉ.
+// Cause : `market://` n'est PAS un schéma Google, c'est un schéma Android
+// GÉNÉRIQUE que n'importe quel magasin peut revendiquer — Huawei le documente
+// explicitement (« s'applique à tous les magasins d'applications »). Sur les
+// appareils Xiaomi / Huawei / Oppo, le magasin du constructeur gagne l'arbitrage.
+// `https://play.google.com/...` est immunisé : le Play Store a VÉRIFIÉ ce
+// domaine au titre des liens d'application Android, et aucun magasin tiers ne
+// peut le revendiquer. C'est aussi la forme que la documentation Google
+// recommande pour afficher une fiche (`market://` n'y figure que pour Play
+// Instant). Sur un appareil sans Play, la fiche s'ouvre dans le navigateur.
 const STORE_REVIEW_URL =
   Platform.OS === 'ios'
     ? 'itms-apps://apps.apple.com/app/id6799153444?action=write-review'
-    : 'market://details?id=com.manifestmind.app';
+    : 'https://play.google.com/store/apps/details?id=com.manifestmind.app';
 
-// Repli https si le schéma natif échoue (magasin absent, émulateur…).
+// Repli iOS UNIQUEMENT. Android n'en a VOLONTAIREMENT aucun : le seul repli
+// possible serait `market://`, or un appareil où le lien https échoue est
+// précisément un appareil sans Play Store — donc celui où `market://` ouvrirait
+// le magasin du constructeur et reproduirait exactement le bug corrigé ici.
 const STORE_REVIEW_FALLBACK =
   Platform.OS === 'ios'
     ? 'https://apps.apple.com/app/id6799153444?action=write-review'
-    : 'https://play.google.com/store/apps/details?id=com.manifestmind.app';
+    : null;
 
 // ⚠️ AUCUN `Linking.canOpenURL` ICI, VOLONTAIREMENT. Sur Android 11+, la
-// visibilité des paquets lui fait renvoyer FAUX pour `market://` même quand le
-// Play Store est bien installé — sauf à déclarer un bloc `<queries>` dans le
-// manifeste, ce qui modifierait app.json et casserait l'invariant « manifeste
-// identique ». Un garde `canOpenURL` produirait donc un bouton SILENCIEUSEMENT
-// MORT sur les téléphones récents, c'est-à-dire ceux des testeurs. On tente
-// l'ouverture, et on se replie sur l'URL https en cas d'échec.
+// visibilité des paquets lui fait renvoyer FAUX même quand le magasin est bien
+// installé — sauf à déclarer un bloc `<queries>` dans le manifeste, ce qui
+// modifierait app.json et casserait l'invariant « manifeste identique ». Un
+// garde `canOpenURL` produirait un bouton SILENCIEUSEMENT MORT sur les
+// téléphones récents. On tente l'ouverture, sans interroger le système.
 async function openStoreReview() {
   try {
     await Linking.openURL(STORE_REVIEW_URL);
   } catch {
+    if (!STORE_REVIEW_FALLBACK) return; // Android : pas de repli, par conception
     try {
       await Linking.openURL(STORE_REVIEW_FALLBACK);
     } catch {
-      /* aucun magasin ni navigateur : on ne casse rien, on ne dit rien */
+      /* ni App Store ni navigateur : on ne casse rien, on ne dit rien */
     }
   }
 }
