@@ -2041,3 +2041,26 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 - **🔴 CONSIGNE ABSOLUE, EN VIGUEUR JUSQU'À NOUVEL ORDRE : NE RIEN RECONSTRUIRE, NE RIEN RESOUMETTRE.** L'utilisatrice a demandé à Apple de préciser ce qui manque et **attend leur réponse**. Une soumission à l'aveugle coûterait un tour d'examen complet pour rien.
 - **Ce que ça implique concrètement** : pas de `eas build --platform ios`, pas de `eas submit`, aucune modification motivée par « peut-être que c'est ça ». Le motif viendra d'Apple, pas d'une supposition.
 - **Rappel de contexte** : la règle 2.1 (« App Completeness ») couvre un éventail très large — binaire incomplet, fonctionnalité inaccessible à l'examinateur, compte de démonstration défaillant, achat non testable, métadonnée manquante. **Deviner parmi ces possibilités est précisément ce qu'il ne faut pas faire.**
+
+## 🎯 LES TROIS PLATEFORMES ALIGNÉES SUR LE MÊME COMMIT (2026-08-22) — UNE PREMIÈRE
+- **`f856191` est le commit unique dont sont issues les TROIS livraisons du 22 août.** Web, Android et iOS partent du **même code, au caractère près** — c'est la première fois du projet. Toute divergence de comportement observée entre plateformes à partir d'ici vient donc de la PLATEFORME, jamais du code : c'est un point de repère de diagnostic à conserver.
+- **Contenu commun aux trois** : correctif de hiérarchie des prix (montant facturé dominant) · correctif du lien de notation (Android) · et tout l'acquis des v8/v9 — lien de retour sur l'écran de reconnexion, phrase du vision board, consentement marketing RGPD, correctif du bouton d'achat, bouton « Noter l'application ».
+
+### 🌐 WEB PROD REDÉPLOYÉE (2026-08-22) — correctif de hiérarchie des prix EN LIGNE
+- **Release live : 2026-08-22 21:16:59.** 70 fichiers dans `dist`, 23 nouveaux envoyés. Déploiement `--only hosting` : `paddleWebhook` et `adaptyWebhook` **vérifiés inchangés après coup** (v2 / europe-west1 / nodejs20), et le `predeploy` du dossier `functions` ne s'est pas exécuté. Règles Firestore non rejouées (rien n'avait changé depuis le 15/08).
+- 🛟 **DEUX CRANS DE RETOUR ARRIÈRE** (Console → Hosting → Historique → « Effectuer un rollback », 1 clic) :
+  - **`8173c7`** — release du **2026-08-22 21:16:59**, EN LIGNE, porte le correctif de hiérarchie des prix. **Cible du PROCHAIN déploiement.**
+  - **`ad8ac3`** — release du **2026-08-15 21:11:50**, cran PRÉCÉDENT, toujours dans l'historique. ⚠️ Y revenir **remettrait la non-conformité de prix en ligne** — à n'utiliser qu'en cas de panne franche, pas pour un détail d'affichage.
+- **Preuves de l'export** : `dist` reconstruit **identique AU CONTENU** (56/56, comparaison `cmp` et non par taille) à l'export vérifié avant commit · éventail des tailles intact (4 196 à 49 835 o), aucune uniformisation · **4 routes sur 56** changent réellement, les 2 paywalls × 2 émissions, les 52 autres ne différant que par le nom du bundle JS.
+- **Vérifié EN PRODUCTION par l'utilisatrice, sur téléphone** : carte annuelle = montant facturé en gros + « soit X/mois » en sous-titre · ligne « par cycle » disparue · liens légaux, mention de renouvellement et case de consentement toujours présents · **connexion Google et ouverture de la fenêtre Paddle fonctionnelles**.
+
+### 📱 ÉTAT DES TROIS PLATEFORMES AU SOIR DU 2026-08-22
+| Plateforme | Livraison | État |
+|---|---|---|
+| **WEB** | release `8173c7` | ✅ **déployé et vérifié**, correctif en ligne |
+| **ANDROID** | AAB build `8963e173`, **versionCode 10** | 📤 **déposé en PRODUCTION**, en examen chez Google |
+| **iOS** | IPA build `3ae6fe8d`, **1.0.0 (6)** | 📤 **resoumis à l'examen** chez Apple, après 2 rejets |
+- **iOS — les DEUX motifs de rejet sont traités**, et par des voies différentes qu'il ne faut pas confondre :
+  1. **Règle 3.1.2(c)** (hiérarchie des prix) → corrigée **dans le CODE**, présente dans le build 6.
+  2. **Règle 1.5** (Support URL pointant vers le canal de prévisualisation supprimé) → corrigée **dans la CONSOLE**, métadonnée dans les 3 langues. Aucun build ne pouvait la porter.
+- La ligne des notes d'examen sur le bouton « Noter » a été collée dans App Store Connect avant resoumission (le lien iOS ne résout pas tant que la fiche n'est pas publiée — cf. section dédiée).
