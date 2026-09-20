@@ -2069,7 +2069,7 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 
 - **Progression des quatre rejets, dans l'ordre** : 1) règle **2.1** (complétude) · 2) règles **3.1.2(c)** (hiérarchie des prix) et **1.5** (Support URL) ensemble · 3) règle **2.3.2** (image promotionnelle) · 4) règle **2.3.2** de nouveau. **Les trois premiers motifs ont été traités et acceptés par Apple** — seul le motif de l'image reste bloquant depuis les rejets 3 et 4.
 - **Découverte fin août 2026 (28-30)** : le champ Image est **VERROUILLÉ** tant qu'un produit est en « Ready for Review ». Les deux abonnements ont été retirés de la soumission pour débloquer le champ, les images supprimées — mais depuis, les deux produits sont bloqués en **« Developer Rejected »**, et le bouton **« Add for Review »** échoue systématiquement avec « Something went wrong. Try again », sur le produit ET sur le groupe.
-- **Support Apple** : ticket `20000127519301`, escaladé à l'équipe d'ingénierie, conseiller senior **Mohan** assigné. **Silence total depuis sept semaines** au 2026-09-20.
+- **Support Apple** : ticket support escaladé à l'équipe d'ingénierie. **Silence total depuis sept semaines** au 2026-09-20.
 - **Impasse constatée** : impossible de supprimer ces deux produits (aucun bouton disponible), impossible de réutiliser leurs identifiants (`mm_premium_monthly`, `mm_premium_annual` côté Apple — Apple réserve un identifiant de produit à vie, même supprimé/mort).
 
 ### 🎯 DÉCISION — CRÉER DEUX NOUVEAUX ABONNEMENTS APPLE AVEC DE NOUVEAUX IDENTIFIANTS, iOS UNIQUEMENT
@@ -2097,3 +2097,48 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
 8. Construire iOS uniquement. Ne PAS reconstruire Android.
 9. Soumettre avec les trois produits.
 - **Garde-fous rappelés** : ne jamais mettre les identifiants Google actuels dans l'onglet Google Play des nouveaux produits Apple (casserait la production Android) · créer un seul produit d'abord pour ne brûler qu'un identifiant si échec.
+
+## 🍎 EXÉCUTION DU PLAN _2 — SESSION DU 2026-09-20 : ÉTAPES 1-5 FAITES CÔTÉ CONSOLES, 7 ET 7ter FAITES CÔTÉ CODE, 6 ET 8-9 RESTANT
+
+### Pourquoi ce contournement — rappel en une phrase
+Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`) sont bloqués en **« Developer Rejected »** après 4 rejets (progression 2.1 → 3.1.2(c)+1.5 → 2.3.2 ×2, cf. section précédente) ; le bouton **« Add for Review »** échoue depuis **sept semaines** avec « Something went wrong », sur le produit ET le groupe ; le ticket support escaladé est **resté sans réponse**. Apple réservant un identifiant de produit à vie même mort, la seule voie restante est de tout recréer sous de nouveaux identifiants.
+
+### Étapes 1 à 5 — FAITES ce soir, côté consoles (aucun code)
+- **App Store Connect** : 4 items en **« Ready to Submit »** — groupe **« ManifestMind Premium 2 »** (ID `22399671`) contenant `mm_premium_monthly_2` (7,99 $/mois), `mm_premium_annual_2` (29,99 $/an, 1 Year Upfront), `mm_premium_lifetime_2` (69,99 $, Non-Consumable).
+- **Adapty** : les 3 produits `_2` créés à côté de l'existant (rien de modifié dessus) — connexion **App Store UNIQUEMENT** (aucune correspondance Google Play), niveau d'accès `premium` (identique à l'existant).
+- **🔀 Écart au plan initial, décidé ce soir** : le plan prévoyait d'ajouter les 3 produits `_2` au placement **existant** `main_paywall`. Impossible — **Adapty verrouille lui-même ce placement et son paywall pour cause de transactions déjà passées dessus.** Solution retenue : nouveau paywall **« Main paywall iOS »** + nouveau placement **`main_paywall_ios`** (audience All Users, Live), contenant les 3 produits `_2` dans le même ordre. Le placement `main_paywall` d'origine n'a subi **aucune modification** — zéro risque pour Android.
+
+### Étape 7 — FAITE, `services/purchasesNative.ts`
+`PLACEMENT_ID` et `PRODUCT_ID_BY_PLAN` sont devenus dépendants de la plateforme (`Platform.OS === 'ios' ? … : …`). Résumé des deux branches :
+
+| | Android (défaut, INCHANGÉ) | iOS |
+|---|---|---|
+| `mensuel` | `mm_premium_monthly` | `mm_premium_monthly_2` |
+| `annuel` | `mm_premium_annual` | `mm_premium_annual_2` |
+| `lifetime` | `mm_premium_lifetime` | `mm_premium_lifetime_2` |
+| placement | `main_paywall` | `main_paywall_ios` |
+
+`ACCESS_LEVEL_ID = 'premium'` **non touché**, identique pour les deux plateformes. Vérification appliquée : le texte réel du fichier a été extrait à froid et évalué avec `Platform.OS` forcé à `'android'` puis `'ios'` — la branche Android correspond caractère pour caractère à la référence historique. `npx tsc --noEmit` = 0.
+
+### Étape 7ter (ajoutée ce soir) — FAITE, `functions/src/adaptyWebhook.ts`, DÉPLOYÉE et VÉRIFIÉE
+`LIFETIME_PRODUCT_ID` (une chaîne) devenu `LIFETIME_PRODUCT_IDS` (un `Set` de deux chaînes : `mm_premium_lifetime` + `mm_premium_lifetime_2`), lu au seul point d'usage (`isLifetimeGrant`). **Changement strictement additif** : le comportement pour `mm_premium_lifetime` (achats Android en production) reste identique — `Set.has('mm_premium_lifetime')` valait déjà vrai avant, vaut toujours vrai. `PREMIUM_ACCESS_LEVEL = 'premium'` **non touché**.
+- **Déployé** via `firebase deploy --only functions:adaptyWebhook` (jamais `--only functions` global, qui aurait aussi redéployé `paddleWebhook`).
+- **Preuve que `paddleWebhook` n'a pas bougé** : `updateTime` de `adaptyWebhook` = `2026-09-20T22:36:11Z` (ce déploiement) ; **zéro** entrée `UpdateFunction` dans les logs de `paddleWebhook` sur toute la fenêtre de rétention Cloud Logging disponible (2026-09-12 → 2026-09-15 dans le lot récupéré) — aucun déploiement récent de ce côté.
+- **Preuve de démarrage propre** : `Starting new instance… DEPLOYMENT_ROLLOUT` → `STARTUP TCP probe succeeded` → sonde manuelle (`POST {}` sans en-tête `Authorization`) → `401 Unauthorized`, log `[adapty] authorization invalid: missing Authorization header` — exactement le chemin de code attendu, atteint AVANT toute lecture/écriture Firestore. Aucune erreur au chargement.
+
+### 🔴 CONDITION BLOQUANTE — EN VIGUEUR JUSQU'À LEVÉE EXPLICITE : AUCUN BUILD ANDROID AVANT UN APK DE TEST
+**Aucun build Android (`eas build --platform android --profile production`) ne doit partir tant qu'un APK de test (profil `preview` ou `development` d'`eas.json`, JAMAIS `production`) construit à partir du code modifié n'a confirmé, sur un appareil réel : les 3 prix historiques affichés (`nativeGetPrices` résout `mm_premium_monthly` / `mm_premium_annual` / `mm_premium_lifetime` via le placement `main_paywall`) ET le paywall fonctionnel.**
+- **Pourquoi cette condition existe** : `PRODUCT_ID_BY_PLAN` / `pickProduct` sont un code **partagé** entre iOS et Android dans un seul fichier. Une erreur de branchement (`Platform.select` inversé, mauvaise valeur par défaut) compile sans erreur (`tsc --noEmit = 0` n'y suffit pas — même type des deux côtés du ternaire) et ne casserait Android qu'au **prochain build** de cette plateforme, pas immédiatement (production actuelle figée sur versionCode 10, aucun canal `expo-updates` configuré → zéro risque de poussée silencieuse ce soir).
+- **État au 2026-09-20 : condition NON LEVÉE.** Aucun APK de test n'a encore été construit.
+
+### LES NEUF ÉTAPES — état au 2026-09-20 (fin de session)
+1. ✅ Un seul abonnement Apple créé (`mm_premium_monthly_2`).
+2. ✅ Atteint « Ready to Submit ».
+3. ✅ Second créé à l'identique (`mm_premium_annual_2`), et un troisième non prévu au départ (`mm_premium_lifetime_2`).
+4. ✅ Déclarés dans Adapty (App Store uniquement, Google Play vide, `premium`).
+5. ✅ Ajoutés à un placement — **mais un NOUVEAU placement `main_paywall_ios`, pas `main_paywall`** (verrouillé par Adapty, cf. écart documenté plus haut).
+6. ⏳ **PAS ENCORE FAIT** — vérifier Android en conditions réelles (condition bloquante ci-dessus, sous une forme renforcée : APK de test dédié plutôt que simple observation de la prod).
+7. ✅ Table par plateforme écrite dans le code, vérifiée par extraction-et-évaluation à froid.
+   7ter (ajoutée) : ✅ webhook rendu additif pour le lifetime, déployé isolément, démarrage vérifié sans erreur.
+8. ⏳ Construction iOS — pas encore lancée.
+9. ⏳ Soumission — pas encore faite.
