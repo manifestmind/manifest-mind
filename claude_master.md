@@ -2064,3 +2064,36 @@ Compte développeur actif · contrats + formulaires fiscaux validés · app cré
   1. **Règle 3.1.2(c)** (hiérarchie des prix) → corrigée **dans le CODE**, présente dans le build 6.
   2. **Règle 1.5** (Support URL pointant vers le canal de prévisualisation supprimé) → corrigée **dans la CONSOLE**, métadonnée dans les 3 langues. Aucun build ne pouvait la porter.
 - La ligne des notes d'examen sur le bouton « Noter » a été collée dans App Store Connect avant resoumission (le lien iOS ne résout pas tant que la fiche n'est pas publiée — cf. section dédiée).
+
+## 🍎 QUATRE REJETS APPLE, PROGRESSION 2.1 → 3.1.2(c)+1.5 → 2.3.2 (×2) → PRODUITS BLOQUÉS EN « DEVELOPER REJECTED » (analyse tenue fin août 2026, autour du 28-30, jamais consignée jusqu'ici — retrouvée et vérifiée le 2026-09-20)
+
+- **Progression des quatre rejets, dans l'ordre** : 1) règle **2.1** (complétude) · 2) règles **3.1.2(c)** (hiérarchie des prix) et **1.5** (Support URL) ensemble · 3) règle **2.3.2** (image promotionnelle) · 4) règle **2.3.2** de nouveau. **Les trois premiers motifs ont été traités et acceptés par Apple** — seul le motif de l'image reste bloquant depuis les rejets 3 et 4.
+- **Découverte fin août 2026 (28-30)** : le champ Image est **VERROUILLÉ** tant qu'un produit est en « Ready for Review ». Les deux abonnements ont été retirés de la soumission pour débloquer le champ, les images supprimées — mais depuis, les deux produits sont bloqués en **« Developer Rejected »**, et le bouton **« Add for Review »** échoue systématiquement avec « Something went wrong. Try again », sur le produit ET sur le groupe.
+- **Support Apple** : ticket `20000127519301`, escaladé à l'équipe d'ingénierie, conseiller senior **Mohan** assigné. **Silence total depuis sept semaines** au 2026-09-20.
+- **Impasse constatée** : impossible de supprimer ces deux produits (aucun bouton disponible), impossible de réutiliser leurs identifiants (`mm_premium_monthly`, `mm_premium_annual` côté Apple — Apple réserve un identifiant de produit à vie, même supprimé/mort).
+
+### 🎯 DÉCISION — CRÉER DEUX NOUVEAUX ABONNEMENTS APPLE AVEC DE NOUVEAUX IDENTIFIANTS, iOS UNIQUEMENT
+- **Principe** : créer `mm_premium_monthly_2` et `mm_premium_annual_2` côté Apple. Le code n'utilise ces identifiants QUE sur iOS. **Android continue d'appeler `mm_premium_monthly` / `mm_premium_annual` sans aucun changement.**
+- **Vérifié dans le code réel le 2026-09-20** (rien n'avait changé depuis le 22/08) :
+  - La table des identifiants (`PRODUCT_ID_BY_PLAN`, `services/purchasesNative.ts:33-37`) est bien lue à un seul endroit (`pickProduct`), elle-même appelée par seulement deux fonctions du même fichier. Recherche sur tout le dépôt : aucun autre fichier ne référence `mm_premium_monthly`/`mm_premium_annual` directement.
+  - `functions/src/adaptyWebhook.ts` ne dépend que de `LIFETIME_PRODUCT_ID = 'mm_premium_lifetime'` (inchangé) — **aucune référence** aux identifiants mensuel/annuel. Le webhook est totalement indifférent aux futurs `_2`.
+  - 🔴 **Le niveau d'accès Adapty `'premium'` est codé en dur à DEUX endroits** (pas quatre, correction de la mémoire orale) : `ACCESS_LEVEL_ID` dans `purchasesNative.ts:26` et `PREMIUM_ACCESS_LEVEL` dans `adaptyWebhook.ts:57`, chacune réutilisée ensuite via sa propre constante. **Le nouveau produit Apple DOIT porter le niveau d'accès `premium` dans Adapty, à la casse près.** Sinon : paiement encaissé, accès jamais accordé, aucune erreur, aucune trace.
+  - Le split web/natif tient : `purchasesNative.web.ts` est un stub qui n'importe rien et ne contient aucun identifiant de produit. Modifier la table native ne peut pas atteindre le bundle web.
+  - **Pas de risque de mise à jour OTA silencieuse sur l'Android en production** : `app.json` et `eas.json` ne configurent aucun canal `expo-updates` (`updates`, `runtimeVersion`, `channel` absents des deux fichiers). Construire iOS seul ne peut techniquement rien pousser vers les binaires Android déjà installés (versionCode 10, en production) — ils ne changeront qu'à la prochaine soumission Android volontaire.
+
+### 🔴 RISQUE IDENTIFIÉ QUE LE PLAN INITIAL NE COUVRAIT PAS — TESTER LE BRANCHEMENT PAR PLATEFORME SUR UN APK AVANT DE LE CONSIDÉRER SÛR
+- `PRODUCT_ID_BY_PLAN` / `pickProduct` sont un **code partagé** entre iOS et Android dans un seul fichier. L'étape 6 (vérifier les 3 prix sur l'Android EN PRODUCTION) protège le **placement Adapty**, mais ne peut PAS détecter une erreur de logique dans le futur branchement par plateforme (`Platform.select` ou équivalent) — puisque la production Android tourne sur un binaire déjà compilé, figé avant la modification du code.
+- **Étape ajoutée, à insérer entre l'étape 7 (table par plateforme) et l'étape 8 (construction iOS)** : construire un **APK Android de test (profil `preview` ou `development`)** à partir du code modifié, et vérifier dessus que les 3 prix s'affichent toujours et que l'achat/la restauration fonctionnent — AVANT de considérer l'étape 7 comme sûre et de passer à la construction iOS. Le filtre exact de `pickProduct` sur l'identifiant (`vendorProductId === vendorId`) garantit qu'Android ne peut pas accidentellement récupérer un produit `_2`, mais une erreur de fallback dans le `Platform.select` lui-même (mauvaise clé, valeur par défaut incorrecte) resterait indétectable sans ce test.
+
+### LES NEUF ÉTAPES (+ l'ajout ci-dessus), état au 2026-09-20 : AUCUNE ENCORE EXÉCUTÉE
+1. Créer UN SEUL abonnement chez Apple, même groupe, sans image promotionnelle.
+2. Vérifier qu'il atteint « Ready to Submit ».
+3. Créer le second à l'identique.
+4. Les déclarer dans Adapty via « Connect an existing store product » : niveau d'accès `premium`, onglet App Store rempli, **onglet Google Play VIDE**, prix de base réel.
+5. Les ajouter au placement `main_paywall`.
+6. 🔴 Ouvrir l'app Android EN PRODUCTION, vérifier que les 3 prix s'affichent. Anomalie → retirer du placement, réversible en secondes.
+7. Écrire la table par plateforme dans le code (~8 lignes, un seul fichier, `services/purchasesNative.ts`).
+   **→ 7bis (ajout du 2026-09-20) : construire un APK Android de test à partir de ce code et vérifier prix + achat/restauration avant de continuer.**
+8. Construire iOS uniquement. Ne PAS reconstruire Android.
+9. Soumettre avec les trois produits.
+- **Garde-fous rappelés** : ne jamais mettre les identifiants Google actuels dans l'onglet Google Play des nouveaux produits Apple (casserait la production Android) · créer un seul produit d'abord pour ne brûler qu'un identifiant si échec.
