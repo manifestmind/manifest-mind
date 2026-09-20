@@ -56,10 +56,12 @@ const ADAPTY_SANDBOX_WEBHOOK_AUTHORIZATION = defineSecret('ADAPTY_SANDBOX_WEBHOO
 // symétrique de l'entitlement RevenueCat / du champ subscription_active).
 const PREMIUM_ACCESS_LEVEL = 'premium';
 
-// Product ID Google Play de l'ACHAT À VIE (achat unique, non-consommable). Sert à
+// Product IDs de l'ACHAT À VIE (achat unique, non-consommable), un par
+// plateforme : mm_premium_lifetime (Android, Google Play, INCHANGÉ, production)
+// et mm_premium_lifetime_2 (iOS, App Store, ajouté 2026-09-20). Servent à
 // poser/retirer le drapeau `has_lifetime` (bouclier anti-coupure). À garder
 // synchronisé avec PRODUCT_ID_BY_PLAN.lifetime de services/purchasesNative.ts.
-const LIFETIME_PRODUCT_ID = 'mm_premium_lifetime';
+const LIFETIME_PRODUCT_IDS = new Set(['mm_premium_lifetime', 'mm_premium_lifetime_2']);
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -304,7 +306,9 @@ export const adaptyWebhook = onRequest(
     // au prochain événement d'abonnement. Choix documenté (cf. claude_master.md).
     const props = event.event_properties;
     const isLifetimeGrant =
-      eventType === 'non_subscription_purchase' && props?.vendor_product_id === LIFETIME_PRODUCT_ID;
+      eventType === 'non_subscription_purchase' &&
+      !!props?.vendor_product_id &&
+      LIFETIME_PRODUCT_IDS.has(props.vendor_product_id);
     const isLifetimeRefund = eventType === 'non_subscription_purchase_refunded';
     const isSubscriptionLoss = newSubActive === false && !isLifetimeRefund;
 

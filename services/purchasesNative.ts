@@ -12,29 +12,37 @@
 
 import { adapty, AdaptyError } from 'react-native-adapty';
 import type { AdaptyPaywallProduct } from 'react-native-adapty';
+import { Platform } from 'react-native';
 
 // Clé PUBLIQUE SDK Adapty (format `public_live_…`) — conçue pour être embarquée
 // dans l'app cliente. AUCUNE clé secrète ici (les secrets serveur vivent dans
 // Secret Manager côté Cloud Functions). Chemin NATIF uniquement (le web résout le
 // stub purchasesNative.web.ts → cette valeur n'entre jamais dans le bundle web).
 const ADAPTY_API_KEY = 'public_live_R76ZtGAr.9eGdj72wFhOYgZcHHqU9';
-// ID du placement Adapty qui expose le paywall (les 3 produits), créé et publié
-// dans le dashboard (audience « Tous les utilisateurs », statut En direct).
-const PLACEMENT_ID = 'main_paywall';
+// ID du placement Adapty qui expose le paywall (les 3 produits). Android reste
+// sur le placement historique (utilisatrices payantes en production) ; iOS
+// pointe vers le placement iOS-only créé avec les produits _2 (2026-09-20).
+const PLACEMENT_ID = Platform.OS === 'ios' ? 'main_paywall_ios' : 'main_paywall';
 // Niveau d'accès Adapty (« access level ») qui déverrouille le premium.
 // Défini côté dashboard, symétrique de l'entitlement RevenueCat.
 const ACCESS_LEVEL_ID = 'premium';
 
-// Mapping plan interne → Product ID Google Play (= `vendorProductId` côté Adapty).
-// Les Product IDs sont ceux créés dans Google Play et reliés dans Adapty :
-//   mensuel  → mm_premium_monthly   (base plan monthly-autorenew)
-//   annuel   → mm_premium_annual    (base plan mm-premium-annual)
-//   lifetime → mm_premium_lifetime  (achat unique, pas de base plan)
-const PRODUCT_ID_BY_PLAN: Record<'mensuel' | 'annuel' | 'lifetime', string> = {
-  mensuel: 'mm_premium_monthly',
-  annuel: 'mm_premium_annual',
-  lifetime: 'mm_premium_lifetime',
-};
+// Mapping plan interne → Product ID (= `vendorProductId` côté Adapty), par
+// PLATEFORME. Android = identifiants Google Play historiques, INCHANGÉS
+// (production, utilisatrices payantes). iOS = nouveaux identifiants _2
+// (2026-09-20, après blocage des produits Apple d'origine en Developer Rejected).
+const PRODUCT_ID_BY_PLAN: Record<'mensuel' | 'annuel' | 'lifetime', string> =
+  Platform.OS === 'ios'
+    ? {
+        mensuel: 'mm_premium_monthly_2',
+        annuel: 'mm_premium_annual_2',
+        lifetime: 'mm_premium_lifetime_2',
+      }
+    : {
+        mensuel: 'mm_premium_monthly',
+        annuel: 'mm_premium_annual',
+        lifetime: 'mm_premium_lifetime',
+      };
 
 // Active le SDK une seule fois, en rattachant l'UID Firebase comme `customerUserId`
 // → le webhook Adapty saura quel doc Firestore (users/{uid}.subscription_active)
