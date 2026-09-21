@@ -2140,5 +2140,12 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 6. ⏳ **PAS ENCORE FAIT** — vérifier Android en conditions réelles (condition bloquante ci-dessus, sous une forme renforcée : APK de test dédié plutôt que simple observation de la prod).
 7. ✅ Table par plateforme écrite dans le code, vérifiée par extraction-et-évaluation à froid.
    7ter (ajoutée) : ✅ webhook rendu additif pour le lifetime, déployé isolément, démarrage vérifié sans erreur.
-8. ⏳ Construction iOS — pas encore lancée.
-9. ⏳ Soumission — pas encore faite.
+8. ✅ Construction iOS faite (voir section suivante) — Android non reconstruit.
+9. ✅ Soumission envoyée (voir section suivante).
+
+## 🍎 SOUMISSION ENVOYÉE LE 2026-09-20 — BUILD 1.0.0 (7), 5 ITEMS, RÉPONSE APPLE ATTENDUE SOUS 48H
+- **Build** : `1.0.0 (7)`, profil `production`, plateforme iOS uniquement, depuis le commit `89a0486` (les blocs A, B et C sont donc bien dans le binaire). Vérifié via `eas build:list` avant téléversement. Terminé en 50 min.
+- **Téléversement** : `eas submit --platform ios --latest`, traité par Apple.
+- **App Store Connect** : l'ancienne soumission du 28 août entièrement vidée (5 items retirés, dont l'ancien lifetime — qui portait un rejet **2.3.2 « Accurate Metadata »** jamais vu jusqu'ici, découvert à cette occasion). Nouvelle soumission de **5 items** : `iOS App 1.0.0 (7)`, `mm_premium_monthly_2`, `mm_premium_annual_2`, le groupe **ManifestMind Premium 2**, `mm_premium_lifetime_2`.
+- **Publication réglée sur MANUELLE** : après approbation, les prix passeront de 7,99 $ / 29,99 $ / 69,99 $ à **2 € / 6 € / 10 €** avant publication effective. Un changement de prix ne redéclenche pas d'examen.
+- **État au 2026-09-20 : en attente de la réponse d'Apple (délai annoncé 48h).**
