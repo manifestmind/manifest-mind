@@ -3,6 +3,8 @@ import { router, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { useLanguage } from '../../src/i18n/LanguageContext';
+import { getCycleContent } from '../../hooks/useCycleContent';
 import { toPersistentPhotoUri } from '../../services/imagePersist';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -35,6 +37,7 @@ type StepStatus = {
 export default function Profil() {
   const insets = useSafeAreaInsets();
   const t = useTranslation();
+  const { lang } = useLanguage();
 
   const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
 
@@ -47,7 +50,10 @@ export default function Profil() {
   const [subscriber, setSubscriber] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [cycleNumber, setCycleNumber] = useState(1);
-  const [themeName, setThemeName] = useState('');
+  // Thème = celui du contenu du cycle en cours (même source que les écrans du
+  // cycle), dans la langue courante. Remplace l'ancienne liste t.themes, dont
+  // les noms différaient du contenu et qui ignorait le thème du jour 365.
+  const themeName = getCycleContent(cycleNumber, lang)?.theme || '';
   const [levelIndex, setLevelIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [cyclePoints, setCyclePoints] = useState(0);
@@ -89,8 +95,6 @@ export default function Profil() {
         const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
         setCycleNumber(cycle);
 
-        const theme = parseInt(await AsyncStorage.getItem('current_theme') || '1');
-        setThemeName(t.themes[theme - 1]);
 
         const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
         setPointsTotal(total);
