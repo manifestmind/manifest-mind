@@ -12,11 +12,13 @@
 ═══════════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════════
-🟣 **MODÈLE FREEMIUM EN VIGUEUR (AUTORITÉ) — 1 CYCLE GRATUIT** 🟣
+🟣 **MODÈLE D'ACCÈS (AUTORITÉ) — PAYANT DÈS L'OUVERTURE (décidé le 2026-11-23, version 1.1.0)** 🟣
 ═══════════════════════════════════════════════════════════════════════════════
 
-- ✅ **MODÈLE ACTUEL (la SEULE règle en vigueur)** : **1 seul cycle gratuit** → écran de félicitations (avec points) → **paywall dès le retour à l'accueil** (même session, sans attendre minuit) → bloqué à chaque ouverture tant que non-abonné → abonnement = accès cycle 2 + rythme quotidien dès le cycle 3. *(Décision 2026-07-21, commit `34dffde` ; détail : « 📝 DÉCISION MODÈLE — 1 CYCLE GRATUIT » plus bas.)*
-- 🕰️ **ANCIEN MODÈLE (OBSOLÈTE, NE PLUS APPLIQUER)** : « **7 cycles gratuits → paywall au cycle 8** ». **TOUTES** les mentions « 7 cycles / cycle 7 / cycle 8 » ailleurs dans ce document décrivent CET ancien modèle (trace historique des Phases A→E et des tests). **Ne JAMAIS les prendre pour la règle en vigueur** — la seule règle actuelle est « 1 cycle gratuit » ci-dessus.
+- ✅ **RÈGLE DÉCIDÉE (la seule à appliquer pour tout nouveau code)** : **plus AUCUN cycle gratuit, nulle part — web, Android, iOS.** Après l'onboarding, **paywall immédiat**. **Personne n'est laissé finir son cycle 1** : une personne en plein cycle 1 gratuit au moment de la mise à jour voit le paywall tout de suite. Détail, prix et liste des travaux : section « 🗺️ VERSION 1.1.0 — LISTE DÉFINITIVE A→E » en fin de document.
+- ⏳ **ÉTAT DE TRANSITION** : tant que la 1.1.0 n'est pas publiée, le code en ligne applique encore l'ancien modèle ci-dessous (« 1 cycle gratuit »). À REMPLACER, jamais à étendre.
+- 🕰️ **MODÈLE « 1 CYCLE GRATUIT » (2026-07-21 → 1.1.0, DÉSORMAIS OBSOLÈTE)** : **1 seul cycle gratuit** → écran de félicitations (avec points) → **paywall dès le retour à l'accueil** (même session, sans attendre minuit) → bloqué à chaque ouverture tant que non-abonné → abonnement = accès cycle 2 + rythme quotidien dès le cycle 3. *(Décision 2026-07-21, commit `34dffde` ; détail : « 📝 DÉCISION MODÈLE — 1 CYCLE GRATUIT » plus bas.)*
+- 🕰️ **ANCIEN MODÈLE (OBSOLÈTE, NE PLUS APPLIQUER)** : « **7 cycles gratuits → paywall au cycle 8** ». **TOUTES** les mentions « 7 cycles / cycle 7 / cycle 8 » ailleurs dans ce document décrivent CET ancien modèle (trace historique des Phases A→E et des tests). **Ne JAMAIS les prendre pour la règle en vigueur** — la seule règle actuelle est « payant dès l'ouverture » ci-dessus ; « 1 cycle gratuit » est l'état de transition.
 
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2149,3 +2151,69 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 - **App Store Connect** : l'ancienne soumission du 28 août entièrement vidée (5 items retirés, dont l'ancien lifetime — qui portait un rejet **2.3.2 « Accurate Metadata »** jamais vu jusqu'ici, découvert à cette occasion). Nouvelle soumission de **5 items** : `iOS App 1.0.0 (7)`, `mm_premium_monthly_2`, `mm_premium_annual_2`, le groupe **ManifestMind Premium 2**, `mm_premium_lifetime_2`.
 - **Publication réglée sur MANUELLE** : après approbation, les prix passeront de 7,99 $ / 29,99 $ / 69,99 $ à **2 € / 6 € / 10 €** avant publication effective. Un changement de prix ne redéclenche pas d'examen.
 - **État au 2026-09-20 : en attente de la réponse d'Apple (délai annoncé 48h).**
+
+## ✅ iOS APPROUVÉE ET EN LIGNE SUR L'APP STORE (confirmé par l'utilisatrice le 2026-11-23)
+- **La version iOS a été approuvée par Apple et est publiée sur l'App Store. Elle fonctionne bien** (constat de l'utilisatrice). Les sections « réponse Apple attendue sous 48h » (2026-09-20) et « QUATRE REJETS APPLE » ci-dessus sont donc **closes** : la soumission `1.0.0 (7)` avec les produits `_2` (placement `main_paywall_ios`) a abouti.
+- **Fiche publique vérifiée le 2026-11-23** : `https://apps.apple.com/app/id6799153444` répond **HTTP 200** → le bouton « Noter l'application » (`STORE_REVIEW_URL`) ne mène plus dans le vide. Le point « À VÉRIFIER APRÈS LA PUBLICATION iOS » est levé.
+- **Non consigné, à relire dans App Store Connect si besoin** : la date exacte d'approbation et les prix iOS réellement en vigueur (le plan du 2026-09-20 prévoyait de passer à 2 € / 6 € / 10 € avant publication).
+
+## 🔎 VÉRIFIER SOI-MÊME CE QUI EST PUBLIÉ (noté 2026-11-23) — NE PLUS LE DEMANDER À L'UTILISATRICE
+- **Android EN LIGNE sur le Play Store** (confirmé par l'utilisatrice le 2026-11-23) : https://play.google.com/store/apps/details?id=com.manifestmind.app
+- **iOS EN LIGNE sur l'App Store** : https://apps.apple.com/app/id6799153444 (Apple ID `6799153444`).
+- **Comment vérifier sans rien demander** :
+  - iOS : `curl -s "https://itunes.apple.com/lookup?id=6799153444"` → champs `version` et `currentVersionReleaseDate` (API publique Apple). Relevé le 2026-11-23 : **version 1.0.0, publiée le 2026-09-24**.
+  - Android : `curl -s "https://play.google.com/store/apps/details?id=com.manifestmind.app&hl=fr"` → la page publique contient le nom de version (`[[["1.0.0"]]`) et la date de mise à jour. Relevé le 2026-11-23 : **1.0.0, mise à jour du 22 août 2026**. ⚠️ La page publique ne donne PAS le versionCode.
+  - Numéros de construction : `npx eas-cli build:list --limit 6 --non-interactive --json` (lecture seule) → `appVersion` + `appBuildVersion` de chaque construction. Relevé le 2026-11-23 : dernière Android production = **versionCode 10** (2026-08-22) ; dernière iOS production = **build 7** (2026-09-20).
+- **Prochaines constructions** (`appVersionSource: remote` + `autoIncrement` sur le profil production) : Android **versionCode 11**, iOS **build 8**. Le nom de version `1.0.0` (`app.json` → `version`) est déjà publié sur les deux boutiques → **Apple exige un numéro de version supérieur** pour une nouvelle version App Store ; le passer à `1.1.0` avant les constructions (non lu par le code de l'app, aucun effet web).
+
+## 🔐 `.env` ET CLÉS — SAUVEGARDÉS (confirmé par l'utilisatrice le 2026-11-23)
+- Le fichier `.env` est **sauvegardé sur des clés externes**, avec les autres clés. Le point « ⚠️ LE VRAI POINT FRAGILE… le fichier `.env` » de l'inventaire des clés (2026-08-15) est **levé**. Ne plus le redemander.
+
+# ════════════════════════════════════════════════════════════════════════════
+# 🗺️ VERSION 1.1.0 — LISTE DÉFINITIVE A→E (VALIDÉE PAR L'UTILISATRICE LE 2026-11-23)
+# ════════════════════════════════════════════════════════════════════════════
+> **Méthode imposée** : une étape à la fois, **feu vert de l'utilisatrice avant CHAQUE étape**, résultat montré à la fin de chacune. Une seule série de constructions à la fin (une Android + une iOS, après un APK de test). Projet Resonance (`C:\Users\duboi\resonance`) : **lecture seule**, on peut y reprendre des idées (animation des cœurs), jamais y modifier quoi que ce soit (fichier, dépôt, Firebase, commit).
+
+## Décisions (2026-11-23)
+- **Modèle** : payant dès l'ouverture sur web, Android et iOS. Plus aucun cycle gratuit. Paywall immédiat, **y compris pour une personne en plein cycle 1** au moment de la mise à jour (on ne laisse finir personne). Le web change aussi (exception à la règle web validée, cf. CLAUDE.md).
+- **Prix** : **4,99 $/mois · 29,99 $/an · 79,99 $ à vie**, en dollars, identiques sur Paddle, Google Play et App Store. **Aucun prix écrit en dur** : toujours lus dans les consoles. Posés dans les consoles **le jour de la mise en ligne**, pas avant. Dernier montant en dur restant dans le code au 2026-11-23 : `pricing.bottomText` (« Moins de 0,50 $… », `translations.ts` FR/EN/ES, jamais affiché) → supprimé à l'étape B.9.
+- **Paddle (jour J)** : les prix utilisés ne se modifient pas → l'utilisatrice crée **3 nouveaux prix** sur les produits existants, transmet les `pri_…` → mise à jour de `.env` (local, jamais dans git) → export + mise en ligne du site → **archivage** (pas suppression) des anciens prix. Le webhook ne lit aucun identifiant de prix (vérifié). Les abonnés existants gardent leur ancien prix.
+- **Notifications** (natif uniquement ; le web n'en a pas) :
+  - **Défaut à corriger** : `parametres.tsx` — désactiver le rappel de 20 h le reprogramme quand même (la fonction relit l'ancienne valeur « activé »). Le rappel 20 h doit en plus ne partir que si le cycle du jour n'est pas fait (promesse de la politique de confidentialité).
+  - **Heures décalées constatées sur l'Android de l'utilisatrice** (iPhone non vérifié). Cause relevée dans le code d'`expo-notifications` 0.32.17 : sans la permission d'alarme exacte (non déclarée par l'app), les notifications sont programmées en mode **inexact** (`setAndAllowWhileIdle`) → Android peut les retarder (jusqu'à environ 1 h hors veille, davantage en veille profonde ; Honor très strict sur la batterie). **Politique Google à revérifier sur la page officielle AVANT de coder** : `USE_EXACT_ALARM` réservé aux apps réveil/minuteur/calendrier (déclaration Play Console) → **pas pour nous** ; `SCHEDULE_EXACT_ALARM` demandable par toute app mais **accordé par la personne** (réglage « Alarmes et rappels »), refusé par défaut sur Android 14+.
+  - **Fuseau horaire** : l'heure est stockée « HH:MM » sans fuseau. iPhone = suit automatiquement le fuseau courant du téléphone. Android = le prochain déclenchement est calculé dans le fuseau du moment ; après un changement de fuseau, UNE notification arrive à l'ancien instant, puis tout se recale.
+  - **Conservées** : affirmation à l'heure choisie + rappel de 20 h (avec son correctif).
+  - **Nouvelles — 3 par jour, tous les jours, que l'app ait été ouverte ou non, avec un interrupteur dans les Paramètres** :
+    - **8 h** — FR « ManifestMind, ton application pour manifester, te souhaite le meilleur ✨ » · EN "ManifestMind, your manifesting app, wishes you the very best ✨" · ES "ManifestMind, tu app para manifestar, te desea lo mejor ✨"
+    - **14 h** — FR « Une pensée lumineuse pour toi : tu mérites l'abondance dans tous les domaines. » · EN "A bright thought for you: you deserve abundance in every area of your life." · ES "Un pensamiento luminoso para ti: mereces la abundancia en todos los ámbitos."
+    - **19 h** — FR « Prends une seconde pour sourire : de belles choses sont en route. » · EN "Take a second to smile: good things are on their way." · ES "Tómate un segundo para sonreír: cosas bonitas vienen en camino."
+- **Journal** : modifiable **uniquement pendant le cycle en cours, jusqu'à minuit** ; à minuit il passe dans l'historique, non modifiable. Points donnés **à la première écriture**, les modifications n'en ajoutent pas. « **Passer cette étape** » est **définitif** (plus de retour possible) ; les points d'un journal sauté ne changent pas.
+- **Après le cycle 365** : aujourd'hui le cycle 365 se rejoue indéfiniment (`home.tsx`, `Math.min(cycle + 1, 365)`). → écran « **Parcours accompli** » + bouton « **Commencer un nouveau tour** ».
+- **Mesure** : `adapty.logShowPaywall` sur le paywall natif. Conséquence console : déclaration « Sécurité des données » Google à compléter (« Activité dans l'appli ») ; côté Apple, « Interaction produit » est déjà déclarée.
+- **Fonctions Firebase** : passer de Node 20 (arrêté) à **Node 22**, avec précaution pour `paddleWebhook`.
+
+## Liste définitive, dans l'ordre (feu vert à chaque étape)
+**A. Préparation**
+1. ✅ Mise à jour de CLAUDE.md et claude_master.md (2026-11-23).
+2. Node 20 → Node 22 : `adaptyWebhook` seule, vérifiée (journaux) ; puis `paddleWebhook` seule, vérifiée (script de test signé → 200, journaux). Jamais `--only functions` en global. Aucune construction.
+
+**B. Code** — un commit par chantier ; à chaque fois `tsc`, export web, **comparaison des tailles de routes** rapportée.
+3. Payant dès l'ouverture (web + Android + iOS) + textes de l'app FR/EN/ES ; « J'ai déjà un abonnement — Me connecter » et « Restaurer » restent visibles.
+4. Notifications : correctif 20 h · titres distincts · canal Android · heures justes sur Android (politique Google revérifiée avant) · 3 notifications quotidiennes + interrupteur.
+5. Journal modifiable (règles ci-dessus).
+6. Après 365 : fin de la boucle, « Parcours accompli », « Nouveau tour », journaux par tour, export RGPD mis à jour.
+7. Ronds animés sur toutes les pages, web compris (modèle : `FondCoeurs.tsx` de Resonance, API `Animated`).
+8. `logShowPaywall`.
+9. Nettoyage dans un commit dédié : `bottomText` + clés i18n orphelines.
+10. Version de l'app → **1.1.0** (`app.json`).
+
+**C. Textes légaux**
+11. CGU, remboursement, FAQ, confidentialité — une seule réécriture, identique partout, FR/EN/ES (sans montant).
+
+**D. Vérification et constructions**
+12. APK de test Android (profil `preview`) — **condition bloquante** : prix, paywall et tous les chantiers vérifiés au téléphone.
+13. Construction Android production (**versionCode 11**) + iOS production (**build 8**), version **1.1.0**.
+
+**E. Mise en ligne**
+14. Utilisatrice : fiches des boutiques ×3 langues (sans « gratuit » ni « essai », sans prix écrit) · Play Console « Accès à l'application » + notes d'examen App Store Connect · « Sécurité des données » Google · vérifier le compte de démonstration · soumettre en publication manuelle.
+15. À l'approbation, le même jour : nouveaux prix Play + App Store + 3 nouveaux prix Paddle → `.env` → export + mise en ligne du site (hébergement seul, textes légaux compris) → publication des deux apps → archivage des anciens prix Paddle.
