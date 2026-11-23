@@ -2195,7 +2195,7 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 ## Liste définitive, dans l'ordre (feu vert à chaque étape)
 **A. Préparation**
 1. ✅ Mise à jour de CLAUDE.md et claude_master.md (2026-11-23).
-2. Node 20 → Node 22 : `adaptyWebhook` seule, vérifiée (journaux) ; puis `paddleWebhook` seule, vérifiée (script de test signé → 200, journaux). Jamais `--only functions` en global. Aucune construction.
+2. ✅ (2026-11-23, FAIT ET VÉRIFIÉ : les deux fonctions en nodejs22 ; `adaptyWebhook` sonde 401 + journaux propres ; `paddleWebhook` sonde 401 + test signé 200 avec le secret lu dans Secret Manager sans affichage, doc de test écrit puis supprimé) Node 20 → Node 22 : `adaptyWebhook` seule, vérifiée (journaux) ; puis `paddleWebhook` seule, vérifiée (script de test signé → 200, journaux). Jamais `--only functions` en global. Aucune construction.
 
 **B. Code** — un commit par chantier ; à chaque fois `tsc`, export web, **comparaison des tailles de routes** rapportée.
 3. Payant dès l'ouverture (web + Android + iOS) + textes de l'app FR/EN/ES ; « J'ai déjà un abonnement — Me connecter » et « Restaurer » restent visibles.
@@ -2204,7 +2204,7 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 6. Après 365 : fin de la boucle, « Parcours accompli », « Nouveau tour », journaux par tour, export RGPD mis à jour.
 7. Ronds animés sur toutes les pages, web compris (modèle : `FondCoeurs.tsx` de Resonance, API `Animated`).
 8. `logShowPaywall`.
-9. Nettoyage dans un commit dédié : `bottomText` + clés i18n orphelines.
+9. Nettoyage dans un commit dédié : `bottomText` + clés i18n orphelines (dont `themes`, inutilisée depuis que le Profil lit le thème du contenu du cycle, 2026-11-23).
 10. Version de l'app → **1.1.0** (`app.json`).
 
 **C. Textes légaux**
