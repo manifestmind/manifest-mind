@@ -23,9 +23,14 @@ export default function Index() {
 
     const timer = setTimeout(async () => {
       try {
-        const done = await AsyncStorage.getItem('onboarding_completed');
-        if (__DEV__) console.log('[index] onboarding_completed =', done);
-        if (!done) {
+        const [[, done], [, legal]] = await AsyncStorage.multiGet(['onboarding_completed', 'legal_accepted']);
+        if (__DEV__) console.log('[index] onboarding_completed =', done, 'legal_accepted =', legal);
+        if (!done && legal === 'true') {
+          // 1.1.0 (payant dès l'ouverture) : onboarding déjà vu et conditions
+          // acceptées, mais aucun achat → retour DIRECT au paywall d'onboarding,
+          // sans refaire les écrans de présentation.
+          router.replace('/(onboarding)/pricing' as any);
+        } else if (!done) {
           router.replace('/(onboarding)/welcome' as any);
         } else {
           router.replace('/(app)/splash' as any);

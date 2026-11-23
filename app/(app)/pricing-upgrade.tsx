@@ -6,7 +6,7 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
-import { canPay, FREE_CYCLES, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
+import { canPay, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { convertOrSignIn, mapConversionError, needsAccount } from '../../services/authConversion';
@@ -63,14 +63,17 @@ export default function PricingUpgrade() {
   const busyRef = useRef(false);
   const [busyKind, setBusyKind] = useState<null | 'confirm' | 'google'>(null);
 
+  // Bandeau « ManifestMind évolue » (1.1.0) : réservé aux ANCIENNES utilisatrices
+  // de l'offre gratuite (selected_plan === 'free', valeur que seul l'ancien
+  // « premier cycle offert » écrivait) et non abonnées. Il explique le passage
+  // au payant dès l'ouverture. Une nouvelle personne ne le voit jamais.
   useEffect(() => {
     (async () => {
       try {
-        const cycle = parseInt((await AsyncStorage.getItem('current_cycle')) || '1');
-        const subActive = (await AsyncStorage.getItem('subscription_active')) === 'true';
-        setIsFreemiumExpired(cycle > FREE_CYCLES && !subActive);
+        const [[, plan], [, sub]] = await AsyncStorage.multiGet(['selected_plan', 'subscription_active']);
+        setIsFreemiumExpired(plan === 'free' && sub !== 'true');
       } catch {
-        // fallback silencieux — pas de bandeau freemium si lecture impossible
+        // fallback silencieux — pas de bandeau si lecture impossible
       }
     })();
   }, []);

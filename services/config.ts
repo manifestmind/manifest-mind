@@ -20,8 +20,11 @@ export const PADDLE_ACTIVE = true;
 // + les vars EXPO_PUBLIC_PADDLE_SANDBOX_TOKEN/PRICE_*.
 export const PADDLE_SANDBOX = process.env.EXPO_PUBLIC_PADDLE_SANDBOX === 'true';
 
-// Nombre de cycles offerts avant le paywall freemium.
-export const FREE_CYCLES = 1;
+// Nombre de cycles offerts avant le paywall. 0 depuis la version 1.1.0
+// (décision 2026-11-23) : PAYANT DÈS L'OUVERTURE, web + Android + iOS. Toute
+// personne sans abonnement est bloquée dès le cycle 1, y compris celle qui
+// était en plein cycle 1 gratuit au moment de la mise à jour.
+export const FREE_CYCLES = 0;
 
 // Adresse de support (boîte configurée et relevée). Utilisée par activation.tsx
 // pour offrir un recours à un vrai payeur dont le webhook a échoué. Si un jour

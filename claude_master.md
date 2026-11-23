@@ -2198,13 +2198,13 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 2. ✅ (2026-11-23, FAIT ET VÉRIFIÉ : les deux fonctions en nodejs22 ; `adaptyWebhook` sonde 401 + journaux propres ; `paddleWebhook` sonde 401 + test signé 200 avec le secret lu dans Secret Manager sans affichage, doc de test écrit puis supprimé) Node 20 → Node 22 : `adaptyWebhook` seule, vérifiée (journaux) ; puis `paddleWebhook` seule, vérifiée (script de test signé → 200, journaux). Jamais `--only functions` en global. Aucune construction.
 
 **B. Code** — un commit par chantier ; à chaque fois `tsc`, export web, **comparaison des tailles de routes** rapportée.
-3. Payant dès l'ouverture (web + Android + iOS) + textes de l'app FR/EN/ES ; « J'ai déjà un abonnement — Me connecter » et « Restaurer » restent visibles.
+3. ✅ (2026-11-23, codé et vérifié : tsc 0, routes 54/56 identiques, paywall onboarding −1 086 o, 10 parcours web locaux OK) Payant dès l'ouverture (web + Android + iOS) + textes de l'app FR/EN/ES ; « J'ai déjà un abonnement — Me connecter » et « Restaurer » restent visibles.
 4. Notifications : correctif 20 h · titres distincts · canal Android · heures justes sur Android (politique Google revérifiée avant) · 3 notifications quotidiennes + interrupteur.
 5. Journal modifiable (règles ci-dessus).
 6. Après 365 : fin de la boucle, « Parcours accompli », « Nouveau tour », journaux par tour, export RGPD mis à jour.
 7. Ronds animés sur toutes les pages, web compris (modèle : `FondCoeurs.tsx` de Resonance, API `Animated`).
 8. `logShowPaywall`.
-9. Nettoyage dans un commit dédié : `bottomText` + clés i18n orphelines (dont `themes`, inutilisée depuis que le Profil lit le thème du contenu du cycle, 2026-11-23).
+9. Nettoyage dans un commit dédié : `bottomText` + clés i18n orphelines (dont `themes`, inutilisée depuis que le Profil lit le thème du contenu du cycle ; `pricing.plans.free.*`, `pricing.retourAbonne.*`, `pricingUpgrade.freemiumBouton` et les styles `modal*` de `pricing.tsx`, inutilisés depuis B.3 — 2026-11-23).
 10. Version de l'app → **1.1.0** (`app.json`).
 
 **C. Textes légaux**

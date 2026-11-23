@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { onAuthStateChanged, signInAnonymously, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 import { canPay, PADDLE_ACTIVE, SUPPORT_EMAIL } from '../../services/config';
@@ -15,7 +15,7 @@ import { linkOrSignInWithGoogle } from '../../services/googleAuth';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
 import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
-import { deviceHadSubscription, hasActiveSubscription } from '../../services/subscription';
+import { hasActiveSubscription } from '../../services/subscription';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
 import { nativePurchase } from '../../services/purchasesNative';
@@ -47,11 +47,6 @@ export default function Pricing() {
   // Réactif à la restauration de session Firebase : formulaire de création de
   // compte affiché seulement si pas (encore) de compte permanent.
   const [mustCreateAccount, setMustCreateAccount] = useState(true);
-  // Question « Bon retour parmi nous » : posée au clic « essai gratuit » quand
-  // l'appareil porte le marqueur had_subscription. Sans elle, un abonné qui
-  // revient (nouveau tél, cache vidé) se fabriquerait un anonyme NEUF et
-  // perdrait l'accès à son abonnement, attaché à son ancien UID.
-  const [showRetourAbonne, setShowRetourAbonne] = useState(false);
   // Consentement marketing (RGPD) — NON coché par défaut, c'est le point
   // juridique central. Purement informatif pour l'écran : ne conditionne AUCUN
   // bouton, AUCUNE validation. Ne pas le cocher n'a strictement aucun effet sur
@@ -83,54 +78,6 @@ export default function Pricing() {
     setSelectedPlan(plan);
   }
 
-  // Démarrage de l'essai gratuit (7 cycles, ZÉRO friction) : compte Firebase
-  // ANONYME (identité pour le futur paiement/webhook), sans email ni carte. La
-  // progression reste LOCALE (AsyncStorage). Au cycle 8, ce compte anonyme sera
-  // converti en permanent via linkWithCredential, même UID → aucune perte.
-  // C'est l'UNIQUE chemin « sans compte » (l'ancien handleSkipAccount d'auth.tsx
-  // a été supprimé au profit de celui-ci).
-  async function startFreeTrial() {
-    try {
-      const current = auth.currentUser;
-      // Un compte PERMANENT (donc potentiellement abonné) est encore connecté :
-      // la session Firebase vit dans IndexedDB et survit au reset comme au
-      // AsyncStorage.clear(). Sans ce signOut, « nouveau compte » réutiliserait
-      // cette identité — l'utilisateur hériterait de l'abonnement (accès aux
-      // cycles 8+) et, pire, se retrouverait DANS le compte de quelqu'un d'autre
-      // sur un appareil prêté. Un essai gratuit ne démarre jamais sur l'identité
-      // d'un compte permanent.
-      if (current && !current.isAnonymous) {
-        if (__DEV__) console.log('[pricing] compte permanent connecté (uid=', current.uid, ') → signOut avant nouvel essai');
-        await signOut(auth);
-      }
-      if (!auth.currentUser) {
-        const cred = await signInAnonymously(auth);
-        if (__DEV__) console.log('[pricing] signInAnonymously OK uid=', cred.user.uid, 'anon=', cred.user.isAnonymous);
-      } else if (__DEV__) {
-        console.log('[pricing] session anonyme réutilisée uid=', auth.currentUser.uid);
-      }
-    } catch (e: any) {
-      // Échec (hors-ligne) : on ne bloque pas l'entrée en essai. La conversion
-      // du cycle 8 gérera l'absence de compte anonyme (createUser au lieu de link).
-      if (__DEV__) console.log('[pricing] signInAnonymously ÉCHEC', e?.code, e?.message);
-    }
-    try {
-      // Purge des droits hérités. useSubscriptionSync finira par retirer la clé
-      // (le doc du nouvel anonyme n'a pas d'abonnement), mais le gate de home.tsx
-      // lit AsyncStorage IMMÉDIATEMENT au chargement : sans cette purge explicite,
-      // un ancien subscription_active='true' laisserait passer pendant la fenêtre
-      // de synchro. Un essai gratuit démarre toujours sans accès payant.
-      await AsyncStorage.removeItem('subscription_active');
-      await AsyncStorage.multiSet([
-        ['selected_plan', 'free'],
-        ['onboarding_completed', 'true'],
-      ]);
-    } catch {
-      // fallback silencieux — on continue la navigation
-    }
-    router.replace('/(app)/splash');
-  }
-
   // Cœur de l'achat, SANS gestion du verrou — appelé par les 2 boutons
   // (handlePurchase « Confirmer » et handleGooglePurchase) qui, eux, tiennent le
   // verrou. Le garde-fou anti double-paiement reste ici, en UNE seule copie.
@@ -149,26 +96,6 @@ export default function Pricing() {
     // Attendre la restauration de session avant toute lecture de currentUser
     // (évite de recréer un anonyme en double après un rechargement de page).
     await auth.authStateReady();
-    // Essai gratuit = 7 cycles, ZÉRO friction. On crée un compte Firebase
-    // ANONYME (identité pour le futur paiement/webhook), sans email ni carte.
-    // La progression reste LOCALE (AsyncStorage). Au cycle 8, ce compte anonyme
-    // sera converti en permanent via email+password (linkWithCredential), même
-    // UID → aucune perte. C'est l'UNIQUE chemin "sans compte" (l'ancien
-    // handleSkipAccount d'auth.tsx a été supprimé au profit de celui-ci).
-    if (selectedPlan === 'free') {
-      // Garde-fou : cet appareil a-t-il déjà porté un abonnement ? Si oui, on ne
-      // crée SURTOUT PAS un anonyme neuf en silence — on demande à l'utilisateur
-      // s'il revient (→ reconnexion) ou s'il veut vraiment un nouveau compte.
-      // Un vrai nouvel utilisateur (aucun marqueur) ne voit jamais cette question.
-      if (await deviceHadSubscription()) {
-        if (__DEV__) console.log('[pricing] had_subscription détecté → question retour abonné');
-        setShowRetourAbonne(true);
-        return;
-      }
-      await startFreeTrial();
-      return;
-    }
-
     // Plan payant — bloqué si aucun provider de paiement actif pour la plateforme.
     if (!canPay()) {
       Alert.alert(t.commun.disponibleProchainement);
@@ -233,7 +160,11 @@ export default function Pricing() {
         plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
         email: checkoutEmail,
         firebaseUid: auth.currentUser.uid,
-        onCheckoutCompleted: () => { router.replace('/(app)/splash'); },
+        // 1.1.0 : plus de cycle gratuit → on ne peut plus router vers l'accueil
+        // tant que le webhook n'a pas posé subscription_active (le gate renverrait
+        // au paywall). L'écran d'activation attend la confirmation, comme depuis
+        // pricing-upgrade, puis demande le prénom s'il manque.
+        onCheckoutCompleted: () => { router.replace('/(app)/activation' as any); },
       });
       // Échec d'OUVERTURE du checkout → message visible (fini l'échec silencieux).
       if (!result.ok) {
@@ -435,32 +366,6 @@ export default function Pricing() {
         </View>
 
         <View style={styles.plansContainer}>
-          {/* Plan Free */}
-          <Pressable
-            style={[
-              styles.planCard,
-              selectedPlan === 'free' && styles.planCardSelected,
-              { borderColor: '#B8D4B0' },
-            ]}
-            onPress={() => selectPlan('free')}
-          >
-            <View style={styles.planBody}>
-              <View style={[styles.radio, selectedPlan === 'free' && styles.radioSelected]}>
-                {selectedPlan === 'free' && <View style={styles.radioDot} />}
-              </View>
-              <View style={styles.planInfo}>
-                <Text style={styles.planTitle}>{t.pricing.plans.free.titre}</Text>
-                <Text style={styles.planSubtitle}>{t.pricing.plans.free.sousTitre}</Text>
-                <Text style={styles.planDescription}>{t.pricing.plans.free.description}</Text>
-              </View>
-              <View style={styles.planPrice}>
-                <Text style={[styles.priceAmount, { color: '#5A8050' }]}>
-                  {t.pricing.plans.free.prix}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-
           {/* Plan Lifetime */}
           <Pressable
             style={[
@@ -573,7 +478,7 @@ export default function Pricing() {
       </View>
 
       <View style={styles.bottomBlock}>
-        {selectedPlan !== 'free' && mustCreateAccount ? (
+        {mustCreateAccount ? (
           <View style={styles.accountForm}>
             <Text style={styles.accountTitle}>{t.compte.titre}</Text>
             {/* Volet C — conversion via Google (web only), au-dessus du formulaire,
@@ -666,7 +571,7 @@ export default function Pricing() {
 
         {/* Erreur de prix : seulement si un plan PAYANT est choisi (le plan gratuit
             n'a pas besoin des prix Adapty → jamais bloqué). */}
-        {pricesPhase === 'error' && selectedPlan !== 'free' ? (
+        {pricesPhase === 'error' ? (
           <View style={styles.priceError}>
             <Text style={styles.priceErrorText}>{t.pricing.prixErreur}</Text>
             <Pressable style={styles.priceRetryBtn} onPress={retryPrices}>
@@ -676,14 +581,14 @@ export default function Pricing() {
         ) : null}
 
         <Pressable
-          style={[styles.btnPrimary, (busyKind !== null || (selectedPlan !== 'free' && !pricesReady)) && { opacity: 0.5 }]}
+          style={[styles.btnPrimary, (busyKind !== null || !pricesReady) && { opacity: 0.5 }]}
           onPress={handlePurchase}
-          disabled={busyKind !== null || (selectedPlan !== 'free' && !pricesReady)}
+          disabled={busyKind !== null || !pricesReady}
         >
           <Text style={styles.btnPrimaryText}>
             {busyKind === 'confirm'
               ? t.paiement.chargement
-              : selectedPlan === 'free' ? t.pricing.plans.free.bouton : t.pricing.cta}
+              : t.pricing.cta}
           </Text>
         </Pressable>
 
@@ -741,41 +646,6 @@ export default function Pricing() {
         </View>
       </View>
 
-      {/* Question « Bon retour parmi nous » — uniquement si l'appareil porte le
-          marqueur had_subscription. Modal (et non Alert) : Alert.alert n'affiche
-          rien sur React Native Web. */}
-      <Modal
-        visible={showRetourAbonne}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowRetourAbonne(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{t.pricing.retourAbonne.titre}</Text>
-            <Text style={styles.modalText}>{t.pricing.retourAbonne.texte}</Text>
-
-            <Pressable
-              style={styles.modalBtnPrimary}
-              onPress={() => {
-                setShowRetourAbonne(false);
-                router.push('/(onboarding)/auth');
-              }}
-            >
-              <Text style={styles.modalBtnPrimaryText}>{t.pricing.retourAbonne.retrouver}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={async () => {
-                setShowRetourAbonne(false);
-                await startFreeTrial();
-              }}
-            >
-              <Text style={styles.modalBtnSecondaryText}>{t.pricing.retourAbonne.nouveauCompte}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 }
@@ -1047,7 +917,7 @@ const styles = StyleSheet.create({
   // Même correction que sur pricing-upgrade.tsx (2026-08-15) : la marge négative
   // qui collait ce bouton au formulaire débordait par-dessus le contenu du haut
   // dès que le formulaire n'était pas rendu. Ici le formulaire est masqué quand
-  // le CYCLE GRATUIT est sélectionné (`selectedPlan === 'free'`) ou quand un
+  // (historique : aussi quand le cycle gratuit était sélectionné) ou quand un
   // compte permanent existe déjà — le défaut était donc latent sur cet écran
   // aussi, simplement moins visible que sur le paywall de mise à niveau.
   btnPrimary: {

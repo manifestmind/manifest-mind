@@ -24,10 +24,10 @@ import { DEBUG_SKIP_PAYWALL, FREE_CYCLES } from './config';
 /**
  * L'utilisateur doit-il être renvoyé vers le paywall ?
  *
- * Règle : au-delà de l'essai gratuit (FREE_CYCLES cycles), TOUT utilisateur
- * sans abonnement actif est bloqué. On ne regarde PAS `selected_plan` : un
- * anonyme d'essai comme un compte permanent non abonné sont paywallés au
- * cycle 8 de la même façon.
+ * Règle : au-delà de FREE_CYCLES cycles, TOUT utilisateur sans abonnement
+ * actif est bloqué. Depuis la 1.1.0, FREE_CYCLES = 0 → payant dès l'ouverture :
+ * tout non-abonné est bloqué dès le cycle 1. On ne regarde PAS `selected_plan` :
+ * un anonyme comme un compte permanent non abonné sont bloqués de la même façon.
  *
  * `subscription_active` n'est jamais écrit par le client : il est posé par le
  * webhook Paddle → Firestore → useSubscriptionSync → AsyncStorage. Les règles

@@ -160,12 +160,22 @@ export default function Activation() {
     }
   }
 
+  // Sortie de l'écran une fois l'abonnement confirmé. 1.1.0 (payant dès
+  // l'ouverture) : un NOUVEL utilisateur arrive ici directement depuis le
+  // paywall d'onboarding, sans être passé par l'écran du prénom → on le lui
+  // demande avant l'accueil. Un abonné qui a déjà un prénom va droit à l'accueil.
+  async function goAfterActivation() {
+    let hasName = true;
+    try { hasName = !!(await AsyncStorage.getItem('user_name')); } catch {}
+    router.replace((hasName ? '/(app)/home' : '/(app)/name') as any);
+  }
+
   // ── Carte Q2 : conversion anonyme → permanent (LINK-ONLY, UID conservé) ──────
   // Pose le drapeau « déjà proposée » puis route home. Utilisé par « Plus tard »
   // ET après un succès de création.
   async function finishConvertAndGoHome() {
     try { await AsyncStorage.setItem('account_prompt_shown', 'true'); } catch {}
-    router.replace('/(app)/home' as any);
+    await goAfterActivation();
   }
 
   function handleConvertLater() {
@@ -319,7 +329,7 @@ export default function Activation() {
       const delay = Math.max(SUCCESS_HOLD_MS, MIN_VISIBLE_MS - elapsed);
       if (__DEV__) console.log(`[activation] route vers /home dans ${delay}ms`);
       timer = setTimeout(() => {
-        if (!cancelled) router.replace('/(app)/home' as any);
+        if (!cancelled) goAfterActivation();
       }, delay);
     })();
     return () => {
