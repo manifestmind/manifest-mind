@@ -4,16 +4,24 @@ import { router } from 'expo-router';
 import { deleteUser, onAuthStateChanged, sendSignInLinkToEmail, signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
-import { isPaywalled } from '../../services/access';
 import { exporterDonnees } from '../../services/dataExport';
 import { IosInstallModal } from '../../components/ui/InstallPrompt';
 import { installOfferable, performInstall, subscribeInstalled } from '../../services/pwaInstall';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
-import * as Notifications from 'expo-notifications';
 import * as FileSystem from 'expo-file-system/legacy';
-import { getCycleContent } from '../../hooks/useCycleContent';
+import * as Notifications from 'expo-notifications';
+import {
+  DEFAULT_REMINDER_TIME,
+  NOTIF_KEYS,
+  notificationsGranted,
+  openBatterySettings,
+  openExactAlarmSettings,
+  openNotificationSettings,
+  requestNotificationPermission,
+  rescheduleAll,
+} from '../../services/notifications';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
@@ -29,6 +37,7 @@ import {
   Text,
   TextInput,
   View,
+  AppState,
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -127,9 +136,14 @@ export default function Parametres() {
 
   const [notifAffirmation, setNotifAffirmation] = useState(true);
   const [notifRappel, setNotifRappel] = useState(false);
+  const [notifBienveillants, setNotifBienveillants] = useState(true);
+  // Autorisation système des notifications (natif). null = pas encore lue.
+  const [notifGranted, setNotifGranted] = useState<boolean | null>(null);
   const [reminderTime, setReminderTime] = useState<Date>(() => {
+    // 9 h par défaut depuis la 1.1.0 (8 h = premier message bienveillant).
+    const [h, m] = DEFAULT_REMINDER_TIME.split(':').map(Number);
     const d = new Date();
-    d.setHours(8, 0, 0, 0);
+    d.setHours(h, m, 0, 0);
     return d;
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -173,16 +187,18 @@ export default function Parametres() {
   useEffect(() => {
     (async () => {
       try {
-        const [storedNotifAff, storedNotifRappel, storedTime, storedSub] =
+        const [storedNotifAff, storedNotifRappel, storedTime, storedSub, storedBien] =
           await AsyncStorage.multiGet([
-            'notif_affirmation',
-            'notif_rappel',
-            'reminder_time',
+            NOTIF_KEYS.affirmation,
+            NOTIF_KEYS.rappel,
+            NOTIF_KEYS.time,
             'subscription_active',
+            NOTIF_KEYS.bienveillants,
           ]);
 
         if (storedNotifAff[1] !== null) setNotifAffirmation(storedNotifAff[1] === 'true');
         if (storedNotifRappel[1] !== null) setNotifRappel(storedNotifRappel[1] === 'true');
+        if (storedBien[1] !== null) setNotifBienveillants(storedBien[1] === 'true');
         if (storedTime[1]) {
           const [h, m] = storedTime[1].split(':').map(Number);
           const d = new Date();
@@ -236,96 +252,62 @@ export default function Parametres() {
     }
   }
 
-  // ── Notification helpers ─────────────────────────────────────────────────
-  async function requestPermissions(): Promise<boolean> {
+  // ── Notifications ────────────────────────────────────────────────────────
+  // 1.1.0 : toute la programmation passe par services/notifications.ts, qui
+  // relit les réglages ENREGISTRÉS. On enregistre donc TOUJOURS avant de
+  // reprogrammer. C'est ce qui corrige le défaut du rappel de 20 h (l'ancien code
+  // relisait la valeur « activé » gardée par l'écran et le reprogrammait après
+  // sa désactivation).
+  //
+  // WEB : comportement inchangé (la section est inerte, aucune notification
+  // locale sur le site) : on ne fait qu'enregistrer le réglage, après la même
+  // demande d'autorisation navigateur qu'avant.
+  async function webPermissionOk(): Promise<boolean> {
     const { status } = await Notifications.requestPermissionsAsync();
     return status === 'granted';
   }
 
-  async function scheduleAffirmationNotif(time: Date) {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (notifRappel) await scheduleRappelNotifRaw(time);
-    const cycleNumber = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
-    // 🚨 Anti-fuite de contenu : ne JAMAIS mettre l'affirmation réelle du cycle
-    // dans la notif d'un NON-ABONNÉ paywallé — elle divulguerait le contenu que
-    // le gate lui refuse à l'écran. Repli sur le texte générique. Inerte sur web
-    // (pas de notif locale récurrente), mais indispensable sur natif (Phase 2).
-    // Source de vérité unique = isPaywalled() : un essai (cycles 1-7) n'est PAS
-    // paywallé → il garde légitimement son affirmation.
-    const cycleContent = (await isPaywalled()) ? null : getCycleContent(cycleNumber, lang);
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'ManifestMind ✦',
-        body: cycleContent?.affirmation || t.notifications.affirmationBody,
-        data: { screen: 'affirmation' },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: time.getHours(),
-        minute: time.getMinutes(),
-      },
-    });
+  function toastNotifsOff() {
+    showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
   }
 
-  async function scheduleRappelNotifRaw(time: Date) {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'ManifestMind ✦',
-        body: t.notifications.rappelBody,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
-        hour: 20,
-        minute: 0,
-      },
-    });
-  }
-
-  async function cancelAffirmationNotif() {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (notifRappel) await scheduleRappelNotifRaw(reminderTime);
-  }
-
-  async function cancelRappelNotif() {
-    await Notifications.cancelAllScheduledNotificationsAsync();
-    if (notifAffirmation) await scheduleAffirmationNotif(reminderTime);
+  // Bascule d'un réglage : à l'ACTIVATION, il faut l'autorisation ; sinon on
+  // n'active rien. Enregistrement puis reprogrammation complète.
+  async function toggleNotif(key: string, next: boolean, apply: (v: boolean) => void) {
+    if (next) {
+      const ok = Platform.OS === 'web'
+        ? await webPermissionOk()
+        : (await notificationsGranted()) || (await requestNotificationPermission());
+      if (!ok) {
+        toastNotifsOff();
+        return;
+      }
+    }
+    apply(next);
+    await AsyncStorage.setItem(key, String(next));
+    if (Platform.OS !== 'web') {
+      await rescheduleAll();
+      setNotifGranted(await notificationsGranted());
+    }
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   function handleLanguage(l: 'fr' | 'en' | 'es') {
     setLangContext(l);
+    // Les textes des notifications suivent la langue.
+    rescheduleAll({ lang: l });
   }
 
-  async function handleNotifAffirmation() {
-    const next = !notifAffirmation;
-    if (next) {
-      const ok = await requestPermissions();
-      if (!ok) {
-        showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
-        return;
-      }
-      await scheduleAffirmationNotif(reminderTime);
-    } else {
-      await cancelAffirmationNotif();
-    }
-    setNotifAffirmation(next);
-    await AsyncStorage.setItem('notif_affirmation', String(next));
+  function handleNotifAffirmation() {
+    return toggleNotif(NOTIF_KEYS.affirmation, !notifAffirmation, setNotifAffirmation);
   }
 
-  async function handleNotifRappel() {
-    const next = !notifRappel;
-    if (next) {
-      const ok = await requestPermissions();
-      if (!ok) {
-        showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
-        return;
-      }
-      await scheduleRappelNotifRaw(reminderTime);
-    } else {
-      await cancelRappelNotif();
-    }
-    setNotifRappel(next);
-    await AsyncStorage.setItem('notif_rappel', String(next));
+  function handleNotifRappel() {
+    return toggleNotif(NOTIF_KEYS.rappel, !notifRappel, setNotifRappel);
+  }
+
+  function handleNotifBienveillants() {
+    return toggleNotif(NOTIF_KEYS.bienveillants, !notifBienveillants, setNotifBienveillants);
   }
 
   async function handleTimeChange(_event: DateTimePickerEvent, date?: Date) {
@@ -334,12 +316,19 @@ export default function Parametres() {
     setReminderTime(date);
     const hh = String(date.getHours()).padStart(2, '0');
     const mm = String(date.getMinutes()).padStart(2, '0');
-    await AsyncStorage.setItem('reminder_time', `${hh}:${mm}`);
-    if (notifAffirmation) {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status === 'granted') await scheduleAffirmationNotif(date);
-    }
+    await AsyncStorage.setItem(NOTIF_KEYS.time, `${hh}:${mm}`);
+    await rescheduleAll();
   }
+
+  // Autorisation système (natif) : lue à l'ouverture et à chaque retour dans
+  // l'app (retour des réglages du téléphone → la ligne « coupées » disparaît).
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const refresh = () => { notificationsGranted().then(setNotifGranted); };
+    refresh();
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') refresh(); });
+    return () => sub.remove();
+  }, []);
 
   // Déconnexion : on ferme la session, on NE TOUCHE PAS à la progression.
   //
@@ -599,6 +588,23 @@ export default function Parametres() {
         <Animated.View style={{ opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>{t.parametres.sections.notifications}</Text>
 
+          {/* Notifications coupées sur le téléphone (natif) : ligne permanente,
+              sans insister, qui mène aux réglages. Disparaît dès le retour si
+              elles ont été réactivées. */}
+          {Platform.OS !== 'web' && notifGranted === false ? (
+            <Pressable style={[styles.rowBase, styles.rowSolo, { marginBottom: 8 }]} onPress={openNotificationSettings}>
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 2 5H2c1-1 2-2 2-5a6 6 0 0 1 6-6z" stroke="#B5547A" strokeWidth="1.2" fill="none" />
+                <Path d="M3 3l14 14" stroke="#B5547A" strokeWidth="1.2" strokeLinecap="round" />
+              </Svg>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{t.parametres.notifs.coupeesTitre}</Text>
+                <Text style={styles.rowSub}>{t.parametres.notifs.coupeesSub}</Text>
+              </View>
+              <Chevron />
+            </Pressable>
+          ) : null}
+
           {/* Ligne 1 — Affirmation du cycle */}
           <View style={[styles.rowBase, styles.rowFirst]}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
@@ -631,8 +637,8 @@ export default function Parametres() {
             </Pressable>
           </View>
 
-          {/* Ligne 3 — Rappel cycle incomplet */}
-          <View style={[styles.rowBase, styles.rowLast]}>
+          {/* Ligne 3 — Rappel cycle incomplet (dernière ligne sur web, inchangée) */}
+          <View style={[styles.rowBase, Platform.OS === 'web' ? styles.rowLast : styles.rowMiddle]}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 2 5H2c1-1 2-2 2-5a6 6 0 0 1 6-6z" stroke="#9B72C8" strokeWidth="1.2" fill="none" />
               <Path d="M8 17a2 2 0 0 0 4 0" stroke="#9B72C8" strokeWidth="1.2" strokeLinecap="round" />
@@ -645,6 +651,52 @@ export default function Parametres() {
               <Toggle on={notifRappel} />
             </Pressable>
           </View>
+
+          {/* Ligne 4 — Messages bienveillants 8 h · 14 h · 19 h (natif) */}
+          {Platform.OS !== 'web' ? (
+            <View style={[styles.rowBase, styles.rowLast]}>
+              <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                <Path d="M10 17s-6-3.6-6-8a3.5 3.5 0 0 1 6-2.4A3.5 3.5 0 0 1 16 9c0 4.4-6 8-6 8z" stroke="#9B72C8" strokeWidth="1.2" fill="none" />
+              </Svg>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{t.parametres.notifs.bienveillantsTitre}</Text>
+                <Text style={styles.rowSub}>{t.parametres.notifs.bienveillantsSub}</Text>
+              </View>
+              <Pressable onPress={handleNotifBienveillants}>
+                <Toggle on={notifBienveillants} />
+              </Pressable>
+            </View>
+          ) : null}
+
+          {/* Android : heures précises (« Alarmes et rappels ») + batterie. Sans
+              ces réglages, Android peut retarder les notifications. L'app ne
+              peut pas savoir si l'autorisation a été donnée : les lignes restent. */}
+          {Platform.OS === 'android' ? (
+            <>
+              <Pressable style={[styles.rowBase, styles.rowFirst, { marginTop: 8 }]} onPress={openExactAlarmSettings}>
+                <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                  <Circle cx="10" cy="10" r="7" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+                  <Path d="M10 6v4l3 2" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" />
+                </Svg>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{t.parametres.notifs.heuresPrecisesTitre}</Text>
+                  <Text style={styles.rowSub}>{t.parametres.notifs.heuresPrecisesSub}</Text>
+                </View>
+                <Chevron />
+              </Pressable>
+              <Pressable style={[styles.rowBase, styles.rowLast]} onPress={openBatterySettings}>
+                <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+                  <Rect x="2" y="6" width="14" height="8" rx="2" stroke="#6B3FA0" strokeWidth="1.2" fill="none" />
+                  <Path d="M18 9v2" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" />
+                </Svg>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{t.parametres.notifs.batterieTitre}</Text>
+                  <Text style={styles.rowSub}>{t.parametres.notifs.batterieSub}</Text>
+                </View>
+                <Chevron />
+              </Pressable>
+            </>
+          ) : null}
         </Animated.View>
 
         {/* 4. ABONNEMENT */}

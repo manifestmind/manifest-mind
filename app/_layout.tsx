@@ -4,7 +4,8 @@ import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { getRedirectResult, isSignInWithEmailLink, onAuthStateChanged, signInAnonymously, signInWithEmailLink } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import { installForegroundHandler, rescheduleAll } from '../services/notifications';
 import { AuthToastHost, showAuthToast } from '../components/ui/AuthToast';
 import { auth } from '../services/firebase';
 import { STORES_ACTIVE } from '../services/config';
@@ -264,6 +265,22 @@ function NotificationRouter() {
   return null;
 }
 
+// Programmation des notifications (1.1.0). NATIF UNIQUEMENT — web : rien.
+// Au démarrage puis à chaque retour dans l'app : affichage app ouverte, canal
+// Android, et reprogrammation complète (texte du cycle à jour, rappel de 20 h du
+// jour retiré si le cycle est fait, autorisation « Alarmes et rappels » prise en
+// compte dès le retour des réglages).
+function NotificationsBootstrap() {
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    installForegroundHandler();
+    rescheduleAll();
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') rescheduleAll(); });
+    return () => sub.remove();
+  }, []);
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <LanguageProvider>
@@ -272,6 +289,7 @@ export default function RootLayout() {
       <AdaptyBootstrap />
       <DeepLinkHandler />
       <NotificationRouter />
+      <NotificationsBootstrap />
       <SubscriptionSync />
       <PwaInstallListener />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 300 }}>

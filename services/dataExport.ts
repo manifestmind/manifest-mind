@@ -67,6 +67,8 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     [, legalAccepted], [, legalAcceptedDate], [, onboardingCompleted],
     [, selectedPlan], [, subscriptionActiveLocal], [, hadSubscription],
     [, pwaArrivalDismissed], [, pwaCelebrationPromptShown],
+    [, notifBienveillants], [, notifPermissionAsked],
+    [, notifRepromptCount], [, notifRepromptNext], [, notifRepromptOff],
   ] = await AsyncStorage.multiGet([
     'user_name', 'user_language',
     'current_cycle', 'current_theme', 'cycle_completed', 'cycle_points',
@@ -77,6 +79,8 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     'legal_accepted', 'legal_accepted_date', 'onboarding_completed',
     'selected_plan', 'subscription_active', 'had_subscription',
     'pwa_arrival_dismissed', 'pwa_celebration_prompt_shown',
+    'notif_bienveillants', 'notif_permission_asked',
+    'notif_reprompt_count', 'notif_reprompt_next', 'notif_reprompt_off',
   ]);
 
   // 2. Journal — clés dynamiques journal_cycle_N, découvertes par préfixe.
@@ -168,6 +172,11 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
       onboardingTermine: toBool(onboardingCompleted),
       installArriveeRefusee: toBool(pwaArrivalDismissed),
       installCelebrationMontree: toBool(pwaCelebrationPromptShown),
+      notifMessagesBienveillants: toBool(notifBienveillants),
+      notifAutorisationDemandee: toBool(notifPermissionAsked),
+      notifRepropositionsFaites: notifRepromptCount,
+      notifProchaineReproposition: notifRepromptNext,
+      notifRepropositionsArretees: toBool(notifRepromptOff),
     },
   };
 }

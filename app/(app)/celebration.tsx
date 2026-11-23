@@ -16,6 +16,8 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InstallPrompt from '../../components/ui/InstallPrompt';
+import NotifPrompt from '../../components/ui/NotifPrompt';
+import { rescheduleAll } from '../../services/notifications';
 
 
 export default function Celebration() {
@@ -86,6 +88,9 @@ export default function Celebration() {
       const tomorrow = new Date();
       tomorrow.setHours(24, 0, 0, 0);
       await AsyncStorage.setItem('next_cycle_time', String(tomorrow.getTime()));
+      // Cycle terminé → le rappel de 20 h du jour n'a plus lieu d'être (natif ;
+      // sans effet sur web).
+      rescheduleAll();
 
       const pts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
       setCyclePoints(pts);
@@ -363,6 +368,7 @@ export default function Celebration() {
           Web-only, gardée par pwa_celebration_prompt_shown, respecte le refus.
           Additif : ne touche ni les points, ni la nav, ni la logique de fin de cycle. */}
       <InstallPrompt variant="celebration" />
+      <NotifPrompt variant="relance" />
     </View>
   );
 }
