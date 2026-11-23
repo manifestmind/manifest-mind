@@ -51,7 +51,7 @@
     }
   },
   "jour_4": {
-    "theme": "Salud & Vitalidad",
+    "theme": "Salud & Energía",
     "jour_semaine": "jeudi",
     "phase": "Despertar",
     "couleur_principale": "#3A8A20",
@@ -68,7 +68,7 @@
     }
   },
   "jour_5": {
-    "theme": "Carrera & Misión",
+    "theme": "Carrera & Ambición",
     "jour_semaine": "vendredi",
     "phase": "Despertar",
     "couleur_principale": "#C06820",
@@ -85,7 +85,7 @@
     }
   },
   "jour_6": {
-    "theme": "Creatividad & Expresión",
+    "theme": "Creatividad & Sueños",
     "jour_semaine": "samedi",
     "phase": "Despertar",
     "couleur_principale": "#1A6A80",
@@ -102,7 +102,7 @@
     }
   },
   "jour_7": {
-    "theme": "Gratitud & Paz",
+    "theme": "Gratitud & Paz interior",
     "jour_semaine": "dimanche",
     "phase": "Despertar",
     "couleur_principale": "#9A8878",

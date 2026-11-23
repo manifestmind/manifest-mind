@@ -284,7 +284,7 @@ export default function Action() {
 
           <Animated.View style={[styles.themeBadge, { backgroundColor: cycleColors.orb1 + '59', opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
             <View style={styles.themeDot} />
-            <Text style={[styles.themeBadgeText, { color: content?.couleurPrincipale || '#6B3FA0' }]}>✦ Thème · {content?.theme}</Text>
+            <Text style={[styles.themeBadgeText, { color: content?.couleurPrincipale || '#6B3FA0' }]}>✦ {t.commun.theme} · {content?.theme}</Text>
           </Animated.View>
         </View>
 
