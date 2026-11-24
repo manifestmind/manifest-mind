@@ -43,6 +43,7 @@ import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { canPay } from '../../services/config';
 import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
+import CyclePreview from '../../components/dev/CyclePreview';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -917,6 +918,10 @@ export default function Parametres() {
             <Chevron />
           </Pressable>
         </View>
+
+        {/* Outil « Aperçu d'un cycle » : n'existe QUE dans l'APK de test
+            (EXPO_PUBLIC_PREVIEW_TOOLS, profil preview). Ailleurs : rien. */}
+        <CyclePreview />
 
         {/* 7. VERSION */}
         <View style={styles.versionBlock}>

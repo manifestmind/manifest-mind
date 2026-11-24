@@ -11,6 +11,7 @@ import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { checkMilestones, readTour } from '../../services/levels';
+import FitBox from '../../components/ui/FitBox';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -62,17 +63,6 @@ export default function Affirmation() {
   const [validated, setValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
-  const [boxWidth, setBoxWidth] = useState(0);
-
-  function getFontSize(text: string): number {
-    if (!boxWidth || !text) return 15;
-    const len = text.length;
-    if (len < 70)  return 20;
-    if (len < 100) return 17;
-    if (len < 130) return 15;
-    if (len < 155) return 13;
-    return 12;
-  }
 
   useEffect(() => {
     async function load() {
@@ -203,20 +193,23 @@ export default function Affirmation() {
 
         {/* Carte affirmation */}
         <Animated.View style={[styles.card, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
-          <View
-            style={styles.cardBody}
-            onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}
-          >
-            <Text style={{
-              fontFamily: 'serif',
-              fontStyle: 'italic',
-              color: '#3A2850',
-              textAlign: 'center',
-              fontSize: getFontSize(content?.affirmation || ''),
-              lineHeight: getFontSize(content?.affirmation || '') * 1.55,
-            }}>
-              {content?.affirmation}
-            </Text>
+          <View style={styles.cardBody}>
+            {/* Taille ajustée par MESURE à la place réelle (1.1.0) : de 20 à 13 px,
+                puis défilement de secours — plus de débordement sur la consigne. */}
+            <FitBox max={20} min={13} fitKey={content?.affirmation || ''} style={{ flex: 1 }}>
+              {(size) => (
+                <Text style={{
+                  fontFamily: 'serif',
+                  fontStyle: 'italic',
+                  color: '#3A2850',
+                  textAlign: 'center',
+                  fontSize: size,
+                  lineHeight: size * 1.55,
+                }}>
+                  {content?.affirmation}
+                </Text>
+              )}
+            </FitBox>
           </View>
           <View style={styles.cardFooter}>
             <Text style={styles.instructionText}>{t.affirmation.instruction}</Text>
@@ -380,7 +373,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 30,
+    // 1.1.0 : 30 → 8. Les 30 px réservaient presque toute la place sur petit
+    // écran (18 px restants pour le texte) ; avec la taille ajustée par
+    // mesure, cette place revient au texte.
+    paddingVertical: 8,
   },
   cardFooter: {
     borderTopWidth: 0.5,

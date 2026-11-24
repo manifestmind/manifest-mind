@@ -11,6 +11,7 @@ import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { checkMilestones, readTour } from '../../services/levels';
+import FitBox from '../../components/ui/FitBox';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -45,18 +46,6 @@ export default function Visualisation() {
   const [congratToast, setCongratToast] = useState('');
   const [phase, setPhase] = useState<'inspire' | 'retiens' | 'expire'>('inspire');
   const [starIndex, setStarIndex] = useState(0);
-  const [boxWidth, setBoxWidth] = useState(0);
-  const [boxHeight, setBoxHeight] = useState(0);
-
-  function getFontSize(text: string): number {
-    if (!boxWidth || !text) return 13;
-    const len = text.length;
-    if (len < 60)  return 17;
-    if (len < 90)  return 15;
-    if (len < 120) return 13;
-    if (len < 150) return 12;
-    return 11;
-  }
 
   function starOpacity(p: string, i: number): number {
     if (phase !== p) return 0.15;
@@ -290,31 +279,41 @@ export default function Visualisation() {
 
         {/* Bloc texte guidé */}
         <View style={styles.textBlock}>
-          <View
+          {/* Taille ajustée par MESURE (1.1.0) : les 4 paragraphes ET la phrase
+              finale tiennent ensemble dans le bloc (17 → 12 px, finale +1 px),
+              sinon le bloc défile — plus de débordement sur le bouton. Les
+              paragraphes restent en haut, la phrase finale en bas, comme avant. */}
+          <FitBox
+            max={17}
+            min={12}
+            justify="space-between"
+            fitKey={content ? [content.visualisation.p1, content.visualisation.p2, content.visualisation.p3, content.visualisation.p4, content.visualisation.finale].join('|') : ''}
             style={{ flex: 1 }}
-            onLayout={e => {
-              setBoxWidth(e.nativeEvent.layout.width);
-              setBoxHeight(e.nativeEvent.layout.height);
-            }}
           >
-            <Animated.Text style={[styles.phraseBase, { opacity: fade1, fontSize: getFontSize(content?.visualisation.p1 || ''), lineHeight: getFontSize(content?.visualisation.p1 || '') * 1.55 }]}>
-              {content?.visualisation.p1}
-            </Animated.Text>
-            <Animated.Text style={[styles.phraseBase, { opacity: fade2, fontSize: getFontSize(content?.visualisation.p2 || ''), lineHeight: getFontSize(content?.visualisation.p2 || '') * 1.55 }]}>
-              {content?.visualisation.p2}
-            </Animated.Text>
-            <Animated.Text style={[styles.phraseBase, { opacity: fade3, fontSize: getFontSize(content?.visualisation.p3 || ''), lineHeight: getFontSize(content?.visualisation.p3 || '') * 1.55 }]}>
-              {content?.visualisation.p3}
-            </Animated.Text>
-            <Animated.Text style={[styles.phraseBase, { opacity: fade4, fontSize: getFontSize(content?.visualisation.p4 || ''), lineHeight: getFontSize(content?.visualisation.p4 || '') * 1.55 }]}>
-              {content?.visualisation.p4}
-            </Animated.Text>
-          </View>
-          <View style={styles.textFooter}>
-            <Animated.Text style={[styles.phraseFinale, { opacity: shimmer, fontSize: getFontSize(content?.visualisation.finale || '') + 1, lineHeight: (getFontSize(content?.visualisation.finale || '') + 1) * 1.55 }]}>
-              {content?.visualisation.finale}
-            </Animated.Text>
-          </View>
+            {(size) => (
+              <>
+                <View>
+                  <Animated.Text style={[styles.phraseBase, { opacity: fade1, fontSize: size, lineHeight: size * 1.55 }]}>
+                    {content?.visualisation.p1}
+                  </Animated.Text>
+                  <Animated.Text style={[styles.phraseBase, { opacity: fade2, fontSize: size, lineHeight: size * 1.55 }]}>
+                    {content?.visualisation.p2}
+                  </Animated.Text>
+                  <Animated.Text style={[styles.phraseBase, { opacity: fade3, fontSize: size, lineHeight: size * 1.55 }]}>
+                    {content?.visualisation.p3}
+                  </Animated.Text>
+                  <Animated.Text style={[styles.phraseBase, { opacity: fade4, fontSize: size, lineHeight: size * 1.55 }]}>
+                    {content?.visualisation.p4}
+                  </Animated.Text>
+                </View>
+                <View style={styles.textFooter}>
+                  <Animated.Text style={[styles.phraseFinale, { opacity: shimmer, fontSize: size + 1, lineHeight: (size + 1) * 1.55 }]}>
+                    {content?.visualisation.finale}
+                  </Animated.Text>
+                </View>
+              </>
+            )}
+          </FitBox>
         </View>
         </Animated.View>
 

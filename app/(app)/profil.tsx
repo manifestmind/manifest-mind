@@ -327,7 +327,8 @@ export default function Profil() {
                 </Svg>
               </View>
             </Pressable>
-            <View style={{ gap: 3 }}>
+            {/* 1.1.0 : largeur complète à côté de l'avatar (prénom long, traduction). */}
+            <View style={{ gap: 3, flex: 1, flexShrink: 1 }}>
               <Text style={[styles.userName, { fontSize: 22, color: '#C89A30' }]}>{userName || t.home.defautPrenom}</Text>
               <Text style={[styles.cycleTheme, { fontSize: 13 }]}>{t.profil.cycleTheme.replace('{n}', String(cycleNumber)).replace('{theme}', themeName.split(' &')[0])}</Text>
               <View style={styles.levelBadge}>

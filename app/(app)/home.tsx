@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   BackHandler,
+  ScrollView,
   Pressable,
   StyleSheet,
   Text,
@@ -255,7 +256,15 @@ export default function Home() {
       <View style={[styles.orb, { width: 60, height: 60, backgroundColor: '#E8C890', top: 310, right: -15 }]} />
 
       {/* Contenu principal */}
-      <View style={[styles.content, { paddingTop: Math.max(insets.top, 12) }]}>
+      {/* 1.1.0 : défilement de SECOURS. Quand tout tient (cas normal), la mise en
+          page est identique (flexGrow + space-between) ; sur un petit écran ou
+          avec un texte agrandi, le bas défile au lieu d'être coupé net. */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top, 12) }]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
 
         {/* Œil + Bonjour */}
         <View style={styles.headerBlock}>
@@ -460,7 +469,7 @@ export default function Home() {
           </View>
         </View>
 
-      </View>
+      </ScrollView>
 
       {/* 5. NAVBAR avec safe area */}
       <View style={[styles.navbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -510,11 +519,13 @@ const styles = StyleSheet.create({
   },
   // 4. SPACE-BETWEEN pour remplir toute la hauteur
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
     justifyContent: 'space-between',
-    overflow: 'hidden',
+  },
+  scroll: {
+    flex: 1,
     zIndex: 1,
   },
   headerBlock: {

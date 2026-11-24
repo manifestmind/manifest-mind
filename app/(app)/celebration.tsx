@@ -9,6 +9,7 @@ import {
   Animated,
   Easing,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -257,11 +258,17 @@ export default function Celebration() {
         <Text style={{ fontFamily: 'Jost', fontSize: 9, color: '#9A8878' }}>{t.commun.partager}</Text>
       </View>
 
-      {/* Contenu */}
-      <View style={[styles.content, {
-        paddingTop:    Math.max(insets.top, 24),
-        paddingBottom: Math.max(insets.bottom, 20),
-      }]}>
+      {/* Contenu — 1.1.0 : défilement de SECOURS (identique quand tout tient ;
+          défile sur petit écran ou texte agrandi au lieu d'être coupé). */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, {
+          paddingTop:    Math.max(insets.top, 24),
+          paddingBottom: Math.max(insets.bottom, 20),
+        }]}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
 
         {/* Section 1 : Oeil + etoiles + titre */}
         <Animated.View style={[styles.eyeSection, fadeStyle(fade1)]}>
@@ -362,7 +369,7 @@ export default function Celebration() {
           </Pressable>
         </Animated.View>
 
-      </View>
+      </ScrollView>
 
       {/* Bannière d'installation PWA — engageante, 1re célébration (point 4-bis).
           Web-only, gardée par pwa_celebration_prompt_shown, respecte le refus.
@@ -384,9 +391,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 18,
     justifyContent: 'space-between',
+  },
+
+  scroll: {
+    flex: 1,
     zIndex: 1,
   },
 
@@ -475,6 +486,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost',
     fontSize: 12,
     color: '#7A7068',
+    // 1.1.0 : prend la place restante (largeur complète) → un libellé long
+    // passe à la ligne au lieu de pousser le badge hors de l'écran.
+    flex: 1,
+    marginRight: 8,
   },
   badgePurple: {
     backgroundColor: '#DDD0F8',

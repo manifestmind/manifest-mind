@@ -11,6 +11,7 @@ import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { checkMilestones, readTour } from '../../services/levels';
+import FitBox from '../../components/ui/FitBox';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -63,17 +64,6 @@ export default function Action() {
   const [hardValidated, setHardValidated] = useState(false);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
-  const [boxWidth, setBoxWidth] = useState(0);
-
-  function getFontSize(text: string): number {
-    if (!boxWidth || !text) return 15;
-    const len = text.length;
-    if (len < 70)  return 20;
-    if (len < 100) return 17;
-    if (len < 130) return 15;
-    if (len < 155) return 13;
-    return 12;
-  }
 
   useEffect(() => {
     async function load() {
@@ -271,18 +261,22 @@ export default function Action() {
               <Text style={styles.badgeGreenText}>+15 pts</Text>
             </View>
           </View>
-          <View style={styles.cardBody} onLayout={e => setBoxWidth(e.nativeEvent.layout.width)}>
-            <Text style={{
-              fontFamily: 'serif',
-              fontStyle: 'italic',
-              color: '#3A3030',
-              textAlign: 'center',
-              fontSize: getFontSize(content?.actionFacile || ''),
-              lineHeight: getFontSize(content?.actionFacile || '') * 1.55,
-            }}>
-              {content?.actionFacile}
-            </Text>
-          </View>
+          {/* Taille ajustée par MESURE (1.1.0) : 20 → 13 px, puis défilement de
+              secours — plus de débordement sur l'en-tête ou le bouton. */}
+          <FitBox max={20} min={13} fitKey={content?.actionFacile || ''} style={styles.cardBody}>
+            {(size) => (
+              <Text style={{
+                fontFamily: 'serif',
+                fontStyle: 'italic',
+                color: '#3A3030',
+                textAlign: 'center',
+                fontSize: size,
+                lineHeight: size * 1.55,
+              }}>
+                {content?.actionFacile}
+              </Text>
+            )}
+          </FitBox>
           <View>
             <Pressable
               style={[styles.btnEasy, easyValidated && { opacity: 0.5 }]}
@@ -313,18 +307,20 @@ export default function Action() {
               <Text style={styles.badgeGoldText}>+25 pts</Text>
             </View>
           </View>
-          <View style={styles.cardBody}>
-            <Text style={{
-              fontFamily: 'serif',
-              fontStyle: 'italic',
-              color: '#3A3030',
-              textAlign: 'center',
-              fontSize: getFontSize(content?.actionDifficile || ''),
-              lineHeight: getFontSize(content?.actionDifficile || '') * 1.55,
-            }}>
-              {content?.actionDifficile}
-            </Text>
-          </View>
+          <FitBox max={20} min={13} fitKey={content?.actionDifficile || ''} style={styles.cardBody}>
+            {(size) => (
+              <Text style={{
+                fontFamily: 'serif',
+                fontStyle: 'italic',
+                color: '#3A3030',
+                textAlign: 'center',
+                fontSize: size,
+                lineHeight: size * 1.55,
+              }}>
+                {content?.actionDifficile}
+              </Text>
+            )}
+          </FitBox>
           <View>
             <Pressable
               style={[styles.btnHard, hardValidated && { opacity: 0.5 }]}
@@ -503,6 +499,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    // 1.1.0 : prend la place restante et peut se resserrer → le titre ne
+    // pousse plus le badge de points hors de la carte (traduction plus longue).
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 6,
   },
   cardDot: {
     width: 5,
@@ -513,12 +514,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost',
     fontSize: 12,
     fontWeight: '500',
+    flexShrink: 1,
     color: '#3A6A20',
   },
   cardTitleHard: {
     fontFamily: 'Jost',
     fontSize: 12,
     fontWeight: '500',
+    flexShrink: 1,
     color: '#7A5000',
   },
   badgeGreen: {
