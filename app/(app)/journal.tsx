@@ -86,6 +86,14 @@ export default function Journal() {
   const [journalText, setJournalText] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [validated, setValidated] = useState(false);
+  // Journal modifiable (1.1.0) : une entrée VALIDÉE reste modifiable tant que
+  // le cycle est en cours (même sur plusieurs jours) ; verrouillée au premier
+  // minuit après la fin du cycle. « Passer cette étape » est définitif. Les
+  // modifications n'ajoutent jamais de points (seule la 1re validation en donne).
+  const [skipped, setSkipped] = useState(false);
+  const [locked, setLocked] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [savedText, setSavedText] = useState('');
   const [previousEntries, setPreviousEntries] = useState<PreviousEntry[]>([]);
   const [toast, setToast] = useState('');
   const [congratToast, setCongratToast] = useState('');
@@ -123,11 +131,19 @@ export default function Journal() {
         const todayRaw = await AsyncStorage.getItem('journal_cycle_' + cycle);
         if (todayRaw) {
           const today = JSON.parse(todayRaw);
+          if (today.skipped) setSkipped(true);
           if (today.text && !today.skipped) {
             setJournalText(today.text);
+            setSavedText(today.text);
             setWordCount(today.text.trim() === '' ? 0 : today.text.trim().split(/\s+/).length);
           }
         }
+
+        // Verrou : cycle TERMINÉ et minuit passé (next_cycle_time n'est posé
+        // qu'à la fin du cycle, par celebration.tsx). Même si l'accueil n'a pas
+        // encore fait avancer le cycle, l'entrée est déjà de l'historique.
+        const [[, completedRaw], [, nextRaw]] = await AsyncStorage.multiGet(['cycle_completed', 'next_cycle_time']);
+        if (completedRaw === 'true' && Date.now() >= Number(nextRaw || 0)) setLocked(true);
 
         const entries: PreviousEntry[] = [];
         if (cycle > 1) {
@@ -203,6 +219,7 @@ export default function Journal() {
       }
 
       setValidated(true);
+      setSavedText(journalText.trim());
       setToast(t.journal.toast);
 
       const route = getNextStepRoute(status);
@@ -235,6 +252,7 @@ export default function Journal() {
       await AsyncStorage.setItem('cycle_step_status', JSON.stringify(status));
 
       setValidated(true);
+      setSkipped(true);
       const route = getNextStepRoute(status);
       if (route === 'completed') {
         Platform.OS === 'web'
@@ -250,7 +268,35 @@ export default function Journal() {
     }
   }
 
+  // Modification d'une entrée déjà validée : ne réécrit QUE le texte. Aucun
+  // point, aucun changement d'étape, aucune navigation.
+  async function handleUpdate() {
+    const text = journalText.trim();
+    if (!editing || locked || skipped || text === '' || text === savedText) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await AsyncStorage.setItem(
+        'journal_cycle_' + cycleNumber,
+        JSON.stringify({ text, skipped: false, cycle: cycleNumber })
+      );
+      setSavedText(text);
+      setJournalText(text);
+      setEditing(false);
+      setToast(t.journal.toastModif);
+    } catch {
+      // stockage indisponible : on reste en modification, rien n'est perdu à l'écran
+    }
+  }
+
+  function handleCancelEdit() {
+    setJournalText(savedText);
+    setWordCount(savedText.trim() === '' ? 0 : savedText.trim().split(/\s+/).length);
+    setEditing(false);
+  }
+
   const canSave = !validated && journalText.trim() !== '';
+  const canEdit = validated && !skipped && !locked && savedText !== '';
+  const canUpdate = editing && journalText.trim() !== '' && journalText.trim() !== savedText;
 
   return (
     <View style={styles.container}>
@@ -311,7 +357,7 @@ export default function Journal() {
             <Text style={styles.entryDate}>{t.journal.aujourdhui}</Text>
           </View>
 
-          <View style={[styles.textAreaWrapper, validated && { opacity: 0.6 }]}>
+          <View style={[styles.textAreaWrapper, validated && !editing && { opacity: 0.6 }]}>
             {/* Démonté pendant la transition vers la célébration : évite que Fabric
                 tente de déplacer ce ReactEditText encore monté (crash « already has a
                 parent »). Invisible pour l'utilisateur (l'écran part de toute façon) ;
@@ -326,7 +372,7 @@ export default function Journal() {
               placeholder={t.journal.placeholder}
               placeholderTextColor="#A09088"
               textAlignVertical="top"
-              editable={!validated}
+              editable={!validated || editing}
               // Ceinture en CARACTÈRES par-dessus la garde des 150 mots : celle-ci
               // compte les mots séparés par des espaces, donc un COLLAGE massif
               // sans espace (1 seul « mot ») la traverserait et pourrait saturer
@@ -337,20 +383,44 @@ export default function Journal() {
             )}
           </View>
 
-          {!validated && (
+          {(!validated || editing) && (
             <Text style={styles.wordCounter}>{wordCount} / 150 {t.journal.mots}</Text>
           )}
 
-          <Pressable
-            style={[styles.saveBtn, !canSave && { opacity: validated ? 0.5 : 0.4 }]}
-            onPress={handleSave}
-            disabled={!canSave}
-          >
-            <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
-              <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-            <Text style={styles.saveBtnText}>{t.journal.valider}</Text>
-          </Pressable>
+          {editing ? (
+            <>
+              {/* Modification : n'enregistre que le texte, aucun point. */}
+              <Pressable
+                style={[styles.saveBtn, !canUpdate && { opacity: 0.4 }]}
+                onPress={handleUpdate}
+                disabled={!canUpdate}
+              >
+                <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
+                  <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+                <Text style={styles.saveBtnText}>{t.journal.enregistrerModifs}</Text>
+              </Pressable>
+              <Pressable onPress={handleCancelEdit}>
+                <Text style={styles.skipText}>{t.commun.annuler}</Text>
+              </Pressable>
+            </>
+          ) : canEdit ? (
+            // Entrée validée, cycle en cours : on peut y revenir.
+            <Pressable style={styles.editBtn} onPress={() => setEditing(true)}>
+              <Text style={styles.editBtnText}>{t.journal.modifier}</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={[styles.saveBtn, !canSave && { opacity: validated ? 0.5 : 0.4 }]}
+              onPress={handleSave}
+              disabled={!canSave}
+            >
+              <Svg width={10} height={10} viewBox="0 0 12 12" fill="none">
+                <Path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={styles.saveBtnText}>{t.journal.valider}</Text>
+            </Pressable>
+          )}
 
           {!validated && (
             <Pressable onPress={handleSkip}>
@@ -358,12 +428,12 @@ export default function Journal() {
             </Pressable>
           )}
 
-          {validated && fromCycle === 'true' && nextRoute === '/(app)/vision-board' && (
+          {validated && !editing && fromCycle === 'true' && nextRoute === '/(app)/vision-board' && (
             <Pressable style={styles.saveBtn} onPress={() => router.push('/(app)/vision-board?fromCycle=true' as any)}>
               <Text style={styles.saveBtnText}>{t.home.continuerCycle}</Text>
             </Pressable>
           )}
-          {validated && fromCycle === 'true' && nextRoute === 'completed' && (
+          {validated && !editing && fromCycle === 'true' && nextRoute === 'completed' && (
             <Pressable style={styles.saveBtn} onPress={handleFinishCycle}>
               <Text style={styles.saveBtnText}>{t.home.continuerCycle} ✦</Text>
             </Pressable>
@@ -548,6 +618,24 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontFamily: 'Jost',
     color: '#F0EAE0',
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  // Bouton « Modifier » : bordé, plus discret que la validation.
+  editBtn: {
+    borderWidth: 1,
+    borderColor: '#6B3FA0',
+    borderRadius: 999,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  editBtnText: {
+    fontFamily: 'Jost',
+    color: '#6B3FA0',
     fontSize: 10,
     fontWeight: '500',
     letterSpacing: 1,
