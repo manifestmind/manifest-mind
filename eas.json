@@ -19,14 +19,16 @@
         "EXPO_PUBLIC_PREVIEW_TOOLS": "true"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "buildArtifactPaths": ["android/app/build/outputs/mapping/release/mapping.txt"]
       }
     },
     "production": {
       "environment": "production",
       "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "buildArtifactPaths": ["android/app/build/outputs/mapping/release/mapping.txt"]
       }
     }
   },
