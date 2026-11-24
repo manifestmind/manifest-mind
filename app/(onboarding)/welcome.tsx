@@ -12,6 +12,7 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { useLanguage } from '../../src/i18n/LanguageContext';
+import Orbe from '../../components/ui/Orbe';
 
 
 export default function OnboardingWelcome() {
@@ -49,17 +50,17 @@ export default function OnboardingWelcome() {
       showsVerticalScrollIndicator={false}
     >
       {/* Orbes décoratives */}
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 160, height: 160,
         backgroundColor: '#B8D4B0',
         top: -45, right: -45
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 100, height: 100,
         backgroundColor: '#C4A8D4',
         bottom: 80, left: -28
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 70, height: 70,
         backgroundColor: '#E8C890',
         bottom: 160, right: -18

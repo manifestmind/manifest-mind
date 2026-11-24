@@ -22,6 +22,7 @@ import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors } from '../../hooks/useCycleContent';
 import { checkMilestones, readTour } from '../../services/levels';
+import Orbe from '../../components/ui/Orbe';
 
 
 export default function VisionBoard() {
@@ -152,8 +153,8 @@ export default function VisionBoard() {
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
       {/* Orbes */}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 85, height: 85, backgroundColor: cycleColors.orb2, bottom: 55, left: -22 }]} />
+      <Orbe style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
+      <Orbe style={[styles.orb, { width: 85, height: 85, backgroundColor: cycleColors.orb2, bottom: 55, left: -22 }]} />
 
       {/* Contenu */}
       <ScrollView

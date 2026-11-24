@@ -12,6 +12,7 @@ import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { checkMilestones, readTour } from '../../services/levels';
 import FitBox from '../../components/ui/FitBox';
+import Orbe from '../../components/ui/Orbe';
 
 function getNextStepRoute(status: Record<string, boolean>): string {
   if (!status.affirmation) return '/(app)/affirmation';
@@ -200,8 +201,8 @@ export default function Action() {
     <View style={styles.container}>
       {toast ? <PointsToast message={toast} onHide={() => setToast('')} /> : null}
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
-      <View style={[styles.orb, { width: 130, height: 130, backgroundColor: cycleColors.orb1, top: -32, left: -32 }]} />
-      <View style={[styles.orb, { width: 75, height: 75, backgroundColor: cycleColors.orb2, bottom: 55, right: -18 }]} />
+      <Orbe style={[styles.orb, { width: 130, height: 130, backgroundColor: cycleColors.orb1, top: -32, left: -32 }]} />
+      <Orbe style={[styles.orb, { width: 75, height: 75, backgroundColor: cycleColors.orb2, bottom: 55, right: -18 }]} />
 
       <View style={[styles.content, { paddingTop: Math.max(insets.top, 14) }]}>
 

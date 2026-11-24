@@ -19,6 +19,7 @@ import { hasActiveSubscription } from '../../services/subscription';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
 import { nativePurchase } from '../../services/purchasesNative';
+import Orbe from '../../components/ui/Orbe';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -281,7 +282,7 @@ export default function Pricing() {
       contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 12, 20), paddingBottom: Math.max(insets.bottom, 12) }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 140,
         height: 140,
         backgroundColor: '#FDE8B0',
@@ -289,7 +290,7 @@ export default function Pricing() {
         top: -20,
         right: -20,
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 80,
         height: 80,
         backgroundColor: '#C4A8D4',

@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import Orbe from '../../components/ui/Orbe';
 
 
 export default function Privacy() {
@@ -40,7 +41,7 @@ export default function Privacy() {
       contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 16, 31), paddingBottom: Math.max(insets.bottom, 14) }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 130,
         height: 130,
         backgroundColor: '#DDD0F8',
@@ -48,7 +49,7 @@ export default function Privacy() {
         top: -20,
         right: -20,
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 80,
         height: 80,
         backgroundColor: '#B8D4B0',

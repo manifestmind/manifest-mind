@@ -28,6 +28,7 @@ import { showAuthToast } from '../../components/ui/AuthToast';
 import { exporterDonnees } from '../../services/dataExport';
 import { rescheduleAll } from '../../services/notifications';
 import { CYCLES_PER_TOUR, readTour, TOUR_KEY } from '../../services/levels';
+import Orbe from '../../components/ui/Orbe';
 
 const INITIAL_STEP_STATUS = {
   opening: false,
@@ -117,8 +118,8 @@ export default function ParcoursAccompli() {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.orb, { width: 160, height: 160, backgroundColor: '#DDD0F8', top: -40, right: -40 }]} />
-      <View style={[styles.orb, { width: 90, height: 90, backgroundColor: '#B8D4B0', bottom: 80, left: -24 }]} />
+      <Orbe style={[styles.orb, { width: 160, height: 160, backgroundColor: '#DDD0F8', top: -40, right: -40 }]} />
+      <Orbe style={[styles.orb, { width: 90, height: 90, backgroundColor: '#B8D4B0', bottom: 80, left: -24 }]} />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 24, 48), paddingBottom: Math.max(insets.bottom + 24, 32) }]}

@@ -24,6 +24,7 @@ import { shareProgress } from '../../hooks/useShare';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { isSubscriber } from '../../services/access';
 import { gaugePercentFor, levelIndexFor, levelNameFor, levelNamesFor, readTour, TOUR_KEY } from '../../services/levels';
+import Orbe from '../../components/ui/Orbe';
 
 type StepStatus = {
   opening: boolean;
@@ -238,8 +239,8 @@ export default function Profil() {
   return (
     <View style={styles.container}>
       {/* Orbes */}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: '#DDD0F8', top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 75,  height: 75,  backgroundColor: '#C4E8F0', bottom: 55, left: -18 }]} />
+      <Orbe style={[styles.orb, { width: 140, height: 140, backgroundColor: '#DDD0F8', top: -35, right: -35 }]} />
+      <Orbe style={[styles.orb, { width: 75,  height: 75,  backgroundColor: '#C4E8F0', bottom: 55, left: -18 }]} />
 
       {/* Icône partage */}
       <View style={{ position: 'absolute', top: 76, right: 28, zIndex: 10, alignItems: 'center', gap: 3 }}>

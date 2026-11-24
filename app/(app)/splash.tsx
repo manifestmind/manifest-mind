@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Orbe from '../../components/ui/Orbe';
 
 export default function Splash() {
   const router = useRouter();
@@ -80,9 +81,9 @@ export default function Splash() {
         showsVerticalScrollIndicator={false}
       >
         {/* Orbes */}
-        <View style={[styles.orb, { width: 150, height: 150, backgroundColor: '#B8D4B0', top: -40, right: -40 }]} />
-        <View style={[styles.orb, { width: 90, height: 90, backgroundColor: '#C4A8D4', bottom: 50, left: -25 }]} />
-        <View style={[styles.orb, { width: 65, height: 65, backgroundColor: '#E8C890', bottom: 120, right: -15 }]} />
+        <Orbe style={[styles.orb, { width: 150, height: 150, backgroundColor: '#B8D4B0', top: -40, right: -40 }]} />
+        <Orbe style={[styles.orb, { width: 90, height: 90, backgroundColor: '#C4A8D4', bottom: 50, left: -25 }]} />
+        <Orbe style={[styles.orb, { width: 65, height: 65, backgroundColor: '#E8C890', bottom: 120, right: -15 }]} />
 
         {/* Œil SVG */}
         <View style={styles.eyeBlock}>

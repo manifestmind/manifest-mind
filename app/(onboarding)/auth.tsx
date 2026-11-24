@@ -11,6 +11,7 @@ import { signInWithApple } from '../../services/appleAuth';
 import { finalizeSignIn } from '../../services/authSession';
 import { SUPPORT_EMAIL } from '../../services/config';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import Orbe from '../../components/ui/Orbe';
 
 // Codes Firebase qui signifient VRAIMENT « identifiants invalides » (et rien
 // d'autre — la protection anti-énumération regroupe mauvais mot de passe,
@@ -220,7 +221,7 @@ export default function Auth() {
         contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 18), paddingBottom: Math.max(insets.bottom, 14) }]}
         keyboardShouldPersistTaps="handled"
       >
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 140,
         height: 140,
         backgroundColor: '#C4A8D4',
@@ -228,7 +229,7 @@ export default function Auth() {
         top: -20,
         right: -20,
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 80,
         height: 80,
         backgroundColor: '#C4E8F0',

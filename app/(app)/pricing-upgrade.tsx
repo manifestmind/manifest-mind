@@ -19,6 +19,7 @@ import { openCheckout, mapCheckoutError } from '../../services/paddle';
 import { nativePurchase, nativeRestore } from '../../services/purchasesNative';
 import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
+import Orbe from '../../components/ui/Orbe';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -322,11 +323,11 @@ export default function PricingUpgrade() {
       contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 12, 20), paddingBottom: Math.max(insets.bottom, 12) }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 140, height: 140, backgroundColor: '#FDE8B0',
         opacity: 0.25, top: -20, right: -20,
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 80, height: 80, backgroundColor: '#C4A8D4',
         opacity: 0.25, bottom: 24, left: -12,
       }]} />

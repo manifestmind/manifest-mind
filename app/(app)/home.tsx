@@ -22,6 +22,7 @@ import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { isPaywalled } from '../../services/access';
 import { DEBUG_SKIP_PAYWALL } from '../../services/config';
 import { CYCLES_PER_TOUR, checkMilestones, gaugePercentFor, levelIndexFor, levelNameFor, levelNamesFor, readTour } from '../../services/levels';
+import Orbe from '../../components/ui/Orbe';
 
 type StepStatus = {
   opening: boolean;
@@ -251,9 +252,9 @@ export default function Home() {
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
 
       {/* Orbes */}
-      <View style={[styles.orb, { width: 150, height: 150, backgroundColor: cycleColors.orb1, top: -40, right: -40 }]} />
-      <View style={[styles.orb, { width: 90, height: 90, backgroundColor: cycleColors.orb2, top: 160, left: -28 }]} />
-      <View style={[styles.orb, { width: 60, height: 60, backgroundColor: '#E8C890', top: 310, right: -15 }]} />
+      <Orbe style={[styles.orb, { width: 150, height: 150, backgroundColor: cycleColors.orb1, top: -40, right: -40 }]} />
+      <Orbe style={[styles.orb, { width: 90, height: 90, backgroundColor: cycleColors.orb2, top: 160, left: -28 }]} />
+      <Orbe style={[styles.orb, { width: 60, height: 60, backgroundColor: '#E8C890', top: 310, right: -15 }]} />
 
       {/* Contenu principal */}
       {/* 1.1.0 : défilement de SECOURS. Quand tout tient (cas normal), la mise en

@@ -29,6 +29,7 @@ import { nativeRestore } from '../../services/purchasesNative';
 import { useLanguage } from '../../src/i18n/LanguageContext';
 import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
 import { saveMarketingConsent } from '../../services/marketingConsent';
+import Orbe from '../../components/ui/Orbe';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -373,8 +374,8 @@ export default function Activation() {
         { paddingTop: Math.max(insets.top + 24, 32), paddingBottom: Math.max(insets.bottom + 16, 24) },
       ]}
     >
-      <View style={[styles.orb, { width: 160, height: 160, backgroundColor: '#FDE8B0', opacity: 0.25, top: -30, right: -30 }]} />
-      <View style={[styles.orb, { width: 90, height: 90, backgroundColor: '#C4A8D4', opacity: 0.25, bottom: 40, left: -16 }]} />
+      <Orbe style={[styles.orb, { width: 160, height: 160, backgroundColor: '#FDE8B0', opacity: 0.25, top: -30, right: -30 }]} />
+      <Orbe style={[styles.orb, { width: 90, height: 90, backgroundColor: '#C4A8D4', opacity: 0.25, bottom: 40, left: -16 }]} />
 
       <View style={styles.content}>
         <Animated.View style={{ transform: [{ scale: eyeScale }], opacity: eyeOpacity }}>

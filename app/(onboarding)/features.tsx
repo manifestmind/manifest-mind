@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Orbe from '../../components/ui/Orbe';
 
 
 export default function Features() {
@@ -25,7 +26,7 @@ export default function Features() {
       contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top + 16, 34), paddingBottom: Math.max(insets.bottom, 16) }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 140,
         height: 140,
         backgroundColor: '#C4E8F0',
@@ -33,7 +34,7 @@ export default function Features() {
         top: -20,
         right: -20,
       }]} />
-      <View style={[styles.orb, {
+      <Orbe style={[styles.orb, {
         width: 85,
         height: 85,
         backgroundColor: '#B8D4B0',

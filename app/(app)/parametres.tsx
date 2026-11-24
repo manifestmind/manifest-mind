@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { canPay } from '../../services/config';
 import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
 import CyclePreview from '../../components/dev/CyclePreview';
+import Orbe from '../../components/ui/Orbe';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -521,8 +522,8 @@ export default function Parametres() {
   return (
     <View style={styles.container}>
       {/* Orbes */}
-      <View style={[styles.orb, { width: 130, height: 130, backgroundColor: '#DDD0F8', top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 70, height: 70, backgroundColor: '#B8D4B0', bottom: 55, left: -18 }]} />
+      <Orbe style={[styles.orb, { width: 130, height: 130, backgroundColor: '#DDD0F8', top: -35, right: -35 }]} />
+      <Orbe style={[styles.orb, { width: 70, height: 70, backgroundColor: '#B8D4B0', bottom: 55, left: -18 }]} />
 
       {/* ScrollView */}
       <ScrollView

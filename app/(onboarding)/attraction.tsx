@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import Orbe from '../../components/ui/Orbe';
 
 export default function Attraction() {
   const router = useRouter();
@@ -129,9 +130,9 @@ export default function Attraction() {
       showsVerticalScrollIndicator={false}
     >
       {/* Orbes décoratifs (identiques à welcome.tsx) */}
-      <View style={[styles.orb, { width: 160, height: 160, backgroundColor: '#B8D4B0', top: -45, right: -45 }]} />
-      <View style={[styles.orb, { width: 100, height: 100, backgroundColor: '#C4A8D4', bottom: 80, left: -28 }]} />
-      <View style={[styles.orb, { width: 70, height: 70, backgroundColor: '#E8C890', bottom: 160, right: -18 }]} />
+      <Orbe style={[styles.orb, { width: 160, height: 160, backgroundColor: '#B8D4B0', top: -45, right: -45 }]} />
+      <Orbe style={[styles.orb, { width: 100, height: 100, backgroundColor: '#C4A8D4', bottom: 80, left: -28 }]} />
+      <Orbe style={[styles.orb, { width: 70, height: 70, backgroundColor: '#E8C890', bottom: 160, right: -18 }]} />
 
       {/* 1. Titre — fondu majestueux violet */}
       <Animated.View

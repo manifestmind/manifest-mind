@@ -20,6 +20,7 @@ import { getCycleColors } from '../../hooks/useCycleContent';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
 import { checkMilestones, readTour } from '../../services/levels';
+import Orbe from '../../components/ui/Orbe';
 
 
 type PreviousEntry = {
@@ -276,8 +277,8 @@ export default function Journal() {
       {congratToast ? <CongratulationsToast message={congratToast} onHide={() => setCongratToast('')} /> : null}
 
       {/* Orbes */}
-      <View style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
-      <View style={[styles.orb, { width: 80, height: 80, backgroundColor: cycleColors.orb2, bottom: 55, left: -20 }]} />
+      <Orbe style={[styles.orb, { width: 140, height: 140, backgroundColor: cycleColors.orb1, top: -35, right: -35 }]} />
+      <Orbe style={[styles.orb, { width: 80, height: 80, backgroundColor: cycleColors.orb2, bottom: 55, left: -20 }]} />
 
       {/* Contenu scrollable */}
       <ScrollView
