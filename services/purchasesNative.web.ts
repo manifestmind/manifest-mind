@@ -38,3 +38,8 @@ export type NativePricesResult =
 export async function nativeGetPrices(): Promise<NativePricesResult> {
   return { ok: false };
 }
+
+// no-op sur web : la mesure « paywall vu » d'Adapty ne concerne que les apps.
+export function nativeLogPaywallShown(): void {
+  // rien à faire sur web
+}

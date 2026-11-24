@@ -155,10 +155,24 @@ export type NativePricesResult =
 // ok:false si Adapty échoue OU si un seul des 3 produits manque / n'a pas de prix
 // localisé complet (localized + amount + devise) → le paywall bloque l'achat et
 // propose « Réessayer ». Jamais de paywall partiel, jamais d'achat à prix incertain.
+// Dernier paywall (flow) chargé avec succès : sert à l'enregistrement « paywall vu ».
+let lastShownFlow: Awaited<ReturnType<typeof adapty.getFlow>> | null = null;
+
+// Mesure (1.1.0) : enregistre auprès d'Adapty que le paywall a été AFFICHÉ, pour
+// voir dans son tableau de bord « vues du paywall → achats ». Adapty compte déjà
+// les achats tout seul, mais pas les affichages (seule l'app sait quand le paywall
+// est à l'écran). Appelé une fois par affichage, seulement quand les 3 prix sont
+// là. Sans attente et sans remontée d'erreur : une mesure ne bloque jamais l'achat.
+export function nativeLogPaywallShown(): void {
+  if (!lastShownFlow) return;
+  adapty.logShowFlow(lastShownFlow).catch(() => {});
+}
+
 export async function nativeGetPrices(appUserID: string): Promise<NativePricesResult> {
   try {
     await ensureActivated(appUserID);
     const flow = await adapty.getFlow(PLACEMENT_ID);
+    lastShownFlow = flow;
     const products = await adapty.getPaywallProducts(flow);
     const plans = ['mensuel', 'annuel', 'lifetime'] as const;
     const prices = {} as Record<'mensuel' | 'annuel' | 'lifetime', NativePriceInfo>;

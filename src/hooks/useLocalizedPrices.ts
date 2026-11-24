@@ -35,12 +35,12 @@
 // Mensuel + lifetime : localizedString DIRECT — le montant affiché EST le
 // montant prélevé, donc déjà conformes, RIEN À Y CHANGER.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { auth } from '../../services/firebase';
 import { canPay } from '../../services/config';
 import { formatLocalizedMoney } from '../../services/prices';
-import { nativeGetPrices, type NativePricesResult } from '../../services/purchasesNative';
+import { nativeGetPrices, nativeLogPaywallShown, type NativePricesResult } from '../../services/purchasesNative';
 import { previewPrices } from '../../services/paddle';
 import { type Lang } from '../i18n/translations';
 
@@ -104,6 +104,9 @@ export function useLocalizedPrices(lang: Lang): LocalizedPrices {
     useFetch ? 'loading' : { ok: false },
   );
 
+  // « Paywall vu » déjà enregistré pour cet affichage de l'écran ?
+  const logged = useRef(false);
+
   const load = useCallback(() => {
     if (!useFetch) return;
     setRes('loading');
@@ -111,7 +114,15 @@ export function useLocalizedPrices(lang: Lang): LocalizedPrices {
     const fetcher = useWeb
       ? previewPrices()
       : nativeGetPrices(auth.currentUser?.uid ?? '');
-    fetcher.then(setRes).catch(() => setRes({ ok: false }));
+    fetcher.then((r) => {
+      setRes(r);
+      // Mesure (1.1.0, apps seulement) : « paywall vu » chez Adapty, une seule
+      // fois par affichage de l'écran, et seulement quand les prix sont là.
+      if (!useWeb && r.ok && !logged.current) {
+        logged.current = true;
+        nativeLogPaywallShown();
+      }
+    }).catch(() => setRes({ ok: false }));
   }, [useFetch, useWeb]);
 
   useEffect(() => {
