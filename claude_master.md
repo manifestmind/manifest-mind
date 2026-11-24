@@ -2208,7 +2208,7 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 10. ✅ (2026-11-23) Version de l'app → **1.1.0** (`app.json`) ; le libellé des Paramètres lit désormais la version dans app.json (`Constants.expoConfig.version`), plus jamais écrite en dur. [B.11]
 
 **C. Textes légaux**
-11. CGU, remboursement, FAQ, confidentialité — une seule réécriture, identique partout, FR/EN/ES (sans montant). Mentionner : au début d'un nouveau tour, le journal du tour précédent est effacé (stocké seulement sur l'appareil).
+11. ✅ (2026-11-24, écrit et vérifié : 15 fichiers FR/EN/ES, structure identique par document, 0 montant, plus aucune promesse d'essai) CGU, remboursement, FAQ, confidentialité (+ pages de suppression de compte) — une seule réécriture, identique partout, FR/EN/ES (sans montant). Mentionner : au début d'un nouveau tour, le journal du tour précédent est effacé (stocké seulement sur l'appareil).
 
 **D. Vérification et constructions**
 12. APK de test Android (profil `preview`) — **condition bloquante** : prix, paywall et tous les chantiers vérifiés au téléphone.

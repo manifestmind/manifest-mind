@@ -66,7 +66,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     </div>
     <h1>Privacy Policy</h1>
     <p class="subtitle">Your data belongs to you</p>
-    <span class="update-badge">Last updated: July 2026</span>
+    <span class="update-badge">Last updated: November 2026</span>
   </div>
 </div>
 
@@ -87,14 +87,15 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <h2>Data we collect</h2>
     <p>We only collect data strictly necessary for the application to function:</p>
     <ul>
-      <li><strong>Account data:</strong> email address and sign-in method (email + password, or Google — Apple on our future mobile applications)</li>
-      <li><strong>Anonymous trial space:</strong> before you create your account, the free trial relies on an anonymous technical identifier, with no personal data whatsoever</li>
+      <li><strong>Account data:</strong> email address and sign-in method (email + password, Google, or Apple on iPhone and iPad)</li>
+      <li><strong>Technical identifier:</strong> on the mobile app, an anonymous technical identifier is created before your purchase, to link your subscription to your device. It contains no personal data</li>
       <li><strong>First name:</strong> entered during initial setup, editable from your Profile</li>
       <li><strong>Profile photo:</strong> chosen from your gallery — stored only on your device</li>
-      <li><strong>Progress data:</strong> completed cycles, accumulated points, level reached (Awakening, Grounding, Expansion, Manifestation)</li>
+      <li><strong>Progress data:</strong> completed cycles, accumulated points, level reached (Awakening, Grounding, Expansion, Manifestation, then Renewal, Deepening, Radiance, Mastery from the 2nd round), round number</li>
       <li><strong>Journal content:</strong> texts written in the journal section — stored only on your device</li>
       <li><strong>Vision Board photos:</strong> images chosen from your gallery — stored only on your device</li>
       <li><strong>Preferences:</strong> chosen language (FR/EN/ES), notification time, app settings</li>
+      <li><strong>Marketing consent (optional):</strong> if you tick the corresponding box when you subscribe, we record your email, your language and the date of your consent, to send you news about ManifestMind. You can withdraw this consent at any time by writing to us at contact@manifest-mind.app</li>
     </ul>
     <div class="highlight">
       We do not collect location data, contacts, biometric data or any information not necessary for the app to function.
@@ -109,7 +110,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
       <li>Authenticate you and secure your account</li>
       <li>Save your progress and cycles</li>
       <li>Personalize your experience (first name, language, current cycle affirmation)</li>
-      <li>Send local notifications if you have enabled them: your cycle affirmation every morning at the time you choose, and a reminder if your cycle is incomplete at 8pm</li>
+      <li>Send local notifications if you have enabled them (mobile app): affirmation of the day at the time you choose, a reminder at 8pm if your cycle of the day is not finished, and kind messages at 8am, 2pm and 7pm</li>
     </ul>
     <p>We never sell your data to third parties. We never use it for advertising purposes.</p>
   </section>
@@ -120,7 +121,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <p>Your data is stored in two ways:</p>
     <ul>
       <li><strong>Locally on your device only:</strong> progress, points, cycles, journal entries, Vision Board photos, profile photo — this data never leaves your device (phone or browser)</li>
-      <li><strong>On our secure servers</strong> (Firebase / Google Cloud, HTTPS encryption): your email and sign-in method, as well as your subscription status and technical billing identifiers (Paddle customer and subscription references) — needed to recognize you as a subscriber. Never your banking information, which we never see.</li>
+      <li><strong>On our secure servers</strong> (Firebase / Google Cloud, HTTPS encryption): your email and sign-in method, as well as your subscription status and technical billing identifiers (Paddle customer and subscription references on the web; Adapty profile identifier and purchases on the mobile app) — needed to recognize you as a subscriber — and your marketing consent if you gave it. Never your banking information, which we never see.</li>
     </ul>
     <p>All transmissions are encrypted via HTTPS. We apply industry standard security measures to protect your data.</p>
   </section>
@@ -128,8 +129,9 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">05</div>
     <h2>Sign-in via third-party services</h2>
-    <p>If you choose to sign in via Google (or Apple on our future mobile applications), we only receive the information these services transmit to us: your email address and display name. We do not have access to your passwords or other data from your Google or Apple account.</p>
+    <p>If you choose to sign in via Google (or Apple on iPhone and iPad), we only receive the information these services transmit to us: your email address and display name. We do not have access to your passwords or other data from your Google or Apple account.</p>
     <p><strong>Paddle (payments, web version)</strong>: when you subscribe on the web, your payment is processed by Paddle.com, our Merchant of Record. Paddle receives the information necessary for the transaction (email, payment details, country for VAT purposes) and processes it in accordance with its own privacy policy. We never receive your banking details.</p>
+    <p><strong>Adapty (in-app purchases on the mobile app)</strong>: on Android and iPhone, your purchases are processed by Google Play or the App Store, and Adapty, our provider, tells us their status. Adapty receives a technical identifier of your account and your purchase history. It never receives your banking details and processes this data in accordance with its own privacy policy.</p>
     <p>The privacy policies of these services also apply to their own data processing.</p>
   </section>
 
@@ -142,6 +144,7 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
       <li><strong>Sign-in session</strong> (IndexedDB): what keeps you signed in between visits</li>
       <li><strong>Paddle payment cookies:</strong> set only during checkout, necessary for the transaction and fraud prevention</li>
       <li><strong>Google cookies:</strong> when signing in with Google, on Google's own domain</li>
+      <li><strong>Purchase identifier</strong> (mobile app): stored by Adapty to link your purchases to your device</li>
     </ul>
     <div class="highlight">
       All of this storage is strictly necessary for the service you request — which is why the application does not display a consent banner.
@@ -151,12 +154,13 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
   <section>
     <div class="section-number">07</div>
     <h2>Notifications</h2>
-    <p>If you enable notifications, two types are available:</p>
+    <p>Notifications are available in the mobile app (Android and iPhone). Three types can be turned on separately:</p>
     <ul>
-      <li><strong>Cycle affirmation:</strong> sent every morning at the time you choose, it contains the affirmation for your current cycle to accompany you through your day</li>
-      <li><strong>Incomplete cycle reminder:</strong> sent at 8pm only if your cycle has not yet been completed that day</li>
+      <li><strong>Affirmation of the day:</strong> at the time you choose (9am by default), with the affirmation of your current cycle</li>
+      <li><strong>Incomplete cycle reminder:</strong> at 8pm, only if your cycle has not yet been completed that day</li>
+      <li><strong>Kind messages:</strong> at 8am, 2pm and 7pm</li>
     </ul>
-    <p>These notifications are generated entirely locally on your device. No personal data is transmitted to an external server for their delivery. You can enable or disable each type of notification independently from the app Settings or your device settings.</p>
+    <p>These notifications are generated entirely on your device: no data is sent to a server to produce them. On Android, you can allow "Alarms &amp; reminders" so that they arrive at the exact time. You can turn them on or off from the app Settings or your device settings.</p>
   </section>
 
   <section>
@@ -165,10 +169,11 @@ ul li::before{content:'—';position:absolute;left:0;color:#9B72C8;font-weight:3
     <p>You have full control over your data directly from the application:</p>
     <ul>
       <li><strong>Journey reset</strong> <em>(subscribers only)</em>: accessible from your Profile. Resets your journey to Cycle 1 and permanently deletes all your points, completed cycles, journal entries and photos. Your account and subscription remain active.</li>
-      <li><strong>Account deletion:</strong> accessible from Settings. Permanently deletes your account and all your data. This action is irreversible.</li>
+      <li><strong>New round:</strong> once you complete the 365 cycles, starting a new round permanently deletes the journal from the previous round and resets the round points to zero. This journal is stored only on your device: it cannot be recovered. A warning is shown beforehand, with the option to export your data.</li>
+      <li><strong>Account deletion:</strong> accessible from Settings. All our data about you is deleted on our side, and we request deletion from the platforms we use (Adapty, etc.). What these platforms keep afterwards depends on their own rules, which we do not control. This action is irreversible.</li>
     </ul>
     <div class="highlight">
-      Both actions are irreversible. No backup of your data is kept on our side after deletion or reset. Only the transaction and billing records related to your payments are retained by our payment provider — Paddle on the web, Google Play (or Apple on iOS) in the mobile app — for the period required by their legal accounting and tax obligations, regardless of your account deletion. This retention is outside our control and never includes your banking details. <a href="account_deletion_en.html" style="color:#6B3FA0;font-weight:500;">Full account deletion procedure</a>.
+      These actions are irreversible. No backup of your data is kept on our side after deletion or reset. Only the transaction and billing records related to your payments are retained by our payment provider — Paddle on the web, Google Play (or Apple on iOS) in the mobile app — for the period required by their legal accounting and tax obligations, regardless of your account deletion. This retention is outside our control and never includes your banking details. <a href="account_deletion_en.html" style="color:#6B3FA0;font-weight:500;">Full account deletion procedure</a>.
     </div>
   </section>
 
