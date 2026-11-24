@@ -62,6 +62,30 @@ export const translations = {
       expansion: 'Expansion',
       manifestation: 'Manifestation',
     },
+    // Niveaux des tours 2 et suivants (1.1.0).
+    niveauxSuite: {
+      renouveau: 'Renouveau',
+      approfondissement: 'Approfondissement',
+      rayonnement: 'Rayonnement',
+      maitrise: 'Maîtrise',
+    },
+    // ── Après le cycle 365 (1.1.0) ────────────────────────────────────────────
+    parcours: {
+      titre: 'Parcours accompli ✦',
+      message: 'Aujourd\'hui, tu n\'as pas seulement terminé un programme de 365 jours. Tu as prouvé quelque chose d\'essentiel : que tu peux te choisir chaque jour, que tu peux te transformer avec amour et constance, que tu mérites de vivre pleinement. Ce voyage ne s\'arrête pas aujourd\'hui — il devient simplement la fondation de tout ce qui vient. Emporte avec toi la confiance, l\'abondance, l\'amour, la vitalité, l\'ambition, la créativité et la paix que tu as cultivés. Ils sont tiens pour toujours. Bonne route, manifestant·e.',
+      bilanCycles: 'cycles accomplis',
+      bilanPoints: 'points',
+      bilanJournaux: 'journaux écrits',
+      voir: 'Voir mon parcours accompli ✦',
+      commencer: 'Commencer un nouveau tour',
+      commenceDemain: 'Ton nouveau tour commence demain ✦',
+      avertTitre: 'Commencer un nouveau tour ?',
+      avertTexte: 'Ton journal du tour précédent sera effacé définitivement. Si tu veux le garder, exporte tes données avant de commencer.',
+      exporter: 'Exporter mes données d\'abord',
+      confirmer: 'Commencer le nouveau tour',
+      tour: 'Tour {n}',
+      tourTermine: 'Tour {n} · {level} ✓',
+    },
 
     // ── Themes (7) ────────────────────────────────────────────────────────────
     themes: [
@@ -717,6 +741,28 @@ export const translations = {
       expansion: 'Expansion',
       manifestation: 'Manifestation',
     },
+    niveauxSuite: {
+      renouveau: 'Renewal',
+      approfondissement: 'Deepening',
+      rayonnement: 'Radiance',
+      maitrise: 'Mastery',
+    },
+    parcours: {
+      titre: 'Journey complete ✦',
+      message: 'Today, you haven\'t just finished a 365-day program. You\'ve proven something essential: that you can choose yourself every day, that you can transform yourself with love and consistency, that you deserve to live fully. This journey doesn\'t end today — it simply becomes the foundation for everything to come. Take with you the confidence, abundance, love, vitality, ambition, creativity and peace you have cultivated. They are yours forever. Onward, manifester.',
+      bilanCycles: 'cycles completed',
+      bilanPoints: 'points',
+      bilanJournaux: 'journal entries',
+      voir: 'See my completed journey ✦',
+      commencer: 'Start a new round',
+      commenceDemain: 'Your new round starts tomorrow ✦',
+      avertTitre: 'Start a new round?',
+      avertTexte: 'Your journal from the previous round will be permanently deleted. If you want to keep it, export your data before you start.',
+      exporter: 'Export my data first',
+      confirmer: 'Start the new round',
+      tour: 'Round {n}',
+      tourTermine: 'Round {n} · {level} ✓',
+    },
 
     themes: [
       'Confidence & Identity',
@@ -1329,6 +1375,28 @@ export const translations = {
       ancrage: 'Arraigo',
       expansion: 'Expansión',
       manifestation: 'Manifestación',
+    },
+    niveauxSuite: {
+      renouveau: 'Renovación',
+      approfondissement: 'Profundización',
+      rayonnement: 'Resplandor',
+      maitrise: 'Maestría',
+    },
+    parcours: {
+      titre: 'Camino completado ✦',
+      message: 'Hoy no solo has terminado un programa de 365 días. Has demostrado algo esencial: que puedes elegirte cada día, que puedes transformarte con amor y constancia, que mereces vivir plenamente. Este viaje no termina hoy: simplemente se convierte en la base de todo lo que viene. Llévate contigo la confianza, la abundancia, el amor, la vitalidad, la ambición, la creatividad y la paz que has cultivado. Son tuyos para siempre. Buen camino, manifestante.',
+      bilanCycles: 'ciclos completados',
+      bilanPoints: 'puntos',
+      bilanJournaux: 'entradas de diario',
+      voir: 'Ver mi camino completado ✦',
+      commencer: 'Empezar una nueva vuelta',
+      commenceDemain: 'Tu nueva vuelta empieza mañana ✦',
+      avertTitre: '¿Empezar una nueva vuelta?',
+      avertTexte: 'Tu diario de la vuelta anterior se borrará definitivamente. Si quieres conservarlo, exporta tus datos antes de empezar.',
+      exporter: 'Exportar mis datos primero',
+      confirmer: 'Empezar la nueva vuelta',
+      tour: 'Vuelta {n}',
+      tourTermine: 'Vuelta {n} · {level} ✓',
     },
 
     themes: [

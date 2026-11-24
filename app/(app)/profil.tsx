@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { shareProgress } from '../../hooks/useShare';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { isSubscriber } from '../../services/access';
+import { gaugePercentFor, levelIndexFor, levelNameFor, levelNamesFor, readTour, TOUR_KEY } from '../../services/levels';
 
 type StepStatus = {
   opening: boolean;
@@ -39,7 +40,9 @@ export default function Profil() {
   const t = useTranslation();
   const { lang } = useLanguage();
 
-  const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
+  // Tour en cours (1.1.0) : noms de niveau propres aux tours 2 et suivants.
+  const [tour, setTour] = useState(1);
+  const LEVELS = levelNamesFor(t, tour);
 
   const [userName, setUserName] = useState('');
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -96,15 +99,14 @@ export default function Profil() {
         setCycleNumber(cycle);
 
 
+        setTour(await readTour());
+
+        // Règle des niveaux : source unique services/levels.ts (jauge plafonnée).
         const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
         setPointsTotal(total);
-        const pct = (total / 36500) * 100;
+        const pct = gaugePercentFor(total);
         setProgressPercent(pct);
-
-        if (pct < 25) setLevelIndex(0);
-        else if (pct < 50) setLevelIndex(1);
-        else if (pct < 75) setLevelIndex(2);
-        else setLevelIndex(3);
+        setLevelIndex(levelIndexFor(total));
 
         const cpts = parseInt(await AsyncStorage.getItem('cycle_points') || '0');
         setCyclePoints(cpts);
@@ -221,6 +223,8 @@ export default function Profil() {
         'cycle_step_status', 'cycle_points', 'cycle_earned_points',
         'cycle_completed', 'next_cycle_time', 'best_cycle_points',
         'profile_photo', 'vision_board_photos', 'user_name',
+        // 1.1.0 : la réinitialisation ramène aussi au tour 1.
+        TOUR_KEY,
       ];
       const allKeys = await AsyncStorage.getAllKeys();
       const journalKeys = allKeys.filter(k => k.startsWith('journal_cycle_'));
@@ -336,10 +340,27 @@ export default function Profil() {
 
         {/* 3. Progression annuelle + Cycle en cours */}
         <Animated.View style={{ gap: 5, opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
+        {/* Tours terminés (1.1.0) : leur jauge reste affichée, pleine. */}
+        {tour > 1 ? (
+          <View style={styles.card}>
+            {Array.from({ length: tour - 1 }, (_, i) => i + 1).map((n) => (
+              <View key={n} style={{ gap: 4 }}>
+                <Text style={[styles.barLabel, { color: '#6B3FA0' }]}>
+                  {t.parcours.tourTermine.replace('{n}', String(n)).replace('{level}', levelNameFor(t, n, Infinity))}
+                </Text>
+                <View style={styles.barTrackLarge}>
+                  <View style={[styles.barFillLarge, { width: '100%' }]} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
         <View style={styles.card}>
           <View style={styles.barHeader}>
             <Text style={[styles.barLabel, { color: '#C89A30' }]}>{t.profil.progression}</Text>
-            <Text style={styles.barValue}>{t.commun.cycle} {cycleNumber} / 365</Text>
+            <Text style={styles.barValue}>
+              {tour > 1 ? t.parcours.tour.replace('{n}', String(tour)) + ' · ' : ''}{t.commun.cycle} {cycleNumber} / 365
+            </Text>
           </View>
           <View style={styles.barTrackLarge}>
             <Animated.View style={[styles.barFillLarge, { width: gaugeAnnuelle.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>

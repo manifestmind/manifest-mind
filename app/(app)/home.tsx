@@ -20,6 +20,7 @@ import NotifPrompt from '../../components/ui/NotifPrompt';
 import { getCycleColors, getCycleContent } from '../../hooks/useCycleContent';
 import { isPaywalled } from '../../services/access';
 import { DEBUG_SKIP_PAYWALL } from '../../services/config';
+import { CYCLES_PER_TOUR, checkMilestones, gaugePercentFor, levelIndexFor, levelNameFor, levelNamesFor, readTour } from '../../services/levels';
 
 type StepStatus = {
   opening: boolean;
@@ -41,33 +42,6 @@ const INITIAL_STEP_STATUS: StepStatus = {
   vision_board: false,
 };
 
-function checkMilestones(
-  oldTotal: number,
-  newTotal: number,
-  setToast: (msg: string) => void,
-  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
-  toastMilestone: string,
-  toastNewLevel: string,
-) {
-  const getLevel = (pts: number) => {
-    const pct = (pts / 36500) * 100;
-    if (pct < 25) return niveaux.eveil;
-    if (pct < 50) return niveaux.ancrage;
-    if (pct < 75) return niveaux.expansion;
-    return niveaux.manifestation;
-  };
-  const oldK = Math.floor(oldTotal / 1000);
-  const newK = Math.floor(newTotal / 1000);
-  if (newK > oldK && newTotal > 0) {
-    setToast(toastMilestone.replace('{n}', String(newK * 1000)));
-    return;
-  }
-  const oldLevel = getLevel(oldTotal);
-  const newLevel = getLevel(newTotal);
-  if (oldLevel !== newLevel) {
-    setToast(toastNewLevel.replace('{level}', newLevel));
-  }
-}
 
 export default function Home() {
   const router = useRouter();
@@ -106,6 +80,8 @@ export default function Home() {
   const [content, setContent] = useState<ReturnType<typeof getCycleContent>>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [levelIndex, setLevelIndex] = useState(0);
+  // Tour en cours (1.1.0) : 1 par défaut ; ≥ 2 après un « nouveau tour ».
+  const [tour, setTour] = useState(1);
   const [cycleCompleted, setCycleCompleted] = useState(false);
   const [stepStatus, setStepStatus] = useState<StepStatus>(INITIAL_STEP_STATUS);
   const [congratToast, setCongratToast] = useState('');
@@ -136,8 +112,12 @@ export default function Home() {
     // Vérifier si minuit est passé et le cycle était terminé → avancer
     const completedRaw = await AsyncStorage.getItem('cycle_completed');
     const nextCycleTime = parseInt(await AsyncStorage.getItem('next_cycle_time') || '0');
-    if (completedRaw === 'true' && Date.now() >= nextCycleTime) {
-      const newCycle = Math.min(cycle + 1, 365);
+    // 1.1.0 : au premier minuit après la fin du cycle 365, on NE relance PAS le
+    // cycle 365 (ancienne boucle infinie) → écran « Parcours accompli », d'où la
+    // personne démarre un nouveau tour. La redirection se fait APRÈS le gate.
+    const journeyDone = completedRaw === 'true' && Date.now() >= nextCycleTime && cycle >= CYCLES_PER_TOUR;
+    if (completedRaw === 'true' && Date.now() >= nextCycleTime && !journeyDone) {
+      const newCycle = Math.min(cycle + 1, CYCLES_PER_TOUR);
       const newTheme = ((newCycle - 1) % 7) + 1;
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
@@ -167,6 +147,12 @@ export default function Home() {
       return;
     }
 
+    if (journeyDone) {
+      router.replace('/(app)/parcours-accompli' as any);
+      return;
+    }
+
+    setTour(await readTour());
     setCycleNumber(cycle);
     setContent(getCycleContent(cycle, lang));
     setCycleColors(getCycleColors(cycle, lang));
@@ -192,7 +178,7 @@ export default function Home() {
       earned.opening = 10;
       await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
 
-      checkMilestones(oldTotal, newTotal, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+      checkMilestones(oldTotal, newTotal, setCongratToast, t, await readTour(), { haptics: false });
     }
 
     setStepStatus(status);
@@ -217,14 +203,10 @@ export default function Home() {
     }
 
     // 3. Lire points_total APRÈS créditation
+    // Règle des niveaux : source unique services/levels.ts (jauge plafonnée à 100 %).
     const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
-    const percent = (total / 36500) * 100;
-    setProgressPercent(percent);
-
-    if (percent < 25) setLevelIndex(0);
-    else if (percent < 50) setLevelIndex(1);
-    else if (percent < 75) setLevelIndex(2);
-    else setLevelIndex(3);
+    setProgressPercent(gaugePercentFor(total));
+    setLevelIndex(levelIndexFor(total));
     } catch {
       // Storage indisponible — afficher les valeurs par défaut
     }
@@ -260,7 +242,7 @@ export default function Home() {
     }
   }
 
-  const LEVELS = [t.niveaux.eveil, t.niveaux.ancrage, t.niveaux.expansion, t.niveaux.manifestation];
+  const LEVELS = levelNamesFor(t, tour);
   const currentLevelIndex = levelIndex;
 
   return (
@@ -312,9 +294,21 @@ export default function Home() {
 
         {/* 3. JAUGE PROGRESSION */}
         <Animated.View style={[styles.gaugeBlock, { opacity: fadeUp1, transform: [{ translateY: fadeUp1.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
+          {/* Tours terminés (1.1.0) : une jauge pleine, fine, par tour accompli,
+              au-dessus de la jauge du tour en cours. Rien au tour 1. */}
+          {Array.from({ length: tour - 1 }, (_, i) => i + 1).map((n) => (
+            <View key={n} style={styles.doneTour}>
+              <Text style={styles.doneTourText}>
+                {t.parcours.tourTermine.replace('{n}', String(n)).replace('{level}', levelNameFor(t, n, Infinity))}
+              </Text>
+              <View style={styles.doneTourBar} />
+            </View>
+          ))}
           {/* Ligne 1 : PROGRESSION + badge niveau */}
           <View style={styles.gaugeHeader}>
-            <Text style={styles.gaugeLabel}>{t.home.gaugeLabel} {cycleNumber}</Text>
+            <Text style={styles.gaugeLabel}>
+              {tour > 1 ? t.parcours.tour.replace('{n}', String(tour)) + ' · ' : ''}{t.home.gaugeLabel} {cycleNumber}
+            </Text>
             <View style={styles.levelBadge}>
               <Text style={styles.levelBadgeText}>✦ {LEVELS[levelIndex]}</Text>
             </View>
@@ -365,10 +359,12 @@ export default function Home() {
 
         {/* BOUTON PRINCIPAL — 3 états */}
         <Animated.View style={[styles.mainBtnWrap, { opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
-          {cycleCompleted && cycleNumber >= 365 ? (
-            <View style={[styles.mainBtn, { opacity: 0.5 }]}>
-              <Text style={styles.mainBtnText}>{t.home.programmeTermine}</Text>
-            </View>
+          {cycleCompleted && cycleNumber >= CYCLES_PER_TOUR ? (
+            // Cycle 365 terminé : l'écran « Parcours accompli » (le nouveau tour,
+            // lui, ne démarre qu'à minuit).
+            <Pressable style={styles.mainBtn} onPress={() => router.push('/(app)/parcours-accompli' as any)}>
+              <Text style={styles.mainBtnText}>{t.parcours.voir}</Text>
+            </Pressable>
           ) : cycleCompleted ? (
             <View style={[styles.mainBtn, { opacity: 0.5 }]}>
               <Text style={styles.mainBtnText}>{t.home.nextCycle}</Text>
@@ -588,6 +584,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
     color: '#9A8878',
+  },
+  // Tour terminé (1.1.0) : libellé + jauge fine et pleine.
+  doneTour: {
+    width: '100%',
+    marginBottom: 6,
+  },
+  doneTourText: {
+    fontFamily: 'Jost',
+    fontSize: 11,
+    color: '#6B3FA0',
+    letterSpacing: 0.5,
+    marginBottom: 3,
+  },
+  doneTourBar: {
+    width: '100%',
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#9B72C8',
   },
   gaugeBar: {
     width: '100%',

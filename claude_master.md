@@ -2201,14 +2201,14 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 3. ✅ (2026-11-23, codé et vérifié : tsc 0, routes 54/56 identiques, paywall onboarding −1 086 o, 10 parcours web locaux OK) Payant dès l'ouverture (web + Android + iOS) + textes de l'app FR/EN/ES ; « J'ai déjà un abonnement — Me connecter » et « Restaurer » restent visibles.
 4. ✅ (2026-11-23, codé et vérifié : tsc 0, pages légales identiques, +71 o uniformes sur les 41 pages de l'app (2 règles CSS de NotifPrompt), parcours web OK ; envoi réel à vérifier sur l'APK) Notifications : correctif 20 h · titres distincts · canal Android · heures justes sur Android (politique Google revérifiée avant) · 3 notifications quotidiennes + interrupteur.
 5. ✅ (2026-11-23, codé et vérifié : tsc 0, 56/56 pages identiques, 7 parcours web OK avec Firebase coupé) Journal modifiable (règles ci-dessus).
-6. Après 365 : fin de la boucle, « Parcours accompli », « Nouveau tour », journaux par tour, export RGPD mis à jour.
+6. ✅ (2026-11-23, codé et vérifié : tsc 0, +2 pages, +110 o uniformes, 8 parcours web OK) Après 365 : fin de la boucle, « Parcours accompli », « Nouveau tour » (à minuit ; avertissement 3 boutons ; journal du tour précédent EFFACÉ, points remis à 0, jauge du tour terminé affichée pleine, noms des tours 2+ : Renouveau · Approfondissement · Rayonnement · Maîtrise). Calcul des niveaux réuni dans services/levels.ts.
 7. Ronds animés sur toutes les pages, web compris (modèle : `FondCoeurs.tsx` de Resonance, API `Animated`).
 8. `logShowPaywall`.
 9. Nettoyage dans un commit dédié : **cacher sur le web la section Notifications des Paramètres** (inerte et trompeuse sur le site — décision 2026-11-23) · `bottomText` + clés i18n orphelines (dont `themes`, inutilisée depuis que le Profil lit le thème du contenu du cycle ; `pricing.plans.free.*`, `pricing.retourAbonne.*`, `pricingUpgrade.freemiumBouton` et les styles `modal*` de `pricing.tsx`, inutilisés depuis B.3 — 2026-11-23).
 10. Version de l'app → **1.1.0** (`app.json`).
 
 **C. Textes légaux**
-11. CGU, remboursement, FAQ, confidentialité — une seule réécriture, identique partout, FR/EN/ES (sans montant).
+11. CGU, remboursement, FAQ, confidentialité — une seule réécriture, identique partout, FR/EN/ES (sans montant). Mentionner : au début d'un nouveau tour, le journal du tour précédent est effacé (stocké seulement sur l'appareil).
 
 **D. Vérification et constructions**
 12. APK de test Android (profil `preview`) — **condition bloquante** : prix, paywall et tous les chantiers vérifiés au téléphone.
@@ -2217,3 +2217,9 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 **E. Mise en ligne**
 14. Utilisatrice : fiches des boutiques ×3 langues (sans « gratuit » ni « essai », sans prix écrit) · Play Console « Accès à l'application » + notes d'examen App Store Connect · « Sécurité des données » Google · vérifier le compte de démonstration · soumettre en publication manuelle.
 15. À l'approbation, le même jour : nouveaux prix Play + App Store + 3 nouveaux prix Paddle → `.env` → export + mise en ligne du site (hébergement seul, textes légaux compris) → publication des deux apps → archivage des anciens prix Paddle.
+
+### Compléments à la liste 1.1.0 (décisions du 2026-11-23)
+- **B.7 (nouvelle étape) — Textes coupés ou superposés** : taille ajustée par MESURE (remplace les paliers par nombre de caractères), défilement de secours, largeur complète pour les textes en ligne, messages de points l'un après l'autre, polices actuelles gardées. Écran « Aperçu d'un cycle » UNIQUEMENT dans l'APK de test (absent des versions publiées, à prouver). Les étapes B.7 à B.10 de la liste ci-dessus deviennent B.8 à B.11.
+- **B.12 (nouvelle étape) — R8 (Android)** : `enableMinifyInReleaseBuilds: true` (sans `enableShrinkResources`), dans un commit séparé, conserver `mapping.txt` pour la Play Console. Vérifié par l'APK de test (profil preview = version de production, R8 actif).
+- **Piste interne avant la production** : la construction Android 1.1.0 (versionCode 11) part d'abord sur la piste de test INTERNE (test réel de l'achat et de la restauration), puis le MÊME fichier est promu en production. **Pas de déploiement progressif** (décision utilisatrice : trop peu d'utilisateurs).
+- **Retour arrière Android** : Google Play ne permet PAS de revenir au versionCode 10. Le seul retour = une NOUVELLE construction (versionCode 12) depuis le code voulu.

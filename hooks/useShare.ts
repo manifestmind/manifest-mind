@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../src/i18n/translations';
 import { showAuthToast } from '../components/ui/AuthToast';
+import { levelNameFor, readTour } from '../services/levels';
 
 export async function shareProgress() {
   try {
@@ -18,13 +19,8 @@ export async function shareProgress() {
     const lang = (langRaw === 'en' || langRaw === 'es') ? langRaw : 'fr';
     const t = translations[lang];
 
-    const pct = (pointsTotal / 36500) * 100;
-    // Annotation explicite : sans elle, TS fige le type sur le littéral de
-    // `eveil` et refuse les 3 autres niveaux (aucun impact au runtime).
-    let level: string = t.niveaux.eveil;
-    if (pct >= 75) level = t.niveaux.manifestation;
-    else if (pct >= 50) level = t.niveaux.expansion;
-    else if (pct >= 25) level = t.niveaux.ancrage;
+    // Règle des niveaux : source unique services/levels.ts (noms du tour en cours).
+    const level = levelNameFor(t, await readTour(), pointsTotal);
 
     const message = t.share.message(cycleNumber, level, pointsTotal);
 

@@ -19,36 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCycleColors } from '../../hooks/useCycleContent';
 import PointsToast from '../../components/ui/PointsToast';
 import CongratulationsToast from '../../components/ui/CongratulationsToast';
+import { checkMilestones, readTour } from '../../services/levels';
 
-function checkMilestones(
-  oldTotal: number,
-  newTotal: number,
-  setToast: (msg: string) => void,
-  niveaux: { eveil: string; ancrage: string; expansion: string; manifestation: string },
-  toastMilestone: string,
-  toastNewLevel: string,
-) {
-  const getLevel = (pts: number) => {
-    const pct = (pts / 36500) * 100;
-    if (pct < 25) return niveaux.eveil;
-    if (pct < 50) return niveaux.ancrage;
-    if (pct < 75) return niveaux.expansion;
-    return niveaux.manifestation;
-  };
-  const oldK = Math.floor(oldTotal / 1000);
-  const newK = Math.floor(newTotal / 1000);
-  if (newK > oldK && newTotal > 0) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(toastMilestone.replace('{n}', String(newK * 1000)));
-    return;
-  }
-  const oldLevel = getLevel(oldTotal);
-  const newLevel = getLevel(newTotal);
-  if (oldLevel !== newLevel) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setToast(toastNewLevel.replace('{level}', newLevel));
-  }
-}
 
 type PreviousEntry = {
   cycle: number;
@@ -215,7 +187,7 @@ export default function Journal() {
         const earned = earnedRaw ? JSON.parse(earnedRaw) : {};
         earned.journal = 15;
         await AsyncStorage.setItem('cycle_earned_points', JSON.stringify(earned));
-        checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t.niveaux, t.home.toastMilestone, t.home.toastNewLevel);
+        checkMilestones(pointsTotal, pointsTotal + 15, setCongratToast, t, await readTour(), { haptics: true });
       }
 
       setValidated(true);
