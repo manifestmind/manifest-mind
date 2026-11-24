@@ -6,6 +6,7 @@ import { deleteUser, onAuthStateChanged, sendSignInLinkToEmail, signOut } from '
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { exporterDonnees } from '../../services/dataExport';
+import { appliquerImport, choisirFichierImport } from '../../services/dataImport';
 import { IosInstallModal } from '../../components/ui/InstallPrompt';
 import { installOfferable, performInstall, subscribeInstalled } from '../../services/pwaInstall';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
@@ -380,6 +381,60 @@ export default function Parametres() {
     } finally {
       exportingRef.current = false;
     }
+  }
+
+  // ── Import du fichier d'export (1.1.0) ───────────────────────────────────
+  // Retrouver son cycle après un changement de téléphone ou une réinstallation.
+  // 1) choix du fichier + vérification complète (rien n'est écrit) ;
+  // 2) confirmation avec le résumé du fichier ; 3) écriture, puis accueil.
+  // L'abonnement n'est jamais importé (il vient du serveur). Accessible à tous.
+  const importingRef = useRef(false);
+  const [importPlan, setImportPlan] = useState<Awaited<ReturnType<typeof choisirFichierImport>> | null>(null);
+  async function handleImport() {
+    if (importingRef.current) return;
+    importingRef.current = true;
+    try {
+      const res = await choisirFichierImport();
+      if (res.ok) setImportPlan(res);
+      else if (res.reason === 'format') showAuthToast(t.parametres.compte.importFormat, 'error');
+      else if (res.reason === 'lecture') showAuthToast(t.parametres.compte.importLecture, 'error');
+    } finally {
+      importingRef.current = false;
+    }
+  }
+
+  function importCorps(): string {
+    if (!importPlan?.ok) return '';
+    const s = importPlan.plan.summary;
+    const date = s.dateExport ? new Date(s.dateExport).toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'fr-FR') : '—';
+    let txt = t.parametres.compte.importCorps
+      .replace('{date}', date)
+      .replace('{cycle}', String(s.cycle))
+      .replace('{tour}', String(s.tour))
+      .replace('{points}', String(s.points))
+      .replace('{journaux}', String(s.journaux))
+      .replace('{photos}', String(s.photos));
+    if (s.photosIgnorees > 0) txt += '\n\n' + t.parametres.compte.importPhotosIgnorees.replace('{n}', String(s.photosIgnorees));
+    return txt;
+  }
+
+  async function confirmImport() {
+    if (!importPlan?.ok) return;
+    const plan = importPlan.plan;
+    setImportPlan(null);
+    const r = await appliquerImport(plan);
+    if (!r.ok) {
+      showAuthToast(t.parametres.compte.importErreur, 'error');
+      return;
+    }
+    if (plan.langue && plan.langue !== lang) setLangContext(plan.langue);
+    showAuthToast(
+      r.photosEchec > 0
+        ? t.parametres.compte.importOkPhotos.replace('{cycle}', String(plan.summary.cycle)).replace('{n}', String(r.photosEchec))
+        : t.parametres.compte.importOk.replace('{cycle}', String(plan.summary.cycle)),
+      'success',
+    );
+    router.replace('/(app)/home' as any);
   }
 
   // Installer l'app (point 4-bis) — rangée permanente = seul moyen in-app de
@@ -823,6 +878,17 @@ export default function Parametres() {
             <Chevron />
           </Pressable>
 
+          {/* Ligne 2 bis — Importer mes données (1.1.0) : retrouver son cycle
+              sur un nouveau téléphone ou après réinstallation. Confirmation
+              obligatoire (remplace la progression de l'appareil). */}
+          <Pressable style={[styles.rowBase, styles.rowMiddle]} onPress={handleImport}>
+            <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
+              <Path d="M10 12V3M6 7l4-4 4 4M4 16h12" stroke="#6B3FA0" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+            <Text style={[styles.rowTitle, { flex: 1 }]}>{t.parametres.compte.importer}</Text>
+            <Chevron />
+          </Pressable>
+
           {/* Ligne 3 — Supprimer mon compte */}
           <Pressable style={[styles.rowBase, styles.rowLast]} onPress={() => setDialog('delete')}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
@@ -928,6 +994,15 @@ export default function Parametres() {
       </ScrollView>
 
       {/* Confirmations — Modal et non Alert (no-op silencieux sur web) */}
+      <ConfirmDialog
+        visible={!!importPlan?.ok}
+        titre={t.parametres.compte.importTitre}
+        corps={importCorps()}
+        confirmer={t.parametres.compte.importConfirmer}
+        annuler={t.commun.annuler}
+        onConfirm={confirmImport}
+        onCancel={() => setImportPlan(null)}
+      />
       <ConfirmDialog
         visible={dialog === 'signout'}
         titre={t.parametres.alertDeconnecter.titre}

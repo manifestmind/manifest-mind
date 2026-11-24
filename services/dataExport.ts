@@ -55,6 +55,29 @@ function toJson(v: string | null): unknown {
 
 // ─── Collecte ────────────────────────────────────────────────────────────────
 
+// Photos PORTABLES (1.1.0) : sur Android/iPhone, la photo est un fichier du
+// téléphone (file://…). L'exporter tel quel ne donnait qu'un CHEMIN, inutile sur
+// un autre téléphone ou après réinstallation. On l'intègre donc en données
+// (data:image/jpeg;base64,…), comme sur le web. Échec de lecture → on garde le
+// chemin (l'export ne doit jamais échouer à cause d'une photo).
+async function photoPortable(uri: unknown): Promise<unknown> {
+  if (typeof uri !== 'string' || !uri.startsWith('file://')) return uri;
+  try {
+    const b64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    return `data:image/jpeg;base64,${b64}`;
+  } catch {
+    return uri;
+  }
+}
+
+async function photosPortables(raw: string | null): Promise<unknown> {
+  const v = toJson(raw);
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v;
+  const out: Record<string, unknown> = {};
+  for (const [k, uri] of Object.entries(v as Record<string, unknown>)) out[k] = await photoPortable(uri);
+  return out;
+}
+
 async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
   // 1. Données locales — liste explicite (cf. règle de maintenance en tête).
   const [
@@ -162,8 +185,8 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
       prochainCycleA: toNum(nextCycleTime),
     },
     journal,
-    visionBoard: { photos: toJson(visionBoardPhotos) },
-    photoProfil: profilePhoto,
+    visionBoard: { photos: await photosPortables(visionBoardPhotos) },
+    photoProfil: await photoPortable(profilePhoto),
     preferences: {
       prenom: userName,
       langue: userLanguage,
