@@ -9,7 +9,7 @@
 // Il attend la MÊME clé AsyncStorage que celle que relira le gate de home.tsx
 // (et non un snapshot Firestore) : on ne route que lorsque la valeur sur
 // laquelle le gate se prononce est effectivement posée — aucune course possible.
-// L'écran reste ainsi agnostique au provider (Paddle aujourd'hui, RevenueCat
+// L'écran reste ainsi agnostique au provider (Paddle aujourd'hui, Adapty
 // demain) et n'écrit jamais `subscription_active` lui-même : useSubscriptionSync
 // en reste le seul écrivain.
 

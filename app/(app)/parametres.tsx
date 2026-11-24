@@ -11,7 +11,6 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as Notifications from 'expo-notifications';
 import {
   DEFAULT_REMINDER_TIME,
   NOTIF_KEYS,
@@ -261,13 +260,7 @@ export default function Parametres() {
   // relisait la valeur « activé » gardée par l'écran et le reprogrammait après
   // sa désactivation).
   //
-  // WEB : comportement inchangé (la section est inerte, aucune notification
-  // locale sur le site) : on ne fait qu'enregistrer le réglage, après la même
-  // demande d'autorisation navigateur qu'avant.
-  async function webPermissionOk(): Promise<boolean> {
-    const { status } = await Notifications.requestPermissionsAsync();
-    return status === 'granted';
-  }
+  // APPS UNIQUEMENT : la section Notifications est cachée sur le web (1.1.0).
 
   function toastNotifsOff() {
     showAuthToast(`${t.parametres.alertNotifsDesactivees.titre} — ${t.parametres.alertNotifsDesactivees.corps}`, 'info');
@@ -277,9 +270,7 @@ export default function Parametres() {
   // n'active rien. Enregistrement puis reprogrammation complète.
   async function toggleNotif(key: string, next: boolean, apply: (v: boolean) => void) {
     if (next) {
-      const ok = Platform.OS === 'web'
-        ? await webPermissionOk()
-        : (await notificationsGranted()) || (await requestNotificationPermission());
+      const ok = (await notificationsGranted()) || (await requestNotificationPermission());
       if (!ok) {
         toastNotifsOff();
         return;
@@ -287,10 +278,8 @@ export default function Parametres() {
     }
     apply(next);
     await AsyncStorage.setItem(key, String(next));
-    if (Platform.OS !== 'web') {
-      await rescheduleAll();
-      setNotifGranted(await notificationsGranted());
-    }
+    await rescheduleAll();
+    setNotifGranted(await notificationsGranted());
   }
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -586,14 +575,17 @@ export default function Parametres() {
           </View>
         </Animated.View>
 
-        {/* 3. NOTIFICATIONS */}
+        {/* 3. NOTIFICATIONS — APPS UNIQUEMENT depuis la 1.1.0 : sur le site, ces réglages
+            n'envoyaient rien (aucune notification locale sur le web) et pouvaient
+            laisser croire le contraire. Section cachée sur le web. */}
+        {Platform.OS !== 'web' ? (
         <Animated.View style={{ opacity: fadeUp2, transform: [{ translateY: fadeUp2.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
           <Text style={styles.sectionLabel}>{t.parametres.sections.notifications}</Text>
 
           {/* Notifications coupées sur le téléphone (natif) : ligne permanente,
               sans insister, qui mène aux réglages. Disparaît dès le retour si
               elles ont été réactivées. */}
-          {Platform.OS !== 'web' && notifGranted === false ? (
+          {notifGranted === false ? (
             <Pressable style={[styles.rowBase, styles.rowSolo, { marginBottom: 8 }]} onPress={openNotificationSettings}>
               <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
                 <Path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 2 5H2c1-1 2-2 2-5a6 6 0 0 1 6-6z" stroke="#B5547A" strokeWidth="1.2" fill="none" />
@@ -639,8 +631,8 @@ export default function Parametres() {
             </Pressable>
           </View>
 
-          {/* Ligne 3 — Rappel cycle incomplet (dernière ligne sur web, inchangée) */}
-          <View style={[styles.rowBase, Platform.OS === 'web' ? styles.rowLast : styles.rowMiddle]}>
+          {/* Ligne 3 — Rappel cycle incomplet */}
+          <View style={[styles.rowBase, styles.rowMiddle]}>
             <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
               <Path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 2 5H2c1-1 2-2 2-5a6 6 0 0 1 6-6z" stroke="#9B72C8" strokeWidth="1.2" fill="none" />
               <Path d="M8 17a2 2 0 0 0 4 0" stroke="#9B72C8" strokeWidth="1.2" strokeLinecap="round" />
@@ -655,7 +647,7 @@ export default function Parametres() {
           </View>
 
           {/* Ligne 4 — Messages bienveillants 8 h · 14 h · 19 h (natif) */}
-          {Platform.OS !== 'web' ? (
+          {/* toujours affichée : section réservée aux apps */}
             <View style={[styles.rowBase, styles.rowLast]}>
               <Svg width={14} height={14} viewBox="0 0 20 20" fill="none">
                 <Path d="M10 17s-6-3.6-6-8a3.5 3.5 0 0 1 6-2.4A3.5 3.5 0 0 1 16 9c0 4.4-6 8-6 8z" stroke="#9B72C8" strokeWidth="1.2" fill="none" />
@@ -668,7 +660,6 @@ export default function Parametres() {
                 <Toggle on={notifBienveillants} />
               </Pressable>
             </View>
-          ) : null}
 
           {/* Android : heures précises (« Alarmes et rappels ») + batterie. Sans
               ces réglages, Android peut retarder les notifications. L'app ne
@@ -700,6 +691,7 @@ export default function Parametres() {
             </>
           ) : null}
         </Animated.View>
+        ) : null}
 
         {/* 4. ABONNEMENT */}
         <Animated.View style={{ opacity: fadeUp3, transform: [{ translateY: fadeUp3.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>
@@ -737,11 +729,11 @@ export default function Parametres() {
           </Pressable>
 
           {/* Ligne 2 — Restaurer les achats — MASQUÉE SUR WEB (2026-07-17).
-              « Restaurer » est un concept de store NATIF (RevenueCat, Phase 2) :
+              « Restaurer » est un concept de store NATIF (Adapty, Phase 2) :
               sur web il n'y a rien à restaurer (l'abonnement suit le compte via
               Firestore ; la récupération se fait par « Me reconnecter »). Sur web
               son handler faisait un Alert.alert = no-op silencieux → bouton mort.
-              Redeviendra visible et utile en Phase 2 (natif) avec RevenueCat. */}
+              Redeviendra visible et utile en Phase 2 (natif) avec Adapty. */}
           {Platform.OS !== 'web' ? (
             <Pressable
               style={[styles.rowBase, subscriptionActive && styles.rowLast]}

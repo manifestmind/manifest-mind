@@ -1,6 +1,6 @@
 // services/purchasesNative.web.ts — stub WEB de purchasesNative.
 //
-// 🔴 N'importe RIEN de `react-native-purchases` (lib native-only) → Metro résout
+// 🔴 N'importe RIEN de `react-native-adapty` (lib native-only) → Metro résout
 // ce fichier `.web.ts` sur web → la lib native n'entre JAMAIS dans le bundle web.
 // Jamais appelé sur web : le paiement web passe par Paddle (branche séparée de
 // pricing-upgrade, `Platform.OS === 'web'`). Ce stub existe seulement pour que

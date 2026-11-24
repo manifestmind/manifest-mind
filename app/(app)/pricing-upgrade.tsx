@@ -15,7 +15,7 @@ import { saveMarketingConsent } from '../../services/marketingConsent';
 import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub), purchasesNative.ts
-// sur natif → react-native-purchases n'entre jamais dans le bundle web.
+// sur natif → react-native-adapty n'entre jamais dans le bundle web.
 import { nativePurchase, nativeRestore } from '../../services/purchasesNative';
 import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
@@ -112,7 +112,7 @@ export default function PricingUpgrade() {
       });
     }
     // Bloqué si aucun provider de paiement n'est actif pour la plateforme courante
-    // (Paddle sur web, RevenueCat/IAP sur native).
+    // (Paddle sur web, Adapty/achats in-app sur native).
     if (!canPay()) {
       Alert.alert(t.commun.disponibleProchainement);
       return;
@@ -202,12 +202,12 @@ export default function PricingUpgrade() {
       return;
     }
 
-    // ── Branche NATIVE → RevenueCat ───────────────────────────────────────
+    // ── Branche NATIVE → Adapty ───────────────────────────────────────
     // Atteinte UNIQUEMENT si canPay()=STORES_ACTIVE=true (Phase B). En Phase A
     // (STORES_ACTIVE=false), le garde-fou `!canPay()` ci-dessus a déjà renvoyé
     // « Disponible prochainement » → on n'arrive JAMAIS ici (achat inerte).
     // Comme le web : AUCUNE écriture optimiste de subscription_active — c'est le
-    // webhook RevenueCat → Firestore → useSubscriptionSync qui fait foi. On route
+    // webhook Adapty → Firestore → useSubscriptionSync qui fait foi. On route
     // vers l'écran d'activation, qui attend la clé (comme le checkout.completed web).
     // Filet « garantir un UID » — symétrie stricte avec pricing.tsx : l'achat doit
     // être attribuable (customerUserId) et le webhook doit pouvoir écrire
@@ -605,13 +605,9 @@ export default function PricingUpgrade() {
           <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
         </Pressable>
 
-        {/* La mention « par jour » (prix CALCULÉ) a été RETIRÉE le 2026-08-22 :
-            un montant dérivé de moins sur l'écran, après le rejet Apple 3.1.2(c).
-            Ne PAS la réintroduire. Seul subsiste le texte statique du mode inerte
-            (canPay=false), qui n'affiche aucun prix issu d'un store. */}
-        {pricesPhase === 'web' ? (
-          <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
-        ) : null}
+        {/* La mention « par jour » (prix CALCULÉ) a été RETIRÉE le 2026-08-22 (rejet
+            Apple 3.1.2(c)) : ne PAS la réintroduire. Le slogan qui contenait un montant écrit en dur
+            a été supprimé en 1.1.0 : aucun prix écrit en dur dans l'app. */}
 
         {/* SORTIE DE SOURICIÈRE (Phase B) : accès minimal aux fonctions de COMPTE
             (déconnexion, suppression RGPD, langue) pour un non-abonné bloqué au
@@ -623,7 +619,7 @@ export default function PricingUpgrade() {
           <Text style={styles.gererCompteText}>{t.pricingUpgrade.gererCompte}</Text>
         </Pressable>
 
-        {/* Concept de store natif (RevenueCat, Phase 2) : sans effet sur web, où
+        {/* Concept de store natif (Adapty, Phase 2) : sans effet sur web, où
             le vrai chemin est le lien de reconnexion ci-dessus. Masqué pour ne pas
             semer la confusion ; code conservé pour le pipeline natif. */}
         {Platform.OS !== 'web' ? (
@@ -1026,13 +1022,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost',
     fontSize: 13,
     color: '#A09088',
-  },
-  bottomText: {
-    fontFamily: 'serif',
-    fontSize: 11,
-    fontStyle: 'italic',
-    color: '#6B3FA0',
-    textAlign: 'center',
   },
   restoreText: {
     fontFamily: 'Jost',

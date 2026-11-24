@@ -4,7 +4,7 @@
 
 import { Platform } from 'react-native';
 
-// Bascule à `true` une fois RevenueCat / In-App Purchases câblés sur les
+// Bascule à `true` une fois Adapty / achats in-app câblés sur les
 // stores natifs (iOS / Android). Tant que `false`, sur native, le bouton
 // d'achat affiche "Disponible prochainement". Sans effet sur web (voir
 // PADDLE_ACTIVE).

@@ -2,7 +2,7 @@
 // vers AsyncStorage.
 //
 // Architecture cible :
-//   1. Backend webhook (Paddle ou RevenueCat) écrit users/{uid}.subscription_active
+//   1. Backend webhook (Paddle ou Adapty) écrit users/{uid}.subscription_active
 //      = true dans Firestore après validation HMAC.
 //   2. Ce hook, monté au root layout, écoute users/{uid} en temps réel via
 //      onSnapshot dès qu'un Firebase user est connecté.

@@ -87,17 +87,6 @@ export const translations = {
       tourTermine: 'Tour {n} · {level} ✓',
     },
 
-    // ── Themes (7) ────────────────────────────────────────────────────────────
-    themes: [
-      'Confiance & Identité',
-      'Abondance & Prospérité',
-      'Amour & Relations',
-      'Santé & Vitalité',
-      'Carrière & Mission',
-      'Créativité & Expression',
-      'Gratitude & Paix',
-    ],
-
     // ── Onboarding : welcome ───────────────────────────────────────────────────
     welcome: {
       tagline: 'Bien-être & Intentions',
@@ -198,13 +187,6 @@ export const translations = {
       etape: 'Étape 3 / 3',
       renouvellementAuto: 'Renouvellement automatique · résiliable à tout moment',
       plans: {
-        free: {
-          titre: 'Ton premier cycle offert',
-          sousTitre: 'Pour découvrir ManifestMind',
-          description: 'Vis ton premier cycle en entier, gratuitement. L\'abonnement démarre au cycle 2.',
-          prix: 'Gratuit',
-          bouton: 'Commencer gratuitement →',
-        },
         lifetime: {
           badge: '⭐ Meilleure offre · Accès à vie',
           titre: 'Lifetime',
@@ -219,7 +201,6 @@ export const translations = {
           // affiché en gros dans la colonne de prix. NE JAMAIS RE-INVERSER :
           // rejet Apple 3.1.2(c) du 2026-08-22, et même exigence côté Google.
           sousTitre: 'soit {prixMois}/mois',
-          unite: '/mois',
           uniteAn: '/an',
           sousTitreAn: 'Facturé une fois par an',
         },
@@ -237,19 +218,10 @@ export const translations = {
         'Disponible en FR, EN & ES',
       ],
       cta: 'Je transforme ma vie maintenant →',
-      bottomText: 'Moins de 0,50 $ pour changer ta vie',
       prixErreur: 'Prix indisponibles — vérifie ta connexion, puis réessaie.',
       reessayer: 'Réessayer',
       dejaCompte: 'J\'ai déjà un abonnement — Me reconnecter',
       restaurer: 'Restaurer un achat',
-      // Question posée au clic « essai gratuit » quand l'appareil porte le
-      // marqueur had_subscription (un abonnement a déjà existé ici).
-      retourAbonne: {
-        titre: 'Bon retour parmi nous ✨',
-        texte: 'Il semble qu\'un abonnement existe déjà sur cet appareil. Tu peux retrouver ton espace, ou créer un nouveau compte (premier cycle offert, puis abonnement).',
-        retrouver: 'Retrouver mon espace',
-        nouveauCompte: 'Nouveau compte',
-      },
     },
 
     // ── Onboarding : auth ─────────────────────────────────────────────────────
@@ -339,7 +311,6 @@ export const translations = {
       gaugeLabel: 'Progression · Cycle',
       gaugeCycles: '365 cycles',
       nextCycle: '✦ Prochain cycle à minuit',
-      programmeTermine: '✦ 365 cycles accomplis',
       commencerCycle: 'Commencer mon cycle →',
       continuerCycle: 'Continuer mon cycle →',
       toastMilestone: '✦ {n} pts sur 36 500 — Félicitations !',
@@ -443,8 +414,6 @@ export const translations = {
         famille: 'Famille & Proches',
       },
       ajouterPhoto: 'Appuie pour ajouter ta photo',
-      valider: 'Valider mon Vision Board · +5 pts',
-      passer: 'Passer cette étape sans points',
       toast: '✦ +5 pts · Vision Board validé',
       // Phrase FIXE affichée en permanence sous le séparateur. Elle donne du sens
       // au geste : les 5 points ne tombent qu'UNE fois par cycle (garde
@@ -581,7 +550,6 @@ export const translations = {
       restaurer: 'Restaurer un achat',
       freemiumTitre: 'ManifestMind évolue ✦',
       freemiumMessage: 'L\'accès à ton parcours se fait désormais par abonnement. Ta progression est conservée.',
-      freemiumBouton: 'Continuer mon parcours',
       gererCompte: 'Paramètres du compte',
     },
 
@@ -764,16 +732,6 @@ export const translations = {
       tourTermine: 'Round {n} · {level} ✓',
     },
 
-    themes: [
-      'Confidence & Identity',
-      'Abundance & Prosperity',
-      'Love & Relationships',
-      'Health & Vitality',
-      'Career & Mission',
-      'Creativity & Expression',
-      'Gratitude & Peace',
-    ],
-
     welcome: {
       tagline: 'Wellness & Intentions',
       quote: 'Every thought\nshapes your future',
@@ -869,13 +827,6 @@ export const translations = {
       etape: 'Step 3 / 3',
       renouvellementAuto: 'Auto-renewing · cancel anytime',
       plans: {
-        free: {
-          titre: 'Your first cycle, free',
-          sousTitre: 'To discover ManifestMind',
-          description: 'Live your entire first cycle, free. The subscription begins at cycle 2.',
-          prix: 'Free',
-          bouton: 'Start for free →',
-        },
         lifetime: {
           badge: '⭐ Best offer · Lifetime access',
           titre: 'Lifetime',
@@ -887,7 +838,6 @@ export const translations = {
           titre: 'Annual',
           // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
           sousTitre: 'that\'s {prixMois}/month',
-          unite: '/mo',
           uniteAn: '/yr',
           sousTitreAn: 'Billed once a year',
         },
@@ -905,17 +855,10 @@ export const translations = {
         'Available in FR, EN & ES',
       ],
       cta: 'Transform my life now →',
-      bottomText: 'Less than $0.50 to change your life',
       prixErreur: 'Prices unavailable — check your connection, then retry.',
       reessayer: 'Retry',
       dejaCompte: 'I already have a subscription — Log in',
       restaurer: 'Restore a purchase',
-      retourAbonne: {
-        titre: 'Welcome back ✨',
-        texte: 'It looks like a subscription already exists on this device. You can return to your space, or create a new account (first cycle free, then subscription).',
-        retrouver: 'Return to my space',
-        nouveauCompte: 'New account',
-      },
     },
 
     auth: {
@@ -1001,7 +944,6 @@ export const translations = {
       gaugeLabel: 'Progress · Cycle',
       gaugeCycles: '365 cycles',
       nextCycle: '✦ Next cycle at midnight',
-      programmeTermine: '✦ 365 cycles achieved',
       commencerCycle: 'Start my cycle →',
       continuerCycle: 'Continue my cycle →',
       toastMilestone: '✦ {n} pts out of 36,500 — Congrats!',
@@ -1099,8 +1041,6 @@ export const translations = {
         famille: 'Family & Friends',
       },
       ajouterPhoto: 'Tap to add your photo',
-      valider: 'Save my Vision Board · +5 pts',
-      passer: 'Skip this step without points',
       toast: '✦ +5 pts · Vision Board saved',
       // « WELL DONE », PAS « BRAVO » : en anglais le mot existe mais s'emploie
       // pour applaudir une performance, pas pour encourager un geste quotidien.
@@ -1227,7 +1167,6 @@ export const translations = {
       restaurer: 'Restore a purchase',
       freemiumTitre: 'ManifestMind is evolving ✦',
       freemiumMessage: 'Access to your journey is now by subscription. Your progress is saved.',
-      freemiumBouton: 'Continue my journey',
       gererCompte: 'Account settings',
     },
 
@@ -1399,16 +1338,6 @@ export const translations = {
       tourTermine: 'Vuelta {n} · {level} ✓',
     },
 
-    themes: [
-      'Confianza & Identidad',
-      'Abundancia & Prosperidad',
-      'Amor & Relaciones',
-      'Salud & Vitalidad',
-      'Carrera & Misión',
-      'Creatividad & Expresión',
-      'Gratitud & Paz',
-    ],
-
     welcome: {
       tagline: 'Bienestar & Intenciones',
       quote: 'Cada pensamiento\ndibuja tu futuro',
@@ -1504,13 +1433,6 @@ export const translations = {
       etape: 'Paso 3 / 3',
       renouvellementAuto: 'Renovación automática · cancela cuando quieras',
       plans: {
-        free: {
-          titre: 'Tu primer ciclo gratis',
-          sousTitre: 'Para descubrir ManifestMind',
-          description: 'Vive tu primer ciclo completo, gratis. La suscripción comienza en el ciclo 2.',
-          prix: 'Gratis',
-          bouton: 'Empezar gratis →',
-        },
         lifetime: {
           badge: '⭐ Mejor oferta · Acceso de por vida',
           titre: 'Lifetime',
@@ -1522,7 +1444,6 @@ export const translations = {
           titre: 'Anual',
           // Prix interpolés par les écrans depuis les cartes localisées (Paddle web / Adapty natif)
           sousTitre: 'es decir {prixMois}/mes',
-          unite: '/mes',
           uniteAn: '/año',
           sousTitreAn: 'Facturado una vez al año',
         },
@@ -1540,17 +1461,10 @@ export const translations = {
         'Disponible en FR, EN & ES',
       ],
       cta: 'Transformar mi vida ahora →',
-      bottomText: 'Menos de 0,50 $ para cambiar tu vida',
       prixErreur: 'Precios no disponibles — comprueba tu conexión y reinténtalo.',
       reessayer: 'Reintentar',
       dejaCompte: 'Ya tengo una suscripción — Iniciar sesión',
       restaurer: 'Restaurar una compra',
-      retourAbonne: {
-        titre: 'Qué bueno verte de nuevo ✨',
-        texte: 'Parece que ya existe una suscripción en este dispositivo. Puedes volver a tu espacio o crear una cuenta nueva (primer ciclo gratis, luego suscripción).',
-        retrouver: 'Volver a mi espacio',
-        nouveauCompte: 'Cuenta nueva',
-      },
     },
 
     auth: {
@@ -1636,7 +1550,6 @@ export const translations = {
       gaugeLabel: 'Progreso · Ciclo',
       gaugeCycles: '365 ciclos',
       nextCycle: '✦ Próximo ciclo a medianoche',
-      programmeTermine: '✦ 365 ciclos logrados',
       commencerCycle: 'Iniciar mi ciclo →',
       continuerCycle: 'Continuar mi ciclo →',
       toastMilestone: '✦ {n} pts de 36.500 — ¡Felicidades!',
@@ -1734,8 +1647,6 @@ export const translations = {
         famille: 'Familia y Cercanos',
       },
       ajouterPhoto: 'Toca para añadir tu foto',
-      valider: 'Guardar mi Vision Board · +5 pts',
-      passer: 'Saltar este paso sin puntos',
       toast: '✦ +5 pts · Vision Board guardado',
       // Point d'exclamation INVERSÉ en ouverture — ne jamais le retirer.
       phraseBravo: '¡BIEN HECHO!',
@@ -1861,7 +1772,6 @@ export const translations = {
       restaurer: 'Restaurar una compra',
       freemiumTitre: 'ManifestMind evoluciona ✦',
       freemiumMessage: 'El acceso a tu camino ahora es por suscripción. Tu progreso se conserva.',
-      freemiumBouton: 'Continuar mi camino',
       gererCompte: 'Ajustes de la cuenta',
     },
 

@@ -2,7 +2,7 @@
 //
 // signInWithPopup / signInWithRedirect n'existent PAS sur React Native : la
 // version native exigera expo-auth-session ou @react-native-google-signin
-// (chantier séparé, avec le pipeline RevenueCat). Sur native, ces fonctions
+// (chantier séparé, avec le pipeline Adapty). Sur native, ces fonctions
 // renvoient donc 'unsupported' et l'appelant garde son toast.
 //
 // Stratégie popup → redirect, et pourquoi la distinction est essentielle :

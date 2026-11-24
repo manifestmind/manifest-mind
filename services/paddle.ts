@@ -180,7 +180,7 @@ function getPriceId(plan: PaddlePlan): string | undefined {
 
 export async function openCheckout(args: CheckoutArgs): Promise<CheckoutResult> {
   if (Platform.OS !== 'web') {
-    console.warn('[paddle] openCheckout appelé sur native — ignoré (utilise STORES_ACTIVE / RevenueCat)');
+    console.warn('[paddle] openCheckout appelé sur native — ignoré (utilise STORES_ACTIVE / Adapty)');
     return { ok: false, reason: 'unsupported' };
   }
 

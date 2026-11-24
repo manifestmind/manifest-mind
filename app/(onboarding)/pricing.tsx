@@ -619,16 +619,12 @@ export default function Pricing() {
           <Text style={styles.btnReconnexionText}>{t.pricing.dejaCompte}</Text>
         </Pressable>
 
-        {/* La mention « par jour » (prix CALCULÉ) a été RETIRÉE le 2026-08-22 :
-            un montant dérivé de moins sur l'écran, après le rejet Apple 3.1.2(c).
-            Ne PAS la réintroduire. Seul subsiste le texte statique du mode inerte
-            (canPay=false), qui n'affiche aucun prix issu d'un store. */}
-        {pricesPhase === 'web' ? (
-          <Text style={styles.bottomText}>{t.pricing.bottomText}</Text>
-        ) : null}
+        {/* La mention « par jour » (prix CALCULÉ) a été RETIRÉE le 2026-08-22 (rejet
+            Apple 3.1.2(c)) : ne PAS la réintroduire. Le slogan qui contenait un montant écrit en dur
+            a été supprimé en 1.1.0 : aucun prix écrit en dur dans l'app. */}
 
         {/* « Restaurer un achat » est un concept de store natif (App Store /
-            Play Store, via RevenueCat en Phase 2). Sur web, la source de vérité
+            Play Store, via Adapty en Phase 2). Sur web, la source de vérité
             est Firestore et le vrai chemin est le lien de reconnexion ci-dessus :
             on masque donc ce lien, qui ne ferait rien et sèmerait la confusion.
             Code conservé tel quel pour le pipeline natif. */}
@@ -995,13 +991,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#A09088',
   },
-  bottomText: {
-    fontFamily: 'serif',
-    fontSize: 11,
-    fontStyle: 'italic',
-    color: '#6B3FA0',
-    textAlign: 'center',
-  },
   // Case de consentement — calquée sur privacy.tsx (checkboxContainer/checkbox/
   // checkboxChecked/checkboxText) pour rester cohérente avec l'autre case de
   // l'app. Les deux consentements restent bien DISTINCTS : celui des conditions
@@ -1053,62 +1042,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#6B3FA0',
-    textAlign: 'center',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(26,14,48,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: '#F0EAE0',
-    borderRadius: 20,
-    paddingVertical: 24,
-    paddingHorizontal: 22,
-    alignItems: 'center',
-    gap: 14,
-  },
-  modalTitle: {
-    fontFamily: 'serif',
-    fontSize: 21,
-    fontStyle: 'italic',
-    color: '#2A2520',
-    textAlign: 'center',
-    width: '100%',
-  },
-  modalText: {
-    fontFamily: 'Jost',
-    fontSize: 13,
-    color: '#3A3530',
-    textAlign: 'center',
-    lineHeight: 20,
-    width: '100%',
-  },
-  modalBtnPrimary: {
-    width: '100%',
-    paddingVertical: 13,
-    borderRadius: 999,
-    backgroundColor: '#3A3530',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  modalBtnPrimaryText: {
-    color: '#F0EAE0',
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-  },
-  modalBtnSecondaryText: {
-    fontFamily: 'Jost',
-    fontSize: 13,
-    color: '#6B3FA0',
-    textDecorationLine: 'underline',
     textAlign: 'center',
   },
   restoreText: {

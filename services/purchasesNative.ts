@@ -24,7 +24,7 @@ const ADAPTY_API_KEY = 'public_live_R76ZtGAr.9eGdj72wFhOYgZcHHqU9';
 // pointe vers le placement iOS-only créé avec les produits _2 (2026-09-20).
 const PLACEMENT_ID = Platform.OS === 'ios' ? 'main_paywall_ios' : 'main_paywall';
 // Niveau d'accès Adapty (« access level ») qui déverrouille le premium.
-// Défini côté dashboard, symétrique de l'entitlement RevenueCat.
+// Défini côté dashboard, symétrique de l'entitlement Adapty.
 const ACCESS_LEVEL_ID = 'premium';
 
 // Mapping plan interne → Product ID (= `vendorProductId` côté Adapty), par
@@ -143,7 +143,7 @@ export async function nativeRestore(appUserID: string): Promise<NativePurchaseRe
 
 // Prix LOCALISÉS d'un produit (total formaté par le store + montant + devise).
 export type NativePriceInfo = {
-  localized: string; // ex. « 12,99 € » — prix total formaté par Google Play
+  localized: string; // prix total déjà formaté par la boutique (montant + devise)
   amount: number; // montant numérique dans la devise locale
   currencyCode: string; // ex. 'EUR', 'USD', 'JPY'
 };
