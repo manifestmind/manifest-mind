@@ -2205,7 +2205,7 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 7. Ronds animés sur toutes les pages, web compris (modèle : `FondCoeurs.tsx` de Resonance, API `Animated`). [devient B.8]
 8. `logShowPaywall`.
 9. Nettoyage dans un commit dédié : **cacher sur le web la section Notifications des Paramètres** (inerte et trompeuse sur le site — décision 2026-11-23) · `bottomText` + clés i18n orphelines (dont `themes`, inutilisée depuis que le Profil lit le thème du contenu du cycle ; `pricing.plans.free.*`, `pricing.retourAbonne.*`, `pricingUpgrade.freemiumBouton` et les styles `modal*` de `pricing.tsx`, inutilisés depuis B.3 — 2026-11-23).
-10. Version de l'app → **1.1.0** (`app.json`).
+10. ✅ (2026-11-23) Version de l'app → **1.1.0** (`app.json`) ; le libellé des Paramètres lit désormais la version dans app.json (`Constants.expoConfig.version`), plus jamais écrite en dur. [B.11]
 
 **C. Textes légaux**
 11. CGU, remboursement, FAQ, confidentialité — une seule réécriture, identique partout, FR/EN/ES (sans montant). Mentionner : au début d'un nouveau tour, le journal du tour précédent est effacé (stocké seulement sur l'appareil).

@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
@@ -918,7 +919,8 @@ export default function Parametres() {
 
         {/* 7. VERSION */}
         <View style={styles.versionBlock}>
-          <Text style={styles.versionText}>ManifestMind v1.0.0</Text>
+          {/* Version lue dans app.json (plus jamais écrite en dur ici). */}
+          <Text style={styles.versionText}>ManifestMind v{Constants.expoConfig?.version ?? ''}</Text>
           <Text style={styles.versionTagline}>{t.parametres.tagline}</Text>
         </View>
         </Animated.View>
