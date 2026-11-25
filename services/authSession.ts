@@ -19,6 +19,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { confirmerAccesServeur } from './subscription';
 
 const INITIAL_STEP_STATUS = {
   opening: false,
@@ -60,5 +61,10 @@ export async function finalizeSignIn(): Promise<void> {
     // AsyncStorage indisponible — on route quand même : home.tsx sait
     // réinitialiser les clés manquantes au chargement.
   }
+  // 1.1.0 : lire l'accès dans Firestore AVANT d'aller vers l'accueil (payant dès
+  // l'ouverture : sans ça, un abonné qui vient de se connecter — dont le compte de
+  // démonstration des examinateurs — tombait sur le paywall). Échec → sans effet :
+  // le contrôle d'accès redemandera au serveur.
+  await confirmerAccesServeur();
   router.replace('/(app)/splash' as any);
 }

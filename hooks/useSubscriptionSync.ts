@@ -26,6 +26,8 @@ import { auth, db } from '../services/firebase';
 export function useSubscriptionSync() {
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
+    let relance: ReturnType<typeof setTimeout> | null = null;
+    let essaisRelance = 0;
 
     function attachFirestoreListener(user: User) {
       // Nettoyage d'un éventuel listener précédent (changement d'utilisateur).
@@ -35,6 +37,9 @@ export function useSubscriptionSync() {
       unsubscribeFirestore = onSnapshot(
         userDocRef,
         async (snap) => {
+          // 1.1.0 (e) : réponse tardive d'un compte qui n'est plus connecté → ignorée.
+          if (auth.currentUser?.uid !== user.uid) return;
+          essaisRelance = 0;
           try {
             const subActive = snap.exists() && snap.data()?.subscription_active === true;
             if (subActive) {
@@ -56,6 +61,14 @@ export function useSubscriptionSync() {
         () => {
           // Erreur Firestore (offline, rules, etc.) — on ne touche pas à
           // AsyncStorage pour ne pas invalider à tort un état déjà payé.
+          // 1.1.0 (b) : Firestore ARRÊTE l'écoute après une erreur → on la relance,
+          // avec un délai croissant (2 s, 4 s… 60 s max), tant que c'est le même compte.
+          const delai = Math.min(60_000, 2000 * 2 ** essaisRelance);
+          essaisRelance += 1;
+          if (relance) clearTimeout(relance);
+          relance = setTimeout(() => {
+            if (auth.currentUser?.uid === user.uid) attachFirestoreListener(user);
+          }, delai);
         },
       );
     }
@@ -63,6 +76,9 @@ export function useSubscriptionSync() {
     function detachFirestoreListener() {
       unsubscribeFirestore?.();
       unsubscribeFirestore = null;
+      if (relance) clearTimeout(relance);
+      relance = null;
+      essaisRelance = 0;
     }
 
     // Purge des droits hérités à tout CHANGEMENT d'identité.

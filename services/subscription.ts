@@ -23,7 +23,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { auth, db } from './firebase';
 
 export async function hasActiveSubscription(uid: string): Promise<boolean> {
   try {
@@ -41,4 +41,33 @@ export async function deviceHadSubscription(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// 1.1.0 — Accès confirmé PAR LE SERVEUR pour le compte connecté.
+// Payant dès l'ouverture : juste après une connexion (ou un lancement à froid),
+// le cache local `subscription_active` n'est pas encore posé par
+// useSubscriptionSync → un abonné était envoyé sur le paywall (constaté le
+// 2026-11-25 avec le compte de démonstration des examinateurs Google). On lit
+// Firestore ; si l'accès est actif, on pose le cache local (avec `sub_sync_uid`,
+// pour que la purge de changement d'identité ne l'efface pas). Hors ligne ou
+// erreur → false : on ne débloque jamais dans le doute.
+export async function confirmerAccesServeur(): Promise<boolean> {
+  try {
+    await auth.authStateReady();
+  } catch {
+    // on continue avec l'état connu
+  }
+  const uid = auth.currentUser?.uid;
+  if (!uid) return false;
+  if (!(await hasActiveSubscription(uid))) return false;
+  try {
+    await AsyncStorage.multiSet([
+      ['subscription_active', 'true'],
+      ['had_subscription', 'true'],
+      ['sub_sync_uid', uid],
+    ]);
+  } catch {
+    // cache indisponible : l'accès est tout de même confirmé
+  }
+  return true;
 }

@@ -489,6 +489,18 @@ export default function Parametres() {
     const user = auth.currentUser;
 
     if (user) {
+      // 0. (1.1.0) Firebase n'accepte de supprimer un compte que si la connexion
+      //    est récente (~5 min). Avant, le document users/{uid} (l'accès) était
+      //    effacé AVANT ce refus → accès perdu sans compte supprimé (risque pour le
+      //    compte de démonstration à l'examen). On vérifie d'abord ; sinon
+      //    reconnexion, et RIEN n'est effacé. (Compte anonyme : pas de lien de
+      //    reconnexion possible → comportement inchangé.)
+      const derniere = Date.parse(user.metadata.lastSignInTime ?? '');
+      const recente = Number.isFinite(derniere) && Date.now() - derniere < 4 * 60_000;
+      if (!user.isAnonymous && !recente) {
+        setDialog('reauth');
+        return;
+      }
       // 1. Doc Firestore users/{uid} (subscription_active, identifiants Paddle…).
       //    ⚠️ Nécessite `allow delete: if request.auth.uid == uid` dans les règles
       //    Firestore — sans ça, permission-denied et le doc SURVIT à la

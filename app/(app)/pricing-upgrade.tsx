@@ -18,6 +18,7 @@ import { openCheckout, mapCheckoutError } from '../../services/paddle';
 // sur natif → react-native-adapty n'entre jamais dans le bundle web.
 import { nativePurchase, nativeRestore, type NativePlan } from '../../services/purchasesNative';
 import { useOffreSpeciale } from '../../src/hooks/useOffreSpeciale';
+import { useQuitterPaywallSiAcces } from '../../src/hooks/useQuitterPaywallSiAcces';
 import OffreSpecialeModal from '../../components/ui/OffreSpecialeModal';
 import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
@@ -67,6 +68,8 @@ export default function PricingUpgrade() {
   const [busyKind, setBusyKind] = useState<null | 'confirm' | 'google'>(null);
   // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 3 s.
   const offre = useOffreSpeciale(() => busyRef.current);
+  // 1.1.0 : si l'accès arrive pendant que le paywall est affiché, on le quitte.
+  useQuitterPaywallSiAcces(() => busyRef.current);
 
   // Bandeau « ManifestMind évolue » (1.1.0) : réservé aux ANCIENNES utilisatrices
   // de l'offre gratuite (selected_plan === 'free', valeur que seul l'ancien
@@ -235,6 +238,12 @@ export default function PricingUpgrade() {
     } catch {
       // Écriture impossible — continuer quand même
     }
+    // 1.1.0 (c) : garde-fou anti double-paiement, comme sur le paywall
+    // d'onboarding — déjà abonnée → restauration, aucun achat.
+    if (await hasActiveSubscription(uid)) {
+      router.replace('/(app)/activation?restore=1' as any);
+      return;
+    }
     const r = await nativePurchase(
       plan as NativePlan,
       uid,
@@ -329,7 +338,19 @@ export default function PricingUpgrade() {
       Alert.alert(t.commun.disponibleProchainement);
       return;
     }
-    const r = await nativeRestore(auth.currentUser?.uid ?? '');
+    // 1.1.0 (d) : jamais de restauration sans compte (sinon rattachée au profil
+    // Adapty de la session précédente) — un compte anonyme est créé au besoin,
+    // comme pour un achat.
+    let uidRestore = auth.currentUser?.uid;
+    if (!uidRestore) {
+      try {
+        uidRestore = (await signInAnonymously(auth)).user.uid;
+      } catch {
+        showAuthToast(t.compte.errGenerique, 'error');
+        return;
+      }
+    }
+    const r = await nativeRestore(uidRestore);
     if (r.status === 'restored') {
       router.replace('/(app)/activation?restore=1' as any);
       return;

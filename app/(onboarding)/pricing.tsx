@@ -20,6 +20,7 @@ import { hasActiveSubscription } from '../../services/subscription';
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
 import { nativePurchase, nativeRestore, type NativePlan } from '../../services/purchasesNative';
 import { useOffreSpeciale } from '../../src/hooks/useOffreSpeciale';
+import { useQuitterPaywallSiAcces } from '../../src/hooks/useQuitterPaywallSiAcces';
 import OffreSpecialeModal from '../../components/ui/OffreSpecialeModal';
 import Orbe from '../../components/ui/Orbe';
 
@@ -57,6 +58,8 @@ export default function Pricing() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 3 s.
   const offre = useOffreSpeciale(() => busyRef.current);
+  // 1.1.0 : si l'accès arrive pendant que le paywall est affiché, on le quitte.
+  useQuitterPaywallSiAcces(() => busyRef.current);
 
   // Enregistre le consentement. Appelé UNIQUEMENT une fois qu'un compte
   // PERMANENT existe (après convertOrSignIn ou après Google) — avant, il n'y a

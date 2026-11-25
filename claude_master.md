@@ -2307,3 +2307,27 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
   - `verifierAccesRestaures` (2ᵉ gén., planifiée chaque jour 5 h Europe/Paris) : relit chez Adapty les SEULS comptes marqués `adapty_sync_ouvert` ; referme (transaction) ceux sans accès premium actif. Ne touche JAMAIS : comptes à vie (`has_lifetime`, dont le compte de démonstration), abonnés du site (Paddle ni annulé ni impayé), comptes non marqués (abonnés normaux, accès posés à la main) ; si un webhook a écrit après la restauration → retire seulement la marque ; Adapty injoignable → ne ferme rien.
   - Vérifs : tests de décision 7/7 (restauration) + 8/8 (vérification) · essai à blanc sur le compte jetable = ouvrirait l'accès (abonnement partagé) · site 58/58 · Android/iOS compilent.
   - Déploiement `--only functions:syncAdaptyAccess,functions:verifierAccesRestaures` : `paddleWebhook` (paddlewebhook-00007-nen, 2026-11-23T19:59:51Z), `adaptyWebhook` (adaptywebhook-00007-kad, 2026-11-23T18:04:09Z), `deleteAdaptyProfile` (v1, 2026-11-24T02:48:59Z) **IDENTIQUES avant/après**. Effets de bord du déploiement : API Cloud Scheduler activée ; compte de service par défaut (`…-compute@developer`) autorisé à lire `ADAPTY_SECRET_KEY`.
+- **🔐 CORRECTIONS DES PARCOURS D'ACCÈS — 1.1.0 (2026-11-25, commit `fix(acces)`, construction 15)** : découvert avec le compte de démonstration `demo-google-review@manifest-mind.app` sur le versionCode 14 : **un abonné qui se connecte tombait sur le paywall et y restait** (payant dès l'ouverture → plus de cycle gratuit pour laisser le temps à la synchro Firestore → cache local pas encore posé). **Aurait bloqué l'examen Google.** Corrections :
+  - `services/access.ts` `isPaywalled` : si le cache local dit « pas d'accès », demande à Firestore (`confirmerAccesServeur`, `services/subscription.ts`, pose le cache + `sub_sync_uid`) AVANT de bloquer ; cycle illisible / stockage en erreur → serveur (avant : accès laissé ouvert = gratuit complet).
+  - `services/authSession.ts` `finalizeSignIn` : lit l'accès dans Firestore avant d'aller vers l'accueil.
+  - `src/hooks/useQuitterPaywallSiAcces.ts` (2 paywalls) : se ferment seuls si l'accès arrive (cache local toutes les 1,5 s, serveur toutes les 15 s = 4 lectures/min max, arrêt à la fermeture) ; jamais si déjà abonnée à l'ouverture (« Changer d'abonnement »), ni pendant un achat/une restauration.
+  - `app/(app)/parametres.tsx` suppression de compte : vérifie D'ABORD une connexion < 4 min, sinon « Reconnexion requise » SANS RIEN EFFACER (avant : l'accès était effacé avant le refus de Firebase). Comptes anonymes inchangés.
+  - `hooks/useSubscriptionSync.ts` : écoute Firestore relancée après erreur (2 s → 60 s) ; réponse d'un compte qui n'est plus connecté ignorée.
+  - `pricing-upgrade.tsx` (app) : garde-fou anti double-paiement avant achat ; restauration toujours avec un compte (aussi `activation.tsx`).
+  - Vérifs : tsc 0/0 · site 58/58 · parcours examinateur (navigateur vierge → « Me connecter » → compte avec accès → splash → prénom) : AVANT = paywall bloqué, APRÈS = accueil · paywalls 3/3 · suppression avec connexion ancienne 6/6 (requêtes de suppression bloquées par le test, rien effacé) · cycle illisible → paywall · offre 16/16 · Android/iOS compilent · 0 compte créé.
+  - Décision : sauvegarde automatique Android (`allowBackup`) CONSERVÉE (utilisatrice, 2026-11-25).
+
+## 🧾 COMPTE DE DÉMONSTRATION — À VÉRIFIER (OU RECRÉER) AVANT CHAQUE SOUMISSION GOOGLE ET APPLE
+**Pourquoi** : la suppression de compte fonctionne (exigée par Apple et Google) ; un examinateur qui la teste juste après s'être connecté **supprime réellement** le compte de démonstration. Il faut donc le vérifier avant CHAQUE soumission (règle déjà posée après l'incident du 2026-08-08).
+**Compte** : `demo-google-review@manifest-mind.app` (mot de passe : jamais écrit dans le dépôt — celui saisi dans Play Console « Accès à l'app » et dans les notes d'examen App Store Connect). UID actuel `K6oPWj…` (créé le 2026-08-15).
+**1. Vérifier (2 minutes)**
+  - Console Firebase → Authentication → chercher l'adresse : le compte EXISTE.
+  - Firestore → `users/{UID de ce compte}` : `subscription_active = true` ET `has_lifetime = true` (le marqueur « à vie » le protège des webhooks et de la vérification quotidienne).
+  - Test réel : navigateur privé sur https://manifest-mind.app → « J'ai déjà un abonnement — Me connecter » → e-mail + mot de passe → on doit arriver DANS l'app (accueil ou prénom), pas sur le paywall.
+**2. Recréer s'il a été supprimé**
+  - Console Firebase → Authentication → « Ajouter un utilisateur » : même adresse, même mot de passe (sinon mettre à jour Play Console « Accès à l'app » et la note d'examen Apple) → copier le NOUVEL UID.
+  - Firestore → collection `users` → « Ajouter un document » avec pour ID ce nouvel UID → champs : `subscription_active` (booléen) `true`, `has_lifetime` (booléen) `true`, `updated_at` (horodatage) maintenant.
+  - Refaire le test réel du point 1.
+  - (Claude peut faire 1 et 2 sur demande, avec les droits d'administration, sans afficher le mot de passe ; il ne le connaît pas.)
+**3. Compte Apple** : si un compte de démonstration distinct est donné à Apple, même procédure pour lui.
+**👉 Claude doit RAPPELER cette vérification à l'utilisatrice au moment de chaque soumission (Google et Apple).**

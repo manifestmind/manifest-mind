@@ -20,6 +20,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEBUG_SKIP_PAYWALL, FREE_CYCLES } from './config';
+import { confirmerAccesServeur } from './subscription';
 
 /**
  * L'utilisateur doit-il être renvoyé vers le paywall ?
@@ -79,13 +80,21 @@ export async function isPaywalled(): Promise<boolean> {
       'subscription_active',
     ]);
 
-    const cycle = parseInt(cycleRaw || '1', 10);
-    if (Number.isNaN(cycle)) return false; // valeur corrompue → fail-open
+    // 1.1.0 (f) : valeur de cycle illisible → traitée comme un cycle payant
+    // (avant : accès laissé ouvert = accès gratuit complet, maintenant que l'app
+    // est payante dès l'ouverture).
+    const lu = parseInt(cycleRaw || '1', 10);
+    const cycle = Number.isNaN(lu) ? FREE_CYCLES + 1 : lu;
 
     const subActive = subRaw === 'true';
 
-    return cycle > FREE_CYCLES && !subActive;
+    if (!(cycle > FREE_CYCLES && !subActive)) return false;
   } catch {
-    return false; // fail-open
+    // 1.1.0 (f) : stockage en erreur → on ne laisse plus tout passer : on
+    // demande au serveur ci-dessous.
   }
+  // 1.1.0 : le cache local dit « pas d'accès » — il peut simplement ne pas être
+  // encore posé (juste après une connexion, au lancement). On demande au
+  // serveur AVANT de bloquer. Hors ligne / erreur → bloqué, comme avant.
+  return !(await confirmerAccesServeur());
 }

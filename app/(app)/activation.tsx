@@ -20,6 +20,7 @@ import { Animated, Easing, Linking, Platform, Pressable, StyleSheet, Text, TextI
 import Svg, { Circle, ClipPath, Defs, Ellipse, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../../services/firebase';
 import { hasActiveSubscription } from '../../services/subscription';
 import { SUPPORT_EMAIL } from '../../services/config';
@@ -145,7 +146,10 @@ export default function Activation() {
     setRestoring(true);
     setRestoreMsg(null);
     try {
-      const r = await nativeRestore(auth.currentUser?.uid ?? '');
+      // 1.1.0 (d) : jamais de restauration sans compte.
+      let uidRestore = auth.currentUser?.uid;
+      if (!uidRestore) uidRestore = (await signInAnonymously(auth)).user.uid;
+      const r = await nativeRestore(uidRestore);
       if (r.status === 'restored' || r.status === 'purchased') {
         const ok = await runCheck();
         if (!ok) setRestoreMsg(t.activation.restaureEnCours);
