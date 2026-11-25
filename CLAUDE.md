@@ -25,7 +25,7 @@
 - Les prix viennent TOUJOURS des consoles, lus à l'exécution : Paddle sur le web (`Paddle.PricePreview`), Google Play et App Store sur mobile (via Adapty). Un changement fait dans une console doit se voir dans l'app sans reconstruction.
 - Interdit : tout montant écrit dans le code, les traductions ou les textes légaux. Seuls les montants CALCULÉS à partir du prix venu de la console (ex. « soit X/mois » de l'annuel) sont permis.
 - Prix de la 1.1.0, identiques partout et en dollars : **4,99 $/mois · 29,99 $/an · 79,99 $ à vie**. **POSÉS depuis le 25/11/2026 sur les trois surfaces** (Paddle, Google Play, App Store). L'ancienne règle « prix posés le jour J » ne s'applique plus.
-- **Offre annuelle spéciale (1.1.0)** : produit à part `mm_premium_annual_special` à **19,99 $/an**, présenté seulement dans une fenêtre (à partir de la 2ᵉ visite du paywall sans achat, 30 s après l'ouverture). Détails dans claude_master.md (« 🎁 OFFRE ANNUELLE SPÉCIALE »).
+- **Offre annuelle spéciale (1.1.0)** : produit à part `mm_premium_annual_special` à **19,99 $/an**, présenté seulement dans une fenêtre (à partir de la 2ᵉ visite du paywall sans achat, 3 s après l’arrivée sur le paywall, une fois par ouverture ; 30 s au départ, ramené à 3 s le 25/11). Détails dans claude_master.md (« 🎁 OFFRE ANNUELLE SPÉCIALE »).
 
 ## 🟣 RÈGLE PERMANENTE — LES TROIS SURFACES ENSEMBLE, TOUJOURS (décision du 24/11/2026)
 - **Site, Android et iOS ont TOUJOURS les mêmes prix et les mêmes offres.** Tout produit, toute offre, tout prix ajouté ou modifié l'est sur les trois en même temps : Paddle, Google Play et App Store. Jamais sur une seule surface.
