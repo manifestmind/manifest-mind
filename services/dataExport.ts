@@ -92,7 +92,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     [, pwaArrivalDismissed], [, pwaCelebrationPromptShown],
     [, notifBienveillants], [, notifPermissionAsked],
     [, notifRepromptCount], [, notifRepromptNext], [, notifRepromptOff],
-    [, currentTour],
+    [, currentTour], [, paywallVisits],
   ] = await AsyncStorage.multiGet([
     'user_name', 'user_language',
     'current_cycle', 'current_theme', 'cycle_completed', 'cycle_points',
@@ -105,7 +105,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     'pwa_arrival_dismissed', 'pwa_celebration_prompt_shown',
     'notif_bienveillants', 'notif_permission_asked',
     'notif_reprompt_count', 'notif_reprompt_next', 'notif_reprompt_off',
-    'current_tour',
+    'current_tour', 'paywall_visits',
   ]);
 
   // 2. Journal — clés dynamiques journal_cycle_N, découvertes par préfixe.
@@ -203,6 +203,8 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
       notifRepropositionsFaites: notifRepromptCount,
       notifProchaineReproposition: notifRepromptNext,
       notifRepropositionsArretees: toBool(notifRepromptOff),
+      // Offre annuelle spéciale (1.1.0) : nombre d'ouvertures de la page des offres.
+      visitesPageOffres: toNum(paywallVisits),
     },
   };
 }

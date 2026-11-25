@@ -18,7 +18,9 @@ import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
-import { nativePurchase } from '../../services/purchasesNative';
+import { nativePurchase, type NativePlan } from '../../services/purchasesNative';
+import { useOffreSpeciale } from '../../src/hooks/useOffreSpeciale';
+import OffreSpecialeModal from '../../components/ui/OffreSpecialeModal';
 import Orbe from '../../components/ui/Orbe';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,6 +55,8 @@ export default function Pricing() {
   // bouton, AUCUNE validation. Ne pas le cocher n'a strictement aucun effet sur
   // la création de compte ni sur l'achat.
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 30 s.
+  const offre = useOffreSpeciale(() => busyRef.current);
 
   // Enregistre le consentement. Appelé UNIQUEMENT une fois qu'un compte
   // PERMANENT existe (après convertOrSignIn ou après Google) — avant, il n'y a
@@ -82,13 +86,15 @@ export default function Pricing() {
   // Cœur de l'achat, SANS gestion du verrou — appelé par les 2 boutons
   // (handlePurchase « Confirmer » et handleGooglePurchase) qui, eux, tiennent le
   // verrou. Le garde-fou anti double-paiement reste ici, en UNE seule copie.
-  async function runPurchase() {
+  // `plan` explicite : la fenêtre de l'offre lance l'achat de l'offre dans le même
+  // geste que sa sélection (l'état selectedPlan n'est pas encore à jour à ce moment).
+  async function runPurchase(plan: string = selectedPlan) {
     // DIAGNOSTIC dev-only (__DEV__ = false en build prod → strip automatique).
     // NB : cette page d'onboarding n'ouvre PAS Paddle (user pas encore
     // authentifié) — elle route vers auth.
     if (__DEV__) {
       console.log('[pricing] handlePurchase', {
-        selectedPlan,
+        plan,
         platform: Platform.OS,
         canPay: canPay(),
         PADDLE_ACTIVE,
@@ -142,7 +148,7 @@ export default function Pricing() {
       }
       try {
         await AsyncStorage.multiSet([
-          ['selected_plan', selectedPlan],
+          ['selected_plan', plan],
           ['onboarding_completed', 'true'],
         ]);
       } catch {
@@ -158,7 +164,7 @@ export default function Pricing() {
         return;
       }
       const result = await openCheckout({
-        plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+        plan: plan as NativePlan,
         email: checkoutEmail,
         firebaseUid: auth.currentUser.uid,
         // 1.1.0 : plus de cycle gratuit → on ne peut plus router vers l'accueil
@@ -198,7 +204,7 @@ export default function Pricing() {
       router.replace('/(app)/activation?restore=1' as any);
       return;
     }
-    const r = await nativePurchase(selectedPlan as 'mensuel' | 'annuel' | 'lifetime', uid);
+    const r = await nativePurchase(plan as NativePlan, uid);
     if (r.status === 'cancelled') return; // annulé par l'utilisateur — on reste sur l'écran
     if (r.status !== 'purchased') {
       showAuthToast(t.paiement.erreurTechnique.replace('{email}', SUPPORT_EMAIL), 'error');
@@ -208,7 +214,7 @@ export default function Pricing() {
     // subscription_active (c'est le webhook). L'écran d'activation attend la clé.
     try {
       await AsyncStorage.multiSet([
-        ['selected_plan', selectedPlan],
+        ['selected_plan', plan],
         ['onboarding_completed', 'true'],
       ]);
     } catch {
@@ -220,12 +226,12 @@ export default function Pricing() {
   // Bouton « Confirmer » — acquiert le VERROU (busyRef synchrone + busyKind pour
   // l'UI), appelle le cœur runPurchase, et RELÂCHE dans finally → jamais de bouton
   // mort, même sur échec du checkout (point 9).
-  async function handlePurchase() {
+  async function handlePurchase(plan?: string) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusyKind('confirm');
     try {
-      await runPurchase();
+      await runPurchase(plan);
     } finally {
       busyRef.current = false;
       setBusyKind(null);
@@ -272,6 +278,20 @@ export default function Pricing() {
       busyRef.current = false;
       setBusyKind(null);
     }
+  }
+
+  // Fenêtre de l'offre → « Profiter de l'offre » : la carte de l'offre apparaît,
+  // sélectionnée. Sur le site, une personne sans compte doit d'abord remplir le
+  // formulaire (même parcours que les autres offres) ; ailleurs, l'achat part tout
+  // de suite, avec les mêmes garde-fous.
+  function profiterOffre() {
+    offre.choisir();
+    setSelectedPlan('offre');
+    if (Platform.OS === 'web' && needsAccount()) {
+      showAuthToast(t.pricing.offre.compteRequis, 'success');
+      return;
+    }
+    handlePurchase('offre');
   }
 
   function handleRestore() {
@@ -367,6 +387,32 @@ export default function Pricing() {
         </View>
 
         <View style={styles.plansContainer}>
+          {/* Offre annuelle spéciale — visible SEULEMENT après la fenêtre de l'offre */}
+          {offre.revelee && offre.prix ? (
+            <Pressable
+              style={[
+                styles.planCard,
+                selectedPlan === 'offre' && styles.planCardSelected,
+                { borderColor: '#6B3FA0' }
+              ]}
+              onPress={() => selectPlan('offre')}
+            >
+              <View style={styles.planBody}>
+                <View style={[styles.radio, selectedPlan === 'offre' && styles.radioSelected]}>
+                  {selectedPlan === 'offre' && <View style={styles.radioDot} />}
+                </View>
+                <View style={styles.planInfo}>
+                  <Text style={styles.planTitle}>{t.pricing.offre.carteTitre}</Text>
+                  <Text style={styles.planSubtitle}>{t.pricing.offre.carteSousTitre}</Text>
+                </View>
+                <View style={styles.planPrice}>
+                  <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{offre.prix}</Text>
+                  <Text style={styles.priceUnit}>{t.pricing.plans.annuel.uniteAn}</Text>
+                </View>
+              </View>
+            </Pressable>
+          ) : null}
+
           {/* Plan Lifetime */}
           <Pressable
             style={[
@@ -583,7 +629,7 @@ export default function Pricing() {
 
         <Pressable
           style={[styles.btnPrimary, (busyKind !== null || !pricesReady) && { opacity: 0.5 }]}
-          onPress={handlePurchase}
+          onPress={() => handlePurchase()}
           disabled={busyKind !== null || !pricesReady}
         >
           <Text style={styles.btnPrimaryText}>
@@ -594,7 +640,7 @@ export default function Pricing() {
         </Pressable>
 
         {/* Renouvellement auto — abonnements UNIQUEMENT (jamais a-vie/gratuit). 3.1.2 + Google. */}
-        {(selectedPlan === 'mensuel' || selectedPlan === 'annuel') ? (
+        {(selectedPlan === 'mensuel' || selectedPlan === 'annuel' || selectedPlan === 'offre') ? (
           <Text style={styles.autoRenewText}>{t.pricing.renouvellementAuto}</Text>
         ) : null}
 
@@ -643,6 +689,14 @@ export default function Pricing() {
         </View>
       </View>
 
+      {offre.prix ? (
+        <OffreSpecialeModal
+          visible={offre.visible}
+          prix={offre.prix}
+          onProfiter={profiterOffre}
+          onFermer={offre.fermer}
+        />
+      ) : null}
     </ScrollView>
   );
 }

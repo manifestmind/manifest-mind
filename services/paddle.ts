@@ -19,7 +19,9 @@ import type { NativePriceInfo, NativePricesResult } from './purchasesNative';
 
 const PADDLE_JS_SRC = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
-type PaddlePlan = 'mensuel' | 'annuel' | 'lifetime';
+// 'offre' = offre annuelle spéciale (1.1.0), prix Paddle à part, présenté
+// seulement par la fenêtre de l'offre (services/offreSpeciale.ts).
+type PaddlePlan = 'mensuel' | 'annuel' | 'lifetime' | 'offre';
 
 type CheckoutArgs = {
   plan: PaddlePlan;
@@ -158,12 +160,14 @@ function getPriceId(plan: PaddlePlan): string | undefined {
       case 'mensuel':  return process.env.EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_MENSUEL;
       case 'annuel':   return process.env.EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_ANNUEL;
       case 'lifetime': return process.env.EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_LIFETIME;
+      case 'offre':    return process.env.EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_OFFRE;
     }
   }
   switch (plan) {
     case 'mensuel':  return process.env.EXPO_PUBLIC_PADDLE_PRICE_MENSUEL;
     case 'annuel':   return process.env.EXPO_PUBLIC_PADDLE_PRICE_ANNUEL;
     case 'lifetime': return process.env.EXPO_PUBLIC_PADDLE_PRICE_LIFETIME;
+    case 'offre':    return process.env.EXPO_PUBLIC_PADDLE_PRICE_OFFRE;
   }
 }
 
@@ -263,8 +267,8 @@ export function mapCheckoutError(
 export async function previewPrices(): Promise<NativePricesResult> {
   if (Platform.OS !== 'web') return { ok: false };
 
-  const plans: PaddlePlan[] = ['mensuel', 'annuel', 'lifetime'];
-  const priceIdByPlan = {} as Record<PaddlePlan, string>;
+  const plans = ['mensuel', 'annuel', 'lifetime'] as const;
+  const priceIdByPlan = {} as Record<(typeof plans)[number], string>;
   const items: { priceId: string; quantity: number }[] = [];
   for (const plan of plans) {
     const id = getPriceId(plan);
@@ -303,7 +307,7 @@ export async function previewPrices(): Promise<NativePricesResult> {
     }
     const divisor = Math.pow(10, decimals);
 
-    const prices = {} as Record<PaddlePlan, NativePriceInfo>;
+    const prices = {} as Record<(typeof plans)[number], NativePriceInfo>;
     for (const plan of plans) {
       const li = lineItems.find((x) => x?.price?.id === priceIdByPlan[plan]);
       const localized: string | undefined = li?.formattedTotals?.total;
@@ -319,5 +323,43 @@ export async function previewPrices(): Promise<NativePricesResult> {
   } catch (e) {
     if (__DEV__) console.log('[paddle] PricePreview échoué', e);
     return { ok: false };
+  }
+}
+
+// Prix LOCALISÉ de l'offre annuelle spéciale (WEB uniquement), même mécanique
+// que previewPrices. null si l'identifiant .env manque, si Paddle échoue ou si le
+// prix est incomplet → la fenêtre de l'offre ne s'affiche pas. Jamais d'offre à
+// prix incertain.
+export async function previewOfferPrice(): Promise<NativePriceInfo | null> {
+  if (Platform.OS !== 'web') return null;
+  const priceId = getPriceId('offre');
+  if (!priceId) return null;
+  try {
+    await loadPaddleScript();
+  } catch {
+    return null;
+  }
+  if (!setupPaddle() || !window.Paddle?.PricePreview) return null;
+  try {
+    const result = await window.Paddle.PricePreview({ items: [{ priceId, quantity: 1 }] });
+    const li = (result?.data?.details?.lineItems ?? []).find((x: any) => x?.price?.id === priceId);
+    const currencyCode: string | undefined = result?.data?.currencyCode;
+    const localized: string | undefined = li?.formattedTotals?.total;
+    if (!currencyCode || !localized) return null;
+    let decimals = 2;
+    try {
+      decimals =
+        new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode })
+          .resolvedOptions().maximumFractionDigits ?? 2;
+    } catch {
+      decimals = 2;
+    }
+    const raw: unknown = li?.totals?.total;
+    const amount =
+      typeof raw === 'string' || typeof raw === 'number' ? Number(raw) / Math.pow(10, decimals) : NaN;
+    if (!Number.isFinite(amount)) return null;
+    return { localized, amount, currencyCode };
+  } catch {
+    return null;
   }
 }

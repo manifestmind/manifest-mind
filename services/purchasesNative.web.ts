@@ -38,3 +38,11 @@ export type NativePricesResult =
 export async function nativeGetPrices(): Promise<NativePricesResult> {
   return { ok: false };
 }
+
+export type NativePlan = 'mensuel' | 'annuel' | 'lifetime' | 'offre';
+
+// Offre annuelle spéciale : sur web, le prix vient de Paddle (paddle.ts
+// previewOfferPrice). Stub jamais appelé sur web.
+export async function nativeGetOfferPrice(): Promise<NativePriceInfo | null> {
+  return null;
+}

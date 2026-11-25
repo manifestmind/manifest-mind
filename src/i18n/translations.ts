@@ -210,6 +210,17 @@ export const translations = {
           unite: '/mois',
         },
       },
+      // Offre annuelle spéciale (1.1.0) : présentation imposée, sans prix barré,
+      // ni pourcentage, ni urgence. {prix} = prix lu dans la console.
+      offre: {
+        phrase: 'Offre annuelle spéciale : {prix}/an',
+        texte: 'Les 365 cycles en accès complet pendant un an, renouvelé chaque année.',
+        profiter: 'Profiter de l\'offre',
+        nonMerci: 'Non merci',
+        carteTitre: 'Offre annuelle spéciale',
+        carteSousTitre: 'Facturé une fois par an',
+        compteRequis: 'Offre choisie ✦ Indique ton e-mail et un mot de passe ci-dessous pour la confirmer.',
+      },
       avantages: [
         '365 cycles de transformation guidée',
         'Affirmations + actions quotidiennes',
@@ -857,6 +868,15 @@ export const translations = {
           unite: '/mo',
         },
       },
+      offre: {
+        phrase: 'Special annual offer: {prix}/yr',
+        texte: 'Full access to all 365 cycles for one year, renewed every year.',
+        profiter: 'Get the offer',
+        nonMerci: 'No thanks',
+        carteTitre: 'Special annual offer',
+        carteSousTitre: 'Billed once a year',
+        compteRequis: 'Offer selected ✦ Enter your email and a password below to confirm it.',
+      },
       avantages: [
         '365 guided transformation cycles',
         'Daily affirmations + actions',
@@ -1472,6 +1492,15 @@ export const translations = {
           sousTitre: 'Cancelable en cualquier momento',
           unite: '/mes',
         },
+      },
+      offre: {
+        phrase: 'Oferta anual especial: {prix}/año',
+        texte: 'Acceso completo a los 365 ciclos durante un año, renovado cada año.',
+        profiter: 'Aprovechar la oferta',
+        nonMerci: 'No, gracias',
+        carteTitre: 'Oferta anual especial',
+        carteSousTitre: 'Facturado una vez al año',
+        compteRequis: 'Oferta elegida ✦ Indica tu correo y una contraseña abajo para confirmarla.',
       },
       avantages: [
         '365 ciclos de transformación guiada',

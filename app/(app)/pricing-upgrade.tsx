@@ -16,7 +16,9 @@ import { showAuthToast } from '../../components/ui/AuthToast';
 import { openCheckout, mapCheckoutError } from '../../services/paddle';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub), purchasesNative.ts
 // sur natif → react-native-adapty n'entre jamais dans le bundle web.
-import { nativePurchase, nativeRestore } from '../../services/purchasesNative';
+import { nativePurchase, nativeRestore, type NativePlan } from '../../services/purchasesNative';
+import { useOffreSpeciale } from '../../src/hooks/useOffreSpeciale';
+import OffreSpecialeModal from '../../components/ui/OffreSpecialeModal';
 import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
 import Orbe from '../../components/ui/Orbe';
@@ -63,6 +65,8 @@ export default function PricingUpgrade() {
   //    Paddle.js. try/finally garantit la réactivation (jamais de bouton mort).
   const busyRef = useRef(false);
   const [busyKind, setBusyKind] = useState<null | 'confirm' | 'google'>(null);
+  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 30 s.
+  const offre = useOffreSpeciale(() => busyRef.current);
 
   // Bandeau « ManifestMind évolue » (1.1.0) : réservé aux ANCIENNES utilisatrices
   // de l'offre gratuite (selected_plan === 'free', valeur que seul l'ancien
@@ -93,7 +97,9 @@ export default function PricingUpgrade() {
   // Cœur de l'achat, SANS gestion du verrou — appelé par les 2 boutons
   // (handlePurchase « Confirmer » et handleGooglePurchase) qui, eux, tiennent le
   // verrou. Le garde-fou anti double-paiement reste ici, en UNE seule copie.
-  async function runPurchase() {
+  // `plan` explicite : la fenêtre de l'offre lance l'achat de l'offre dans le même
+  // geste que sa sélection (l'état selectedPlan n'est pas encore à jour à ce moment).
+  async function runPurchase(plan: string = selectedPlan) {
     // Attendre la fin de la restauration de la session Firebase : sur web,
     // auth.currentUser est null au chargement tant que la persistance n'a pas
     // réhydraté. Sans ça, l'anonyme d'essai apparaît comme "null" → createUser
@@ -102,7 +108,7 @@ export default function PricingUpgrade() {
     // DIAGNOSTIC dev-only (__DEV__ = false en build prod → strip automatique).
     if (__DEV__) {
       console.log('[pricing-upgrade] handlePurchase', {
-        selectedPlan,
+        plan,
         platform: Platform.OS,
         canPay: canPay(),
         PADDLE_ACTIVE,
@@ -174,7 +180,7 @@ export default function PricingUpgrade() {
       // 3) Enregistrer le plan choisi (affichage) — pas d'écriture optimiste de
       //    subscription_active : c'est le webhook → Firestore → useSubscriptionSync.
       try {
-        await AsyncStorage.setItem('selected_plan', selectedPlan);
+        await AsyncStorage.setItem('selected_plan', plan);
       } catch {
         // Écriture impossible — continuer quand même
       }
@@ -185,7 +191,7 @@ export default function PricingUpgrade() {
       //    l'utilisateur sur ce paywall alors qu'il vient de payer. L'écran
       //    d'activation attend la clé puis route.
       const result = await openCheckout({
-        plan: selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+        plan: plan as NativePlan,
         email: checkoutEmail,
         firebaseUid: auth.currentUser.uid,
         onCheckoutCompleted: () => {
@@ -225,12 +231,12 @@ export default function PricingUpgrade() {
       }
     }
     try {
-      await AsyncStorage.setItem('selected_plan', selectedPlan);
+      await AsyncStorage.setItem('selected_plan', plan);
     } catch {
       // Écriture impossible — continuer quand même
     }
     const r = await nativePurchase(
-      selectedPlan as 'mensuel' | 'annuel' | 'lifetime',
+      plan as NativePlan,
       uid,
     );
     if (r.status === 'cancelled') return; // achat annulé par l'utilisateur — silence
@@ -244,12 +250,12 @@ export default function PricingUpgrade() {
   // Bouton « Confirmer » — acquiert le VERROU (busyRef synchrone + busyKind pour
   // l'UI), appelle le cœur runPurchase, et RELÂCHE dans finally → jamais de bouton
   // mort, même sur échec du checkout (point 9).
-  async function handlePurchase() {
+  async function handlePurchase(plan?: string) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusyKind('confirm');
     try {
-      await runPurchase();
+      await runPurchase(plan);
     } finally {
       busyRef.current = false;
       setBusyKind(null);
@@ -299,6 +305,20 @@ export default function PricingUpgrade() {
       busyRef.current = false;
       setBusyKind(null);
     }
+  }
+
+  // Fenêtre de l'offre → « Profiter de l'offre » : la carte de l'offre apparaît,
+  // sélectionnée. Sur le site, une personne sans compte doit d'abord remplir le
+  // formulaire (même parcours que les autres offres) ; ailleurs, l'achat part tout
+  // de suite, avec les mêmes garde-fous.
+  function profiterOffre() {
+    offre.choisir();
+    setSelectedPlan('offre');
+    if (Platform.OS === 'web' && needsAccount()) {
+      showAuthToast(t.pricing.offre.compteRequis, 'success');
+      return;
+    }
+    handlePurchase('offre');
   }
 
   async function handleRestore() {
@@ -370,6 +390,32 @@ export default function PricingUpgrade() {
         </View>
 
         <View style={styles.plansContainer}>
+          {/* Offre annuelle spéciale — visible SEULEMENT après la fenêtre de l'offre */}
+          {offre.revelee && offre.prix ? (
+            <Pressable
+              style={[
+                styles.planCard,
+                selectedPlan === 'offre' && styles.planCardSelected,
+                { borderColor: '#6B3FA0' },
+              ]}
+              onPress={() => setSelectedPlan('offre')}
+            >
+              <View style={styles.planBody}>
+                <View style={[styles.radio, selectedPlan === 'offre' && styles.radioSelected]}>
+                  {selectedPlan === 'offre' && <View style={styles.radioDot} />}
+                </View>
+                <View style={styles.planInfo}>
+                  <Text style={styles.planTitle}>{t.pricing.offre.carteTitre}</Text>
+                  <Text style={styles.planSubtitle}>{t.pricing.offre.carteSousTitre}</Text>
+                </View>
+                <View style={styles.planPrice}>
+                  <Text style={[styles.priceAmount, { color: '#6B3FA0' }]}>{offre.prix}</Text>
+                  <Text style={styles.priceUnit}>{t.pricing.plans.annuel.uniteAn}</Text>
+                </View>
+              </View>
+            </Pressable>
+          ) : null}
+
           {/* Plan Lifetime */}
           <Pressable
             style={[
@@ -572,7 +618,7 @@ export default function PricingUpgrade() {
 
         <Pressable
           style={[styles.btnPrimary, (busyKind !== null || !pricesReady) && { opacity: 0.5 }]}
-          onPress={handlePurchase}
+          onPress={() => handlePurchase()}
           disabled={busyKind !== null || !pricesReady}
         >
           <Text style={styles.btnPrimaryText}>
@@ -581,7 +627,7 @@ export default function PricingUpgrade() {
         </Pressable>
 
         {/* Renouvellement auto — abonnements UNIQUEMENT (jamais a-vie). 3.1.2 + Google. */}
-        {(selectedPlan === 'mensuel' || selectedPlan === 'annuel') ? (
+        {(selectedPlan === 'mensuel' || selectedPlan === 'annuel' || selectedPlan === 'offre') ? (
           <Text style={styles.autoRenewText}>{t.pricing.renouvellementAuto}</Text>
         ) : null}
 
@@ -628,6 +674,14 @@ export default function PricingUpgrade() {
           </Pressable>
         ) : null}
       </View>
+      {offre.prix ? (
+        <OffreSpecialeModal
+          visible={offre.visible}
+          prix={offre.prix}
+          onProfiter={profiterOffre}
+          onFermer={offre.fermer}
+        />
+      ) : null}
     </ScrollView>
   );
 }

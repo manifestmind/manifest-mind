@@ -44,6 +44,15 @@ const PRODUCT_ID_BY_PLAN: Record<'mensuel' | 'annuel' | 'lifetime', string> =
         lifetime: 'mm_premium_lifetime',
       };
 
+// Offre annuelle spéciale (1.1.0) : produit à part, MÊME identifiant sur Google
+// Play et l'App Store, exposé par un emplacement Adapty à part (`offre_annuelle`,
+// un seul pour Android et iOS) qui ne contient que lui. Jamais présent dans
+// main_paywall / main_paywall_ios : il n'est visible que par la fenêtre de l'offre.
+const OFFRE_PLACEMENT_ID = 'offre_annuelle';
+const OFFRE_PRODUCT_ID = 'mm_premium_annual_special';
+
+export type NativePlan = 'mensuel' | 'annuel' | 'lifetime' | 'offre';
+
 // Active le SDK une seule fois, en rattachant l'UID Firebase comme `customerUserId`
 // → le webhook Adapty saura quel doc Firestore (users/{uid}.subscription_active)
 // mettre à jour. Symétrique au firebase_uid de Paddle.
@@ -94,14 +103,17 @@ export type NativePurchaseResult =
 
 // Achat natif d'un plan. Renvoie 'purchased' si l'access level premium est actif.
 export async function nativePurchase(
-  plan: 'mensuel' | 'annuel' | 'lifetime',
+  plan: NativePlan,
   appUserID: string,
 ): Promise<NativePurchaseResult> {
   try {
     await ensureActivated(appUserID);
-    const flow = await adapty.getFlow(PLACEMENT_ID);
+    const flow = await adapty.getFlow(plan === 'offre' ? OFFRE_PLACEMENT_ID : PLACEMENT_ID);
     const products = await adapty.getPaywallProducts(flow);
-    const product = pickProduct(products, plan);
+    const product =
+      plan === 'offre'
+        ? products.find((p) => p.vendorProductId === OFFRE_PRODUCT_ID) ?? null
+        : pickProduct(products, plan);
     if (!product) return { status: 'error', code: 'no-product' };
     // Adapty ne LÈVE PAS d'exception sur annulation : le statut est porté par le
     // type de retour (union discriminée). Le catch ci-dessous ne gère que les
@@ -175,5 +187,25 @@ export async function nativeGetPrices(appUserID: string): Promise<NativePricesRe
     return { ok: true, prices };
   } catch {
     return { ok: false };
+  }
+}
+
+// Prix LOCALISÉ de l'offre annuelle spéciale (emplacement `offre_annuelle`).
+// null si Adapty échoue, si le produit manque (ex. pas encore créé sur l'App
+// Store) ou si son prix est incomplet → la fenêtre de l'offre ne s'affiche pas.
+// Jamais d'offre à prix incertain.
+export async function nativeGetOfferPrice(appUserID: string): Promise<NativePriceInfo | null> {
+  try {
+    await ensureActivated(appUserID);
+    const flow = await adapty.getFlow(OFFRE_PLACEMENT_ID);
+    const products = await adapty.getPaywallProducts(flow);
+    const price = products.find((p) => p.vendorProductId === OFFRE_PRODUCT_ID)?.price;
+    const localized = price?.localizedString;
+    const amount = price?.amount;
+    const currencyCode = price?.currencyCode;
+    if (!localized || typeof amount !== 'number' || !currencyCode) return null;
+    return { localized, amount, currencyCode };
+  } catch {
+    return null;
   }
 }
