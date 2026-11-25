@@ -2268,3 +2268,16 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 **Côté serveur** : `paddleWebhook` NE filtre PAS par prix (tout `transaction.paid` / `subscription.activated` ouvre l'accès, `subscription.canceled` / `past_due` le coupe) → **aucun changement de code ni redéploiement** ; idem `adaptyWebhook` (accorde tout achat du niveau `premium` ; produit non « à vie »). À revérifier au moment du code.
 **À coder (après création des produits)** : compteur de visites du paywall sur l'appareil (onboarding + mise à niveau, non-abonnées seulement), minuterie 30 s, fenêtre FR/EN/ES, achat natif via l'emplacement `offre_annuelle`, achat web via le nouveau prix Paddle (+ aperçu de prix), CGU §offres FR/EN/ES (ligne « Offre annuelle spéciale », sans montant), notes d'examen.
 **Jour J** : le prix Paddle de l'offre et ses variables `.env` partent avec le déploiement du site ; l'achat intégré Apple doit être JOINT à la version 1.1.0 soumise à l'examen (Apple n'examine un nouvel achat intégré qu'avec une version).
+
+## 💲 PRIX PADDLE (SITE) — POSÉS LE 2026-11-24, PAR EXCEPTION AU JOUR J (décision utilisatrice)
+- **Raison** : aucun utilisateur web → les prix web sont posés dès maintenant. **Les prix Google et Apple restent pour le jour J.** ⚠️ Écart TEMPORAIRE et accepté avec la règle des trois surfaces, jusqu'au jour J.
+- Prix de PRODUCTION modifiés EN PLACE (mêmes identifiants, rien à changer dans `.env` ni dans le site) :
+  | Formule | Prix (`pri_…`) | Produit (`pro_…`) | Ancien → nouveau |
+  |---|---|---|---|
+  | Mensuel | `pri_01kwctdr8c2pw59g09vbff4sgt` | `pro_01kwcsxx0f78rfedy5q7rbdsdr` | 2,50 $ → **4,99 $** |
+  | Annuel | `pri_01kwctnccpfv10cz5c2m4gqp7x` | `pro_01kwctkqg6bkbzpq74fb37kzvn` | 6,00 $ → **29,99 $** |
+  | À vie | `pri_01kwctr5xsf39j0ydp5m5z7sa9` | `pro_01kwctprsa17saphspf7zbmfxq` | 10,00 $ → **79,99 $** |
+- **Offre annuelle spéciale (19,99 $/an)** — prix créés dans le produit Annuel : production `pri_01m87y27s0nxcdjbvs44qd2rj6` · sandbox `pri_01m87xstt7w95z71axfvk9k193`. **Pas encore dans `.env`** : à ajouter au moment du code (`EXPO_PUBLIC_PADDLE_PRICE_OFFRE` / `EXPO_PUBLIC_PADDLE_SANDBOX_PRICE_OFFRE`), partira avec le déploiement du site le jour J.
+- Sandbox : les 3 prix sandbox existants (`pri_01kx95t7…`, `pri_01kx95xz…`, `pri_01kx95wh…`) n'ont PAS été modifiés.
+- **Vérifié le 2026-11-24 (lecture seule)** : `.env` et le site en ligne (`manifest-mind.app` et `manifestmind.web.app`) utilisent bien les 3 identifiants de production ci-dessus (+ les 3 sandbox) ; le paywall en ligne affiche **4,99 $ · 29,99 $ · 79,99 $** (lus dans Paddle) et « 2,50 $ » = l'équivalent mensuel CALCULÉ de l'annuel (29,99 / 12), permis par la règle.
+- **Correction d'une erreur de Claude** : les montants « 9,99 / 44,99 / 89,99 $ » cités le 2026-11-23 comme prix Paddle actuels venaient de la note du test preview d'août 2026 (« 3 prix exacts (89,99 / 44,99 / 9,99 $) », plus haut dans ce journal), répétée SANS vérifier Paddle. Les prix réellement en place avant le 2026-11-24 étaient 2,50 / 6,00 / 10,00 $ (constat de l'utilisatrice). Toujours vérifier un prix dans la console ou sur le site, jamais d'après une ancienne note.
