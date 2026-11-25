@@ -6,7 +6,7 @@
 //   1. compte la visite (services/offreSpeciale.ts) ;
 //   2. dès la 2ᵉ visite, charge le prix de l'offre dans la console (Paddle sur
 //      le site, Google Play / App Store via Adapty dans les apps) ;
-//   3. 30 s après l'ouverture, affiche la fenêtre — sauf si la personne est
+//   3. 3 s après l'ouverture, affiche la fenêtre — sauf si la personne est
 //      abonnée entre-temps, ou si un achat est en cours.
 // Sans prix fiable (produit absent, réseau…), l'offre ne s'affiche jamais.
 

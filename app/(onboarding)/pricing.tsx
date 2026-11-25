@@ -55,7 +55,7 @@ export default function Pricing() {
   // bouton, AUCUNE validation. Ne pas le cocher n'a strictement aucun effet sur
   // la création de compte ni sur l'achat.
   const [marketingOptIn, setMarketingOptIn] = useState(false);
-  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 30 s.
+  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 3 s.
   const offre = useOffreSpeciale(() => busyRef.current);
 
   // Enregistre le consentement. Appelé UNIQUEMENT une fois qu'un compte

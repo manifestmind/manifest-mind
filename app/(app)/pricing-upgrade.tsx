@@ -65,7 +65,7 @@ export default function PricingUpgrade() {
   //    Paddle.js. try/finally garantit la réactivation (jamais de bouton mort).
   const busyRef = useRef(false);
   const [busyKind, setBusyKind] = useState<null | 'confirm' | 'google'>(null);
-  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 30 s.
+  // Offre annuelle spéciale (1.1.0) : fenêtre à partir de la 2ᵉ visite, après 3 s.
   const offre = useOffreSpeciale(() => busyRef.current);
 
   // Bandeau « ManifestMind évolue » (1.1.0) : réservé aux ANCIENNES utilisatrices
