@@ -23,6 +23,12 @@
         "buildArtifactPaths": ["android/app/build/outputs/mapping/release/mapping.txt"]
       }
     },
+    "testflight-apercu": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_PREVIEW_TOOLS": "true"
+      }
+    },
     "production": {
       "environment": "production",
       "autoIncrement": true,
