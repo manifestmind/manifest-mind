@@ -1524,7 +1524,7 @@ Pour le **test fermé** (**upload 2**, version complète **avec RevenueCat**), p
 2. Dans la **liste des événements**, COCHER au minimum :
    - 🔴 **`access_level_updated`** (OBLIGATOIRE — révocation ET octroi)
    - grants (activation rapide) : `subscription_started`, `subscription_renewed`, `subscription_renewal_reactivated`, `trial_started`, `trial_converted`, `non_subscription_purchase`
-3. **Réglage « Transfer access »** (App Settings) : régler sur **transférer l'accès au NOUVEAU profil** — nécessaire pour que « Restaurer » accorde l'accès sur un nouvel UID anonyme après réinstallation / changement d'appareil.
+3. ~~Réglage « Transfer access » = transférer au nouveau profil~~ **REMPLACÉ le 2026-11-25** : le réglage reste sur **« Enabled (default) »** (partage) — voir « 🔁 ADAPTY — PARTAGE DE L'ACCÈS ENTRE COMPTES » plus bas.
 4. **VÉRIFICATION en test** (license tester, renouvellements accélérés Google) : dans les logs Firebase Functions, observer successivement l'**octroi** (`subscription_active=true`) PUIS la **révocation** (`subscription_active=false (access_level_updated)`).
 
 Le webhook **journalise tout événement reçu** (`[adapty] reçu event=… at=… uid=…`) → diagnostic complet dans les logs Functions.
@@ -1590,7 +1590,7 @@ Lancement **Android-only** → certains libellés nomment « **Google Play** » 
 ## RESTE À FAIRE — CONSOLE (toi)
 A. **Adapty** — Monetization : créer le **paywall** avec les 3 produits, puis le **placement** (noter son **identifiant** = `PLACEMENT_ID`). App settings → General/API keys : copier la **clé `public_live_…`**.
 B. **Adapty** — Integrations → Webhook : coller l'**URL** de `adaptyWebhook` (europe-west1) + valeur **Authorization** ; **COCHER les événements** : 🔴 `access_level_updated` (OBLIGATOIRE) + `subscription_started`, `subscription_renewed`, `subscription_renewal_reactivated`, `trial_started`, `trial_converted`, `non_subscription_purchase`.
-C. **Adapty** — App settings → **Transfer access** = *transférer au nouveau profil* (indispensable pour « Restaurer » après réinstallation/nouvel appareil).
+C. **Adapty** — ~~Transfer access = transférer au nouveau profil~~ **REMPLACÉ le 2026-11-25** : « Enabled (default) » conservé (voir « 🔁 ADAPTY — PARTAGE DE L'ACCÈS ENTRE COMPTES »).
 D. **Firebase** — poser les secrets : `firebase functions:secrets:set ADAPTY_WEBHOOK_AUTHORIZATION` (+ sandbox si test).
 E. **Firebase** — ajouter le **SHA Play App Signing** (bloquant C, sinon Google Sign-In casse pour installs Play Store).
 F. **Play Console** — confirmer les 3 produits (`mm_premium_monthly` 12,99 $ / `mm_premium_annual` 79 $ / `mm_premium_lifetime` 149 $) + te **licencier en testeur de licence**.
@@ -1600,7 +1600,7 @@ G. **Build** — EAS production AAB (versionCode → **4**) ; puis test téléph
 - La **clé `public_live_…`** (Adapty → App settings → General/API keys). ⚠️ PAS la Secret key.
 - Le **placement** créé (avec les 3 produits) + son **identifiant** exact.
 - La liste des **événements webhook** à cocher (ci-dessus, **access_level_updated obligatoire**).
-- Le réglage **Transfer access** = transférer au nouveau profil.
+- ~~Le réglage Transfer access = transférer au nouveau profil.~~ **REMPLACÉ le 2026-11-25** : « Enabled (default) » conservé.
 - Ton **compte en testeur de licence** Play (renouvellements accélérés → tu verras octroi PUIS révocation en direct dans les logs Functions).
 
 ## RISQUES / POINTS EN SUSPENS
@@ -2295,3 +2295,10 @@ Les deux abonnements Apple d'origine (`mm_premium_monthly`, `mm_premium_annual`)
 - **Adapty / App Store grisé — malgré « Ready to Submit »** (constat utilisatrice 2026-11-25) : Claude recommande le REPLI (2ᵉ produit Adapty App Store seul, même identifiant, même paywall `offre_annuelle`) plutôt que d'attendre ; en attente du feu vert.
 - **⏱️ OFFRE SPÉCIALE — DÉLAI RAMENÉ À 3 s (décision utilisatrice 2026-11-25, après test sur le versionCode 12 : 30 s « beaucoup trop long »)** : `OFFRE_DELAI_MS = 3_000`. Règle inchangée : rien à la 1ʳᵉ visite, puis à chaque visite à partir de la 2ᵉ, une fois par ouverture, 3 s après l'arrivée sur le paywall. Solution SIMPLE retenue (délai fixe dans le code) ; le réglage à distance (document Firestore `config/offre`) a été proposé puis ÉCARTÉ par l'utilisatrice → tout changement de délai = nouvelle construction. Vérifs : tsc 0 · 58/58 pages identiques · parcours web 16/16 (fenêtre à 3,1 s). Partira dans Android versionCode 13 et iOS build 8.
 - **Test Android sur le versionCode 12 (2026-11-25, utilisatrice)** : geste 1 OK (connexion du compte jetable, 3 prix affichés en guaranis, conformes aux nouveaux prix) · geste 2 OK (fenêtre de l'offre à la 2ᵉ puis à la 3ᵉ ouverture, après 30 s ; rien acheté).
+
+
+## 🔁 ADAPTY — PARTAGE DE L'ACCÈS ENTRE COMPTES (décision utilisatrice 2026-11-25)
+- **Décision : « Sharing paid access between user accounts » RESTE sur « Enabled (default) » (partage).** Remplace l'ancienne note de juillet « Transfer access = transférer au nouveau profil » (jamais appliquée : le réglage était resté sur le défaut). Raison de l'utilisatrice : Adapty avertit de ne pas changer ce réglage quand on peut acheter avant de se connecter, ce qui est notre cas (achat natif possible avec un compte anonyme).
+- **Ce que dit la doc Adapty** (sharing-paid-access-between-user-accounts) : avec « Enabled », tous les profils liés au même compte Google/Apple HÉRITENT de l'accès ; le nouveau profil reçoit un événement `access_level_updated` (is_active=true), l'ancien n'est jamais révoqué. Avec « Transfer », le nouveau reçoit true et l'ancien false.
+- **⚠️ CE QU'ON A OBSERVÉ LE 2026-11-25 (contraire à la doc)** : « Restaurer mes achats » avec le compte jetable (versionCode 12) a rattaché à son profil Adapty l'abonnement Google Play du téléphone de l'utilisatrice (`mm_premium_monthly`, d'origine 22/08/2026, en période de grâce jusqu'au 29/11 pour problème de paiement) — mais **AUCUN événement n'est arrivé au webhook** (0 entrée de journal `adaptywebhook` le 25/11) → Firestore du compte jetable resté à false. Or l'app ne débloque qu'avec `subscription_active` dans Firestore (écrit par le webhook seul). **Donc la restauration sur un nouveau téléphone / après réinstallation (nouvel UID) N'EST PAS CONFIRMÉE** avec ce réglage. Le compte de l'utilisatrice n'a pas été touché dans Firestore.
+- **À faire** : retester la restauration sur la construction 14 (corrections Restaurer + rattachement) en surveillant le webhook. Si l'événement ne vient toujours pas : filet proposé = fonction serveur qui, après « Restaurer », lit le profil Adapty (clé secrète) et pose `subscription_active` si l'accès premium y est actif (vérification serveur, infalsifiable).
