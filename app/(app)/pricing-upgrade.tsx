@@ -334,8 +334,9 @@ export default function PricingUpgrade() {
       router.replace('/(app)/activation?restore=1' as any);
       return;
     }
-    // 'nothing' ou 'error' → message générique (affiné en Phase B).
-    showAuthToast(t.paiement.erreurTechnique.replace('{email}', SUPPORT_EMAIL), 'error');
+    // 1.1.0 : deux messages distincts (avant : « Paiement momentanément
+    // indisponible » même quand il n'y avait simplement rien à restaurer).
+    showAuthToast(r.status === 'nothing' ? t.activation.restaureAucun : t.activation.restaureEchec, 'error');
   }
 
   return (

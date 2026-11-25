@@ -18,7 +18,7 @@ import { useLocalizedPrices } from '../../src/hooks/useLocalizedPrices';
 import { hasActiveSubscription } from '../../services/subscription';
 // Résolu par Metro : purchasesNative.web.ts sur web (stub) → react-native-adapty
 // n'entre jamais dans le bundle web (et cette branche est inatteignable sur web).
-import { nativePurchase, type NativePlan } from '../../services/purchasesNative';
+import { nativePurchase, nativeRestore, type NativePlan } from '../../services/purchasesNative';
 import { useOffreSpeciale } from '../../src/hooks/useOffreSpeciale';
 import OffreSpecialeModal from '../../components/ui/OffreSpecialeModal';
 import Orbe from '../../components/ui/Orbe';
@@ -294,7 +294,44 @@ export default function Pricing() {
     handlePurchase('offre');
   }
 
-  function handleRestore() {
+  // « Restaurer mes achats » (NATIF ; lien masqué sur le site). Corrigé en 1.1.0 :
+  // la fonction était VIDE depuis la 1.0.0 → le bouton ne faisait rien, alors
+  // que c'est ici qu'arrive une personne qui réinstalle ou change de téléphone
+  // (Apple 3.1.1, Google Play). Même logique que le paywall de mise à niveau ;
+  // comme pour un achat, on garantit d'abord un UID (anonyme si besoin) pour que
+  // la restauration soit rattachée à un compte. Jamais d'écriture de
+  // subscription_active ici : l'écran d'activation attend le serveur.
+  async function handleRestore() {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      if (!canPay()) {
+        Alert.alert(t.commun.disponibleProchainement);
+        return;
+      }
+      let uid = auth.currentUser?.uid;
+      if (!uid) {
+        try {
+          uid = (await signInAnonymously(auth)).user.uid;
+        } catch {
+          showAuthToast(t.compte.errGenerique, 'error');
+          return;
+        }
+      }
+      const r = await nativeRestore(uid);
+      if (r.status === 'restored') {
+        try {
+          await AsyncStorage.setItem('onboarding_completed', 'true');
+        } catch {
+          // fallback silencieux — on continue la navigation
+        }
+        router.replace('/(app)/activation?restore=1' as any);
+        return;
+      }
+      showAuthToast(r.status === 'nothing' ? t.activation.restaureAucun : t.activation.restaureEchec, 'error');
+    } finally {
+      busyRef.current = false;
+    }
   }
 
   return (

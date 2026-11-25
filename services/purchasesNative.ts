@@ -79,9 +79,21 @@ async function ensureActivated(customerUserId: string) {
 // STORES_ACTIVE). Idempotente : ensureActivated active une fois, puis ré-identifie
 // l'UID courant à chaque appel (utile après une conversion / changement de session).
 // À utiliser en FIRE-AND-FORGET côté appelant : ne doit jamais bloquer le démarrage.
+// 1.1.0 : jusqu'à 3 essais espacés. Avant, un échec du rattachement (ex. juste
+// après un changement de compte) était avalé sans nouvel essai : le compte
+// connecté pouvait rester inconnu d'Adapty (constaté sur le versionCode 12).
+// L'achat, lui, reste protégé : il échoue si le rattachement échoue juste avant.
 export async function nativeInitAdapty(appUserID: string): Promise<void> {
   if (!appUserID) return;
-  await ensureActivated(appUserID);
+  for (let essai = 1; ; essai++) {
+    try {
+      await ensureActivated(appUserID);
+      return;
+    } catch (e) {
+      if (essai >= 3) throw e;
+      await new Promise((r) => setTimeout(r, 3000 * essai));
+    }
+  }
 }
 
 // Sélectionne le produit correspondant au plan dans les produits du placement,
@@ -141,16 +153,30 @@ export async function nativePurchase(
 }
 
 // Restauration des achats. 'restored' si l'access level premium est retrouvé.
+// 1.1.0 : 2 essais. Après une erreur, on relit le profil Adapty : la
+// restauration a pu aboutir côté Adapty malgré l'erreur renvoyée (constaté sur le
+// versionCode 12 : achat rattaché, mais message d'erreur à l'écran). Une erreur
+// n'est rendue qu'après le 2ᵉ échec.
 export async function nativeRestore(appUserID: string): Promise<NativePurchaseResult> {
-  try {
-    await ensureActivated(appUserID);
-    const profile = await adapty.restorePurchases();
-    const active = !!profile.accessLevels?.[ACCESS_LEVEL_ID]?.isActive;
-    return active ? { status: 'restored' } : { status: 'nothing' };
-  } catch (e: any) {
-    const code = e instanceof AdaptyError ? String(e.adaptyCode) : (e?.code ?? 'unknown');
-    return { status: 'error', code };
+  let code = 'unknown';
+  for (let essai = 1; essai <= 2; essai++) {
+    try {
+      await ensureActivated(appUserID);
+      const profile = await adapty.restorePurchases();
+      const active = !!profile.accessLevels?.[ACCESS_LEVEL_ID]?.isActive;
+      return active ? { status: 'restored' } : { status: 'nothing' };
+    } catch (e: any) {
+      code = e instanceof AdaptyError ? String(e.adaptyCode) : (e?.code ?? 'unknown');
+      try {
+        const profile = await adapty.getProfile();
+        if (profile.accessLevels?.[ACCESS_LEVEL_ID]?.isActive) return { status: 'restored' };
+      } catch {
+        // profil illisible : on retente la restauration
+      }
+      if (essai < 2) await new Promise((r) => setTimeout(r, 1500));
+    }
   }
+  return { status: 'error', code };
 }
 
 // Prix LOCALISÉS d'un produit (total formaté par le store + montant + devise).
