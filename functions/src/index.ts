@@ -296,3 +296,5 @@ export const paddleWebhook = onRequest(
 // découvre la fonction. N'altère en rien paddleWebhook ci-dessus.
 export { adaptyWebhook } from './adaptyWebhook';
 export { deleteAdaptyProfile } from './deleteAdaptyProfile';
+export { syncAdaptyAccess } from './syncAdaptyAccess';
+export { verifierAccesRestaures } from './verifierAccesRestaures';

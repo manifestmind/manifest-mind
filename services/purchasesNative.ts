@@ -13,6 +13,8 @@
 import { adapty, AdaptyError } from 'react-native-adapty';
 import type { AdaptyPaywallProduct } from 'react-native-adapty';
 import { Platform } from 'react-native';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import app from './firebase';
 
 // Clé PUBLIQUE SDK Adapty (format `public_live_…`) — conçue pour être embarquée
 // dans l'app cliente. AUCUNE clé secrète ici (les secrets serveur vivent dans
@@ -158,6 +160,24 @@ export async function nativePurchase(
 // versionCode 12 : achat rattaché, mais message d'erreur à l'écran). Une erreur
 // n'est rendue qu'après le 2ᵉ échec.
 export async function nativeRestore(appUserID: string): Promise<NativePurchaseResult> {
+  const r = await restaurerAupresDAdapty(appUserID);
+  // Filet de sécurité (1.1.0) : Adapty n'envoie pas toujours d'événement au
+  // webhook quand une restauration rattache un achat à un NOUVEAU compte
+  // (constaté le 2026-11-25). La fonction serveur relit le profil Adapty avec la
+  // clé secrète et ouvre l'accès dans Firestore s'il est actif — pour le SEUL
+  // compte connecté (UID tiré du jeton, côté serveur). Échec → sans effet :
+  // l'écran d'activation continue d'attendre le webhook.
+  if (r.status === 'restored') {
+    try {
+      await httpsCallable(getFunctions(app, 'europe-west1'), 'syncAdaptyAccess')();
+    } catch {
+      // réseau / fonction indisponible : on laisse faire le webhook
+    }
+  }
+  return r;
+}
+
+async function restaurerAupresDAdapty(appUserID: string): Promise<NativePurchaseResult> {
   let code = 'unknown';
   for (let essai = 1; essai <= 2; essai++) {
     try {
