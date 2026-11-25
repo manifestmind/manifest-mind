@@ -558,10 +558,6 @@ export const translations = {
         annuler: 'Annuler',
         envoyer: 'Envoyer un lien',
       },
-      alertRestaurer: {
-        titre: 'Restaurer les achats',
-        corps: 'Aucun achat à restaurer pour le moment.',
-      },
     },
 
     // ── App : pricing-upgrade ─────────────────────────────────────────────────
@@ -1195,10 +1191,6 @@ export const translations = {
         annuler: 'Cancel',
         envoyer: 'Send a link',
       },
-      alertRestaurer: {
-        titre: 'Restore purchases',
-        corps: 'No purchases to restore at this time.',
-      },
     },
 
     pricingUpgrade: {
@@ -1818,10 +1810,6 @@ export const translations = {
         corps: 'Para eliminar tu cuenta, necesitamos verificar tu identidad. ¿Deseas recibir un nuevo enlace de inicio de sesión?',
         annuler: 'Cancelar',
         envoyer: 'Enviar enlace',
-      },
-      alertRestaurer: {
-        titre: 'Restaurar compras',
-        corps: 'No hay compras para restaurar por ahora.',
       },
     },
 

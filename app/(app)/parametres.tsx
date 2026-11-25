@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
-import { deleteUser, onAuthStateChanged, sendSignInLinkToEmail, signOut } from 'firebase/auth';
+import { deleteUser, onAuthStateChanged, sendSignInLinkToEmail, signInAnonymously, signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 import { exporterDonnees } from '../../services/dataExport';
@@ -43,6 +43,7 @@ import {
 import Svg, { Circle, ClipPath, Defs, Path, Rect } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { canPay } from '../../services/config';
+import { nativeRestore } from '../../services/purchasesNative';
 import { linkAnonymousEmail, mapConversionError } from '../../services/authConversion';
 import CyclePreview from '../../components/dev/CyclePreview';
 import Orbe from '../../components/ui/Orbe';
@@ -567,8 +568,39 @@ export default function Parametres() {
     router.replace('/(onboarding)/welcome' as any);
   }
 
-  function handleRestorePurchases() {
-    Alert.alert(t.parametres.alertRestaurer.titre, t.parametres.alertRestaurer.corps);
+  // « Restaurer mes achats » (apps seulement ; ligne masquée sur le site).
+  // 1.1.0 : la fonction affichait TOUJOURS « Aucun achat à restaurer » sans rien
+  // demander à Adapty (depuis la 1.0.0) — alors que les CGU y renvoient et
+  // qu'Apple exige une restauration réelle (3.1.1). Même logique que les
+  // paywalls : compte garanti, restauration Adapty (+ filet de sécurité serveur
+  // dans nativeRestore), puis l'écran d'activation attend la confirmation.
+  const restoringRef = useRef(false);
+  async function handleRestorePurchases() {
+    if (restoringRef.current) return;
+    restoringRef.current = true;
+    try {
+      if (!canPay()) {
+        Alert.alert(t.commun.disponibleProchainement);
+        return;
+      }
+      let uid = auth.currentUser?.uid;
+      if (!uid) {
+        try {
+          uid = (await signInAnonymously(auth)).user.uid;
+        } catch {
+          showAuthToast(t.compte.errGenerique, 'error');
+          return;
+        }
+      }
+      const r = await nativeRestore(uid);
+      if (r.status === 'restored') {
+        router.replace('/(app)/activation?restore=1' as any);
+        return;
+      }
+      showAuthToast(r.status === 'nothing' ? t.activation.restaureAucun : t.activation.restaureEchec, 'error');
+    } finally {
+      restoringRef.current = false;
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
