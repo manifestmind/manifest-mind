@@ -19,6 +19,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import InstallPrompt from '../../components/ui/InstallPrompt';
 import NotifPrompt from '../../components/ui/NotifPrompt';
 import { rescheduleAll } from '../../services/notifications';
+import { demanderNoteSiMoment } from '../../services/demandeNote';
+import { readTour } from '../../services/levels';
+import { showAuthToast } from '../../components/ui/AuthToast';
+
+// Outil d'aperçu (versions de test seulement) : signale le moment où la demande
+// de note partirait — indispensable sur iPhone, TestFlight n'affichant JAMAIS
+// la fenêtre de note d'Apple.
+const APERCU = process.env.EXPO_PUBLIC_PREVIEW_TOOLS === 'true';
+const DELAI_NOTE_MS = 2500;
 
 
 export default function Celebration() {
@@ -80,6 +89,8 @@ export default function Celebration() {
   // Chargement donnees
   useEffect(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    let annule = false;
+    let minuterieNote: ReturnType<typeof setTimeout> | undefined;
     async function load() {
       await AsyncStorage.setItem('cycle_completed', 'true');
 
@@ -116,8 +127,38 @@ export default function Celebration() {
       const cycle = parseInt(await AsyncStorage.getItem('current_cycle') || '1');
       setCycleNumber(cycle);
       setCycleColors(getCycleColors(cycle));
+
+      // 1.2.0 — demande de note native, à un moment naturel : fin du cycle 7,
+      // puis chaque changement de niveau pendant ce cycle. Les points du cycle
+      // sont déjà comptés dans points_total → niveau avant = total − points du
+      // cycle. Quelques secondes après les félicitations, jamais pendant une étape.
+      const total = parseInt(await AsyncStorage.getItem('points_total') || '0');
+      const tour = await readTour();
+      if (annule) return;
+      minuterieNote = setTimeout(async () => {
+        const motif = await demanderNoteSiMoment({
+          cycleTermine: cycle,
+          tour,
+          pointsAvant: total - pts,
+          pointsApres: total,
+        });
+        // APERCU EN PREMIER : remplacé par `false` à la construction des versions
+        // publiées, le bloc entier (et son texte) est alors retiré par la minification.
+        if (APERCU && motif) {
+          showAuthToast(
+            motif.type === 'cycle7'
+              ? 'Demande de note envoyée (aperçu) : fin du cycle 7'
+              : `Demande de note envoyée (aperçu) : nouveau niveau ${motif.niveau + 1} (tour ${motif.tour})`,
+            'success',
+          );
+        }
+      }, DELAI_NOTE_MS);
     }
     load();
+    return () => {
+      annule = true;
+      if (minuterieNote) clearTimeout(minuterieNote);
+    };
   }, []);
 
   // Animations

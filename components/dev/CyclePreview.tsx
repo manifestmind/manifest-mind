@@ -19,11 +19,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { levelIndexFor, POINTS_PER_TOUR } from '../../services/levels';
+import { NOTE_CLES } from '../../services/demandeNote';
 
 const ENABLED = process.env.EXPO_PUBLIC_PREVIEW_TOOLS === 'true';
 
 const BACKUP_KEY = 'apercu_cycle_sauvegarde';
-const KEYS = ['current_cycle', 'current_theme', 'cycle_completed', 'cycle_step_status', 'next_cycle_time'];
+// 1.2.0 : les points sont aussi sauvegardés (outil « points juste sous le prochain niveau »).
+const KEYS = ['current_cycle', 'current_theme', 'cycle_completed', 'cycle_step_status', 'next_cycle_time', 'points_total', 'cycle_points', 'cycle_earned_points'];
+const EARNED0 = { opening: 0, affirmation: 0, action_easy: 0, action_hard: 0, visualisation: 0, journal: 0, vision_board: 0 };
 const STEPS0 = { opening: true, affirmation: false, action_easy: false, action_hard: false, visualisation: false, journal: false, vision_board: false };
 
 function CyclePreviewImpl() {
@@ -32,13 +36,35 @@ function CyclePreviewImpl() {
   const [value, setValue] = useState('');
   const [msg, setMsg] = useState('');
 
-  async function goTo(route: string) {
-    const n = parseInt(value, 10);
-    if (!(n >= 1 && n <= 365)) { setMsg('Cycle entre 1 et 365'); return; }
+  async function sauvegarder() {
     if (!(await AsyncStorage.getItem(BACKUP_KEY))) {
       const saved = await AsyncStorage.multiGet(KEYS);
       await AsyncStorage.setItem(BACKUP_KEY, JSON.stringify(saved));
     }
+  }
+
+  // 1.2.0 — test de la demande de note au changement de niveau : place les
+  // points 60 sous le prochain palier (25 / 50 / 75 % du tour). Terminer un cycle
+  // (jusqu'à 100 points) fait alors changer de niveau. Restauré par « Revenir ».
+  async function sousProchainNiveau() {
+    await sauvegarder();
+    const pts = parseInt((await AsyncStorage.getItem('points_total')) || '0', 10) || 0;
+    const niveau = levelIndexFor(pts);
+    if (niveau >= 3) { setMsg('Déjà au dernier niveau du tour'); return; }
+    const cible = Math.round(((niveau + 1) * POINTS_PER_TOUR) / 4) - 60;
+    await AsyncStorage.setItem('points_total', String(cible));
+    setMsg(`Points : ${cible} — termine un cycle pour passer au niveau ${niveau + 2}`);
+  }
+
+  async function reinitialiserNotes() {
+    await AsyncStorage.multiRemove([NOTE_CLES.cycle7, NOTE_CLES.niveaux]);
+    setMsg('Demandes de note réinitialisées');
+  }
+
+  async function goTo(route: string) {
+    const n = parseInt(value, 10);
+    if (!(n >= 1 && n <= 365)) { setMsg('Cycle entre 1 et 365'); return; }
+    await sauvegarder();
     const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
     await AsyncStorage.multiSet([
       ['current_cycle', String(n)],
@@ -46,6 +72,8 @@ function CyclePreviewImpl() {
       ['cycle_completed', 'false'],
       ['cycle_step_status', JSON.stringify(STEPS0)],
       ['next_cycle_time', String(midnight.getTime())],
+      ['cycle_points', '0'],
+      ['cycle_earned_points', JSON.stringify(EARNED0)],
     ]);
     setOpen(false);
     router.push(route as any);
@@ -92,6 +120,12 @@ function CyclePreviewImpl() {
                 <Text style={styles.btnText}>{label}</Text>
               </Pressable>
             ))}
+            <Pressable style={styles.btnAlt} onPress={sousProchainNiveau}>
+              <Text style={styles.btnAltText}>Points juste sous le prochain niveau</Text>
+            </Pressable>
+            <Pressable style={styles.btnAlt} onPress={reinitialiserNotes}>
+              <Text style={styles.btnAltText}>Réinitialiser les demandes de note</Text>
+            </Pressable>
             <Pressable style={styles.btnAlt} onPress={restore}>
               <Text style={styles.btnAltText}>Revenir à mon cycle</Text>
             </Pressable>

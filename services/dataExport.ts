@@ -93,6 +93,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     [, notifBienveillants], [, notifPermissionAsked],
     [, notifRepromptCount], [, notifRepromptNext], [, notifRepromptOff],
     [, currentTour], [, paywallVisits],
+    [, noteCycle7], [, noteNiveaux],
   ] = await AsyncStorage.multiGet([
     'user_name', 'user_language',
     'current_cycle', 'current_theme', 'cycle_completed', 'cycle_points',
@@ -106,6 +107,7 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
     'notif_bienveillants', 'notif_permission_asked',
     'notif_reprompt_count', 'notif_reprompt_next', 'notif_reprompt_off',
     'current_tour', 'paywall_visits',
+    'note_demandee_cycle7', 'note_demandee_niveaux',
   ]);
 
   // 2. Journal — clés dynamiques journal_cycle_N, découvertes par préfixe.
@@ -205,6 +207,9 @@ async function collecterDonnees(lang: Lang): Promise<Record<string, unknown>> {
       notifRepropositionsArretees: toBool(notifRepromptOff),
       // Offre annuelle spéciale (1.1.0) : nombre d'ouvertures de la page des offres.
       visitesPageOffres: toNum(paywallVisits),
+      // Demande de note native (1.2.0) : demandes déjà faites sur cet appareil.
+      demandeNoteCycle7Faite: toBool(noteCycle7),
+      demandesNoteNiveaux: toJson(noteNiveaux),
     },
   };
 }
